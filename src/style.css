@@ -90,10 +90,16 @@
     --border-color: #555555;
   }
 
-  /* 移除各元素原有的过渡*/
+  /* 移除各元素原有的过渡（但滑块指示器除外）*/
   body.theme-transitioning,
   body.theme-transitioning * {
     transition: none !important;
+  }
+
+  /* 主题滑块指示器始终保持平滑过渡 */
+  body.theme-transitioning .theme-slider-indicator,
+  .theme-slider-indicator {
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease, box-shadow 0.5s ease !important;
   }
 }
 
@@ -595,13 +601,13 @@ button.border-gray-200 {
 
 /* 学生选择容器内部背景 */
 #student-selection-area > div {
-  background-color: var(--bg-content) !important;
+  background-color: var(--bg-secondary) !important;
   border: 1px solid var(--border-color) !important;
 }
 
 /* 深色模式下的学生选择容器内部背景 */
 .dark #student-selection-area > div {
-  background-color: var(--bg-content) !important;
+  background-color: var(--bg-secondary) !important;
   border: 1px solid var(--border-color) !important;
 }
 
@@ -1147,7 +1153,7 @@ textarea:disabled {
   width: 108px;
   height: 36px;
   background-color: var(--bg-content);
-  border-radius: 6px;
+  border-radius: 18px;
   cursor: pointer;
   overflow: hidden;
 }
@@ -1158,7 +1164,7 @@ textarea:disabled {
   width: 28px;
   height: 28px;
   background-color: var(--bg-secondary);
-  border-radius: 6px;
+  border-radius: 50%;
   transition: left 0.3s ease;
   z-index: 1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -1180,7 +1186,7 @@ textarea:disabled {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-around;
+  justify-content: space-between;
   width: 100%;
   height: 100%;
   z-index: 2;
@@ -1190,8 +1196,12 @@ textarea:disabled {
   font-size: 16px;
   color: var(--text-primary);
   transition: color 0.3s ease;
-  padding: 8px;
   cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .theme-slider-icons i[data-theme="light"].active {
