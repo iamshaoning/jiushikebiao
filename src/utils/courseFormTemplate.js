@@ -22,7 +22,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                             <div class="relative border rounded-md overflow-hidden cursor-pointer" data-action="toggle-date-picker" data-target="course-date-container" style="border-color: var(--border-color); background-color: var(--bg-input);">
                                 <input type="text" id="course-date" value="${dateVal}" class="w-full px-3 py-2 border-0 pr-10" style="background-color: var(--bg-input); color: var(--text-primary);" readonly>
                                 <button type="button" class="absolute right-0 top-0 h-full px-3 flex items-center justify-center" style="color: var(--text-secondary);">
-                                    <i class="fa fa-calendar"></i>
+                                    <i data-lucide="calendar-check" style="width: 16px; height: 16px;"></i>
                                 </button>
                             </div>
                             ${utils.createDatePickerTemplate('course-date-container', 'course-date')}
@@ -59,7 +59,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                                 <div class="relative border rounded-md overflow-hidden cursor-pointer" data-action="toggle-time-picker" data-target="start-time-container" style="border-color: var(--border-color); background-color: var(--bg-input);">
                                     <input type="time" id="course-start-time" value="${startTimeVal}" data-action="course-time-change" class="w-full px-3 py-2 border-0 pr-10" style="background-color: var(--bg-input); color: var(--text-primary);">
                                     <button type="button" class="absolute right-0 top-0 h-full px-3 flex items-center justify-center" style="color: var(--text-secondary);">
-                                        <i class="fa fa-clock-o"></i>
+                                        <i data-lucide="clock" class="inline-block" style="width: 16px; height: 16px;"></i>
                                     </button>
                                 </div>
                                 ${utils.createTimePickerTemplate('start-time-container', 'course-start-time')}

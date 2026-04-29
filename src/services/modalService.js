@@ -382,21 +382,21 @@ class ModalService {
         // 根据类型设置不同的样式
         const typeConfig = {
             confirm: {
-                icon: 'fa-question-circle',
+                icon: 'badge-question-mark',
                 bgColor: 'bg-blue-100',
                 textColor: 'text-blue-500',
                 btnText: '确定',
                 btnColor: 'bg-blue-600 hover:bg-blue-700'
             },
             delete: {
-                icon: 'fa-exclamation-triangle',
+                icon: 'triangle-alert',
                 bgColor: 'bg-red-100',
                 textColor: 'text-red-500',
                 btnText: '删除',
                 btnColor: 'bg-red-600 hover:bg-red-700'
             },
             warning: {
-                icon: 'fa-exclamation-circle',
+                icon: 'circle-alert',
                 bgColor: 'bg-yellow-100',
                 textColor: 'text-yellow-500',
                 btnText: '确定',
@@ -410,12 +410,12 @@ class ModalService {
             <div class="p-6">
                 <div class="text-center mb-6">
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full ${config.bgColor} ${config.textColor} mb-4">
-                        <i class="fa ${config.icon} text-2xl"></i>
+                        <i data-lucide="${config.icon}" class="text-2xl inline-block" style="width: 24px; height: 24px;"></i>
                     </div>
-                    <p class="text-gray-600">${message}</p>
+                    <p style="color: var(--text-primary);">${message}</p>
                 </div>
                 <div class="flex space-x-3">
-                    <button id="cancel-confirm" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <button id="cancel-confirm" class="flex-1 px-4 py-2 rounded-lg transition-colors" style="border: 1px solid var(--border-color); color: var(--text-primary); background-color: var(--bg-secondary);">
                         取消
                     </button>
                     <button id="accept-confirm" class="flex-1 px-4 py-2 ${config.btnColor} text-white rounded-lg transition-colors">
@@ -427,6 +427,9 @@ class ModalService {
 
         this.show(content, {
             onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
                 document.getElementById('cancel-confirm').addEventListener('click', () => this.hide());
                 document.getElementById('accept-confirm').addEventListener('click', () => {
                     onConfirm();
@@ -441,23 +444,23 @@ class ModalService {
      */
     showAddStudent() {
         const content = `
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold">添加学生</h3>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">添加学生</h3>
                     </div>
                     <div id="add-student-form">
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-                            <input type="text" id="student-name" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">姓名</label>
+                            <input type="text" id="student-name" class="w-full px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
                         </div>
                         <div class="mb-4 flex space-x-4">
                             <div class="w-1/2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">机构</label>
+                                <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">机构</label>
                                 <div class="custom-select w-full" id="student-organization-wrapper">
                                     <div class="custom-select-trigger" id="student-organization-trigger" data-action="toggle-select" data-select-wrapper="student-organization-wrapper">
                                         <span>${window.state.organizations[0] || '请选择机构'}</span>
-                                        <i class="custom-select-arrow fa fa-chevron-down"></i>
+                                        <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
                                     </div>
                                     <div class="custom-select-options" id="student-organization-options">
                                         ${window.state.organizations.map((org, index) => `<div class="custom-option ${index === 0 ? 'selected' : ''}" data-value="${org}">${org}</div>`).join('')}
@@ -465,11 +468,11 @@ class ModalService {
                                 </div>
                             </div>
                             <div class="w-1/2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">年级</label>
+                                <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">年级</label>
                                 <div class="custom-select w-full" id="student-grade-wrapper">
                                     <div class="custom-select-trigger" id="student-grade-trigger" data-action="toggle-select" data-select-wrapper="student-grade-wrapper">
                                         <span>${window.state.grades[0] || '请选择年级'}</span>
-                                        <i class="custom-select-arrow fa fa-chevron-down"></i>
+                                        <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
                                     </div>
                                     <div class="custom-select-options" id="student-grade-options">
                                         ${window.state.grades.map((grade, index) => `<div class="custom-option ${index === 0 ? 'selected' : ''}" data-value="${grade}">${grade}</div>`).join('')}
@@ -478,18 +481,18 @@ class ModalService {
                             </div>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">预设课时费</label>
-                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
-                                <span>一对一课型</span>
+                            <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">预设课时费</label>
+                            <div class="flex items-center justify-between p-3 rounded-md" style="border: 1px solid var(--border-color);">
+                                <span style="color: var(--text-primary);">一对一课型</span>
                                 <div class="flex items-center">
-                                    <span class="text-sm text-gray-500 mr-2">每</span>
-                                    <input type="number" id="duration-one-on-one" min="1" value="120" class="w-12 px-2 py-1 border border-gray-300 rounded-md appearance-none">
-                                    <span class="text-sm text-gray-500 mx-2">分钟</span>
-                                    <input type="number" id="fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 border border-gray-300 rounded-md appearance-none">
-                                    <span class="text-sm text-gray-500 ml-2">元</span>
+                                    <span class="text-sm mr-2" style="color: var(--text-secondary);">每</span>
+                                    <input type="number" id="duration-one-on-one" min="1" value="120" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <span class="text-sm mx-2" style="color: var(--text-secondary);">分钟</span>
+                                    <input type="number" id="fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <span class="text-sm ml-2" style="color: var(--text-secondary);">元</span>
                                 </div>
                             </div>
-                            <div class="mt-2 text-sm text-gray-500">
+                            <div class="mt-2 text-sm" style="color: var(--text-secondary);">
                                 多人课请在排课时定价
                             </div>
                         </div>
@@ -504,6 +507,9 @@ class ModalService {
 
         this.show(content, {
             onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
                 // 绑定保存按钮事件
                 const addStudentSave = document.getElementById('add-student-save');
                 if (addStudentSave) {
@@ -575,6 +581,11 @@ class ModalService {
 
         this.show(content, {
             onShow: () => {
+                // 重新初始化 Lucide 图标
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
                 // 初始化课程表单事件
                 if (typeof window.utils.initCourseFormEvents === 'function') {
                     window.utils.initCourseFormEvents(false, { date });
@@ -682,6 +693,11 @@ class ModalService {
 
         this.show(content, {
             onShow: () => {
+                // 重新初始化 Lucide 图标
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
                 // 初始化课程表单事件
                 if (typeof window.utils.initCourseFormEvents === 'function') {
                     window.utils.initCourseFormEvents(true, course);
@@ -693,7 +709,7 @@ class ModalService {
                     saveCourse.addEventListener('click', async () => {
                         // 显示加载状态
                         saveCourse.disabled = true;
-                        saveCourse.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i>保存中...';
+                        saveCourse.innerHTML = '<i data-lucide="loader-circle" class="inline-block animate-spin mr-2" style="width: 16px; height: 16px;"></i>保存中...';
 
                         const courseId = document.getElementById('edit-course-id').value;
                         const date = document.getElementById('course-date').value;
@@ -810,24 +826,24 @@ class ModalService {
      */
     showEditStudent(student) {
         const content = `
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold">编辑学生</h3>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">编辑学生</h3>
                     </div>
                     <form id="edit-student-form">
                         <input type="hidden" id="edit-student-id" value="${student.id}">
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-                            <input type="text" id="edit-student-name" class="w-full px-3 py-2 border border-gray-300 rounded-md" value="${student.name}">
+                            <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">姓名</label>
+                            <input type="text" id="edit-student-name" class="w-full px-3 py-2 rounded-md" value="${student.name}" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
                         </div>
                         <div class="mb-4 flex space-x-4">
                             <div class="w-1/2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">机构</label>
+                                <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">机构</label>
                                 <div class="custom-select w-full" id="edit-student-organization-wrapper">
                                     <div class="custom-select-trigger" id="edit-student-organization-trigger" data-action="toggle-select" data-select-wrapper="edit-student-organization-wrapper">
                                         <span>${student.organization || window.state.organizations[0] || '请选择机构'}</span>
-                                        <i class="custom-select-arrow fa fa-chevron-down"></i>
+                                        <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
                                     </div>
                                     <div class="custom-select-options" id="edit-student-organization-options">
                                         ${window.state.organizations.map((org) => `<div class="custom-option ${org === student.organization ? 'selected' : ''}" data-value="${org}">${org}</div>`).join('')}
@@ -835,11 +851,11 @@ class ModalService {
                                 </div>
                             </div>
                             <div class="w-1/2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">年级</label>
+                                <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">年级</label>
                                 <div class="custom-select w-full" id="edit-student-grade-wrapper">
                                     <div class="custom-select-trigger" id="edit-student-grade-trigger" data-action="toggle-select" data-select-wrapper="edit-student-grade-wrapper">
                                         <span>${student.grade || window.state.grades[0] || '请选择年级'}</span>
-                                        <i class="custom-select-arrow fa fa-chevron-down"></i>
+                                        <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
                                     </div>
                                     <div class="custom-select-options" id="edit-student-grade-options">
                                         ${window.state.grades.map((grade) => `<div class="custom-option ${grade === student.grade ? 'selected' : ''}" data-value="${grade}">${grade}</div>`).join('')}
@@ -848,18 +864,18 @@ class ModalService {
                             </div>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">预设课时费</label>
-                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-md">
-                                <span>一对一课型</span>
+                            <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">预设课时费</label>
+                            <div class="flex items-center justify-between p-3 rounded-md" style="border: 1px solid var(--border-color);">
+                                <span style="color: var(--text-primary);">一对一课型</span>
                                 <div class="flex items-center">
-                                    <span class="text-sm text-gray-500 mr-2">每</span>
-                                    <input type="number" id="edit-duration-one-on-one" min="1" value="${student.fees && student.fees['一对一_duration'] ? student.fees['一对一_duration'] : 120}" class="w-12 px-2 py-1 border border-gray-300 rounded-md appearance-none">
-                                    <span class="text-sm text-gray-500 mx-2">分钟</span>
-                                    <input type="number" id="edit-fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 border border-gray-300 rounded-md appearance-none" value="${student.fees ? (student.fees['一对一'] || 0) : 0}">
-                                    <span class="text-sm text-gray-500 ml-2">元</span>
+                                    <span class="text-sm mr-2" style="color: var(--text-secondary);">每</span>
+                                    <input type="number" id="edit-duration-one-on-one" min="1" value="${student.fees && student.fees['一对一_duration'] ? student.fees['一对一_duration'] : 120}" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <span class="text-sm mx-2" style="color: var(--text-secondary);">分钟</span>
+                                    <input type="number" id="edit-fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 rounded-md appearance-none" value="${student.fees ? (student.fees['一对一'] || 0) : 0}" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <span class="text-sm ml-2" style="color: var(--text-secondary);">元</span>
                                 </div>
                             </div>
-                            <div class="mt-2 text-sm text-gray-500">
+                            <div class="mt-2 text-sm" style="color: var(--text-secondary);">
                                 多人课请在排课时定价
                             </div>
                         </div>
@@ -874,6 +890,9 @@ class ModalService {
 
         this.show(content, {
             onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
                 // 绑定保存按钮事件
                 const editStudentForm = document.getElementById('edit-student-form');
                 if (editStudentForm) {
@@ -953,77 +972,6 @@ class ModalService {
     }
 
     /**
-     * 显示删除学生确认模态框
-     * @param {Object} student - 学生数据
-     */
-    showDeleteStudent(student) {
-        // 统计该学生的相关课程数量
-        const relatedCourses = window.state.courses.filter(course => {
-            if (course.studentIds && Array.isArray(course.studentIds)) {
-                return course.studentIds.includes(student.id);
-            }
-            return false;
-        });
-        const courseCount = relatedCourses.length;
-        
-        const content = `
-            <div class="p-6">
-                <div class="text-center mb-6">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-4">
-                        <i class="fa fa-exclamation-triangle text-2xl"></i>
-                    </div>
-                    <p class="text-gray-600 mb-2">删除学生 <strong>${window.utils.escapeHtml(student.name)}</strong> 后</p>
-                    <p class="text-gray-600">相关的${courseCount}节课也将全部删除</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button id="cancel-confirm" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                        取消
-                    </button>
-                    <button id="accept-confirm" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        确认删除
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        this.show(content, {
-            onShow: () => {
-                document.getElementById('cancel-confirm').addEventListener('click', () => this.hide());
-                document.getElementById('accept-confirm').addEventListener('click', async () => {
-                    // 删除相关课程
-                    relatedCourses.forEach(course => {
-                        const idx = window.state.courses.findIndex(c => c.id === course.id);
-                        if (idx !== -1) {
-                            window.state.courses.splice(idx, 1);
-                        }
-                    });
-                    
-                    // 删除学生
-                    const studentIndex = window.state.students.findIndex(s => s.id === student.id);
-                    if (studentIndex !== -1) {
-                        window.state.students.splice(studentIndex, 1);
-                    }
-                    
-                    // 设置同步状态并保存
-                    if (window.serverStatusService) {
-                        window.serverStatusService.setSyncing();
-                    }
-                    await window.utils.saveData();
-                    
-                    // 刷新视图
-                    window.utils.refreshAllViews();
-                    
-                    // 关闭模态框
-                    this.hide();
-                    
-                    // 显示成功提示
-                    window.notificationService.show('学生删除成功', 'success');
-                });
-            }
-        });
-    }
-
-    /**
      * 显示通用管理模态框
      * @param {Object} config - 配置对象
      */
@@ -1031,29 +979,29 @@ class ModalService {
         const { title, items, itemName, addItem, editItem, deleteItem, onDelete, updateUI } = config;
 
         const content = `
-            <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold">${title}</h3>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">${title}</h3>
                     </div>
                     <div class="mb-4">
                         <div class="flex items-center space-x-2 mb-2">
-                            <input type="text" id="new-${itemName}" class="flex-grow px-3 py-2 border border-gray-300 rounded-md">
+                            <input type="text" id="new-${itemName}" class="flex-grow px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
                             <button id="add-${itemName}" class="bg-primary text-white px-3 py-2 rounded-md" data-action="add-org-inline" data-item-name="${itemName}">添加</button>
                         </div>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-gray-700 mb-2">已有${itemName}</h4>
+                        <h4 class="text-sm font-medium mb-2" style="color: var(--text-primary);">已有${itemName}</h4>
                         <div id="${itemName}s-list" class="space-y-2 max-h-80 overflow-y-auto pr-2">
                             ${items.map(item => `
-                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded" data-${itemName}="${item}">
-                                    <span class="${itemName}-name">${window.utils.escapeHtml(item)}</span>
+                                <div class="flex items-center justify-between p-2 rounded" style="background-color: var(--bg-content);" data-${itemName}="${item}">
+                                    <span class="${itemName}-name" style="color: var(--text-primary);">${window.utils.escapeHtml(item)}</span>
                                     <div class="flex items-center">
                                         <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${item}">
-                                            <i class="fa fa-pencil text-lg" style="color: var(--color-success);"></i>
+                                            <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
                                         </button>
                                         <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${item}">
-                                            <i class="fa fa-trash text-lg" style="color: var(--color-danger);"></i>
+                                            <i data-lucide="trash-2" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-danger);"></i>
                                         </button>
                                     </div>
                                 </div>
@@ -1073,7 +1021,13 @@ class ModalService {
         console.log('showManagementModal - 设置 config:', config.items.length, 'items:', config.items);
         window.currentManagementModalConfig = config;
         
-        this.show(content);
+        this.show(content, {
+            onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }
+        });
 
         // 自动激活输入框
         setTimeout(() => {
@@ -1082,7 +1036,7 @@ class ModalService {
             if (newItemInput) {
                 newItemInput.focus();
 
-                newItemInput.onkeypress = (event) => {
+                newItemInput.onkeydown = (event) => {
                     if (event.key === 'Enter') {
                         event.preventDefault();
                         const addBtn = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`);
@@ -1359,7 +1313,13 @@ class ModalService {
             </div>
         `;
         
-        this.show(content);
+        this.show(content, {
+            onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }
+        });
         
         // 绑定事件
         setTimeout(() => {
@@ -1390,14 +1350,20 @@ class ModalService {
                 button.addEventListener('click', function() {
                     const snapshotId = this.getAttribute('data-id');
                     modalService.showConfirm('确定要覆盖此快照吗？', () => {
-                        // 删除旧快照
-                        window.utils.deleteSnapshot(snapshotId);
-                        // 创建新快照
-                        window.utils.createSnapshot('manual');
-                        // 重新显示快照管理窗口
-                        setTimeout(() => {
-                            modalService.showSnapshotManager();
-                        }, 500);
+                        try {
+                            // 删除旧快照
+                            window.utils.deleteSnapshot(snapshotId, false);
+                            // 创建新快照
+                            window.utils.createSnapshot('manual', false);
+                            // 显示简化的通知
+                            window.notificationService.show('快照覆盖成功', 'success');
+                            // 重新显示快照管理窗口
+                            setTimeout(() => {
+                                modalService.showSnapshotManager();
+                            }, 500);
+                        } catch (error) {
+                            window.notificationService.show('快照覆盖失败', 'error');
+                        }
                     }, 'warning');
                 });
             });

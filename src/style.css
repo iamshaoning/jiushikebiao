@@ -1,7 +1,13 @@
-/* 引入自定义字体 */
+/* ==========================================
+   课程管理系统 - 样式文件
+   ========================================== */
+
+/* ------------------------------
+   1. 字体引入与动画定义
+   ------------------------------ */
+
 @import url("https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkaibright/dist/LXGWBright-Medium/result.css");
 
-/* 毛泽东字体 */
 @font-face {
     font-family: 'MaoZedong';
     src: url('./fonts/maozedong.ttf') format('truetype');
@@ -10,25 +16,60 @@
     font-display: swap;
 }
 
-/* 渐变流动动画 */
 @keyframes gradientFlow {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
+
+@keyframes reveal {
+    to { clip-path: circle(var(--r) at var(--x) var(--y)); }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; }
+}
+
+@keyframes glow {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes breathe {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes slideLeft {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideRight {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes sync-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes sync-pulse {
+    0% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.7; }
+}
+
+/* ------------------------------
+   2. Tailwind 基础配置
+   ------------------------------ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  /* 全局禁用文本选择 */
   * {
     user-select: none !important;
     -webkit-user-select: none !important;
@@ -36,14 +77,13 @@
     -ms-user-select: none !important;
   }
 
-  /* 但输入框和文本域允许文本选择 */
   input, textarea, select {
     user-select: text !important;
     -webkit-user-select: text !important;
     -moz-user-select: text !important;
     -ms-user-select: text !important;
   }
-  
+
   :root {
     --color-primary: #3b82f6;
     --color-primary-90: rgba(59, 130, 246, 0.9);
@@ -65,7 +105,6 @@
     --color-cyan: #0891b2;
     --color-purple-light: #d946ef;
     --color-gold: #FAF408;
-    
 
     /* 浅色模式颜色 */
     --bg-primary: #f0f0f0;
@@ -73,12 +112,11 @@
     --bg-content: #f3f3f3;
     --bg-input: #ffffff;
     --bg-input2: #eeeeee;
-    --text-primary: #333333;
+    --text-primary: #444444;
     --text-secondary: #555555;
     --border-color: #cccccc;
   }
-  
-  /* 深色模式颜色 */
+
   .dark {
     --bg-primary: #2b2b2b;
     --bg-secondary: #333333;
@@ -90,84 +128,112 @@
     --border-color: #555555;
   }
 
-  /* 移除各元素原有的过渡（但滑块指示器除外）*/
   body.theme-transitioning,
   body.theme-transitioning * {
     transition: none !important;
   }
 
-  /* 主题滑块指示器始终保持平滑过渡 */
   body.theme-transitioning .theme-slider-indicator,
   .theme-slider-indicator {
     transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease, box-shadow 0.5s ease !important;
   }
 }
 
-/* 页面最小宽度和高度设置 */
+/* ------------------------------
+   3. 全局基础样式
+   ------------------------------ */
+
 body {
     min-width: 1300px !important;
     min-height: 100vh;
-    /* 全局字体设置 */
     font-family: "LXGW Bright Medium";
-    /* 背景单色 */
     background: var(--bg-primary);
     color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    -ms-overflow-style: none;
 }
 
-/* View Transition 波纹效果 */
+html {
+    scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
 }
 
-/* 自定义扩散动画 */
 ::view-transition-new(root) {
   clip-path: circle(0 at var(--x) var(--y));
   animation: reveal 700ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
-/* 旧页面轻微淡出 */
 ::view-transition-old(root) {
   opacity: 1;
   animation: fadeOut 700ms ease forwards;
 }
 
-@keyframes reveal {
-  to {
-    clip-path: circle(var(--r) at var(--x) var(--y));
-  }
-}
-
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-  }
-}
-
-/* 主题切换光晕效果 */
 body.theme-transition::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-
   background: radial-gradient(
     circle at var(--x) var(--y),
     rgba(255,255,255,0.2),
     transparent 60%
   );
-
   opacity: 0;
   animation: glow 700ms ease;
   z-index: 9999;
 }
 
-@keyframes glow {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+/* 隐藏浏览器默认的日期和时间选择器图标 */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    display: none;
 }
 
-/* 登录页面样式 - 保持原样，不使用CSS变量 */
+input[type="date"]::-moz-calendar-picker-indicator,
+input[type="time"]::-moz-calendar-picker-indicator {
+    display: none;
+}
+
+/* 隐藏数字输入框的上下调节箭头 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* 隐藏下拉菜单的下箭头 */
+select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: none;
+}
+
+/* 移除所有输入元素的默认聚焦样式 */
+input:focus, textarea:focus, select:focus, button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* ------------------------------
+   4. 登录页面样式
+   ------------------------------ */
+
 #auth-modal {
     color: white !important;
 }
@@ -228,65 +294,70 @@ body.theme-transition::after {
     box-shadow: 0 20px 25px -5px rgba(236, 72, 153, 0.4) !important;
 }
 
-/* 深色模式样式 - 精确控制，只覆盖背景和文本颜色 */
-.dark {
-  background-color: var(--bg-primary);
-}
-
-.dark body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-/* 确保登录页面在深色模式下也保持原样 */
-.dark #auth-modal {
-    color: white !important;
-}
-
-.dark #auth-container {
+/* 登录模态框固定样式 - 不随深浅色模式变化 */
+#auth-modal,
+#auth-container,
+#auth-form {
     background: transparent !important;
-    backdrop-filter: blur-lg !important;
+    --tw-text-opacity: 1 !important;
 }
 
-.dark #login-tab {
-    background: rgba(59, 130, 246, 0.4) !important;
-    border-color: var(--color-primary) !important;
-    color: white !important;
+#auth-email,
+#auth-password {
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
 }
 
-.dark #register-tab {
-    background: rgba(147, 51, 234, 0.4) !important;
-    border-color: transparent !important;
-    color: white !important;
+#auth-email::placeholder,
+#auth-password::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* 深色模式下强制覆盖 */
+.dark #auth-modal,
+.dark #auth-container,
+.dark #auth-form {
+    background: transparent !important;
 }
 
 .dark #auth-email,
 .dark #auth-password {
-    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+}
+
+.dark #auth-email::placeholder,
+.dark #auth-password::placeholder {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* 深色模式下按钮保持原有样式 */
+.dark #login-tab {
+    color: #ffffff !important;
+    background: rgba(59, 130, 246, 0.4) !important;
+    border-color: rgba(59, 130, 246, 1) !important;
+}
+
+.dark #register-tab {
+    color: #ffffff !important;
+    background: rgba(147, 51, 234, 0.4) !important;
+    border-color: transparent !important;
 }
 
 .dark #login-submit {
+    color: #ffffff !important;
     background: linear-gradient(to right, rgba(6, 182, 212, 0.8), rgba(59, 130, 246, 0.8)) !important;
     border-color: rgba(6, 182, 212, 0.5) !important;
-    color: white !important;
     box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.3) !important;
 }
 
 .dark #register-submit {
+    color: #ffffff !important;
     background: linear-gradient(to right, rgba(147, 51, 234, 0.8), rgba(236, 72, 153, 0.8)) !important;
     border-color: rgba(236, 72, 153, 0.5) !important;
-    color: white !important;
     box-shadow: 0 10px 15px -3px rgba(236, 72, 153, 0.3) !important;
-}
-
-.dark #login-tab:hover {
-    background: rgba(59, 130, 246, 0.5) !important;
-}
-
-.dark #register-tab:hover {
-    background: rgba(147, 51, 234, 0.5) !important;
 }
 
 .dark #login-submit:hover {
@@ -299,26 +370,65 @@ body.theme-transition::after {
     box-shadow: 0 20px 25px -5px rgba(236, 72, 153, 0.4) !important;
 }
 
-/* 浅色模式下的导航栏背景 */
-nav,
-header {
+#auth-form input::placeholder,
+#auth-form input::-webkit-input-placeholder,
+#auth-form input::-moz-placeholder,
+#auth-form input:-ms-input-placeholder {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ------------------------------
+   5. 导航栏样式
+   ------------------------------ */
+
+nav, header {
   background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
 }
 
-/* 深色模式下的导航栏背景 */
-.dark nav,
-.dark header {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
+.nav-item {
+    position: relative;
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
 }
 
-/* 浅色模式下的导航栏悬停效果 */
+.nav-item::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-purple));
+    transition: all 0.3s ease-in-out;
+    transform: translateX(-50%);
+    border-radius: 3px 3px 0 0;
+}
+
+.nav-item:hover::before {
+    width: 80%;
+}
+
+.nav-item.active::before {
+    width: 100%;
+}
+
 .nav-item:hover {
-  background-color: var(--bg-primary) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-primary) !important;
 }
 
-/* 浅色模式下的导航栏选中效果 */
+.nav-item i {
+    transition: transform 0.3s ease-in-out;
+}
+
+.nav-item:hover i {
+    transform: scale(1.1);
+}
+
 .nav-item.active {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
   color: var(--color-primary) !important;
@@ -330,12 +440,16 @@ header {
   color: var(--color-primary) !important;
 }
 
-/* 深色模式下的导航栏悬停效果 */
+.dark nav,
+.dark header {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
 .dark .nav-item:hover {
   background-color: var(--bg-primary) !important;
 }
 
-/* 深色模式下的导航栏选中效果 */
 .dark .nav-item.active {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%) !important;
   color: var(--color-primary) !important;
@@ -345,6 +459,19 @@ header {
 
 .dark .nav-item.active i {
   color: var(--color-primary) !important;
+}
+
+/* ------------------------------
+   6. 深色模式全局样式
+   ------------------------------ */
+
+.dark {
+  background-color: var(--bg-primary);
+}
+
+.dark body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .dark main {
@@ -358,14 +485,23 @@ header {
   background-color: var(--bg-secondary) !important;
 }
 
-/* 深色模式下的统计页面进度条背景色在深色模式下保持固定 */
 .dark #statistics-page .bg-gray-200 {
   background-color: var(--bg-content) !important;
 }
 
-/* 日历选择器样式 */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: var(--text-primary) !important;
+}
 
-/* 日期选择器单元格基础样式 - 确保是正方形以容纳边框 */
+/* ------------------------------
+   7. 日历选择器样式
+   ------------------------------ */
+
 #date-grid .date-picker-selected,
 #date-grid .date-picker-today,
 #date-grid .date-picker-hover {
@@ -382,41 +518,29 @@ header {
   margin: 0 auto !important;
 }
 
-/* 日历选择器的选中效果 - 固定为蓝色方形圆角边框 */
 #date-grid .date-picker-selected {
   border: 2px solid var(--color-primary) !important;
   border-radius: 0.375rem !important;
   background-color: transparent !important;
   color: var(--text-primary) !important;
   font-weight: bold !important;
-  box-sizing: border-box !important;
-  outline: none !important;
 }
 
-/* 日历选择器的今天效果 - 固定为红色方形圆角边框 */
 #date-grid .date-picker-today {
   border: 2px solid var(--color-danger) !important;
   border-radius: 0.375rem !important;
   background-color: transparent !important;
   color: var(--text-primary) !important;
   font-weight: bold !important;
-  box-sizing: border-box !important;
-  outline: none !important;
 }
 
-/* 日历选择器的悬停效果 - 固定为紫色方形圆角边框 */
 #date-grid .date-picker-hover:hover {
   border: 2px solid var(--color-hover) !important;
   border-radius: 0.375rem !important;
   background-color: transparent !important;
   color: var(--text-primary) !important;
-  box-sizing: border-box !important;
-  outline: none !important;
 }
 
-/* 确保日期选择器的样式不随深浅颜色改变 */
-
-/* 深色模式下的日期选择器单元格基础样式 - 确保是正方形以容纳边框 */
 .dark #date-grid .date-picker-selected,
 .dark #date-grid .date-picker-today,
 .dark #date-grid .date-picker-hover {
@@ -433,53 +557,31 @@ header {
   margin: 0 auto !important;
 }
 
-/* 深色模式下同样保持固定颜色 */
-.dark #date-grid .date-picker-selected {
-  border: 2px solid var(--color-primary) !important;
-  border-radius: 0.375rem !important;
-  background-color: transparent !important;
-  color: var(--text-primary) !important;
-  font-weight: bold !important;
-  box-sizing: border-box !important;
-  outline: none !important;
-}
-
-.dark #date-grid .date-picker-today {
-  border: 2px solid var(--color-danger) !important;
-  border-radius: 0.375rem !important;
-  background-color: transparent !important;
-  color: var(--text-primary) !important;
-  font-weight: bold !important;
-  box-sizing: border-box !important;
-  outline: none !important;
-}
-
+.dark #date-grid .date-picker-selected,
+.dark #date-grid .date-picker-today,
 .dark #date-grid .date-picker-hover:hover {
-  border: 2px solid var(--color-hover) !important;
-  border-radius: 0.375rem !important;
+  border-color: inherit !important;
   background-color: transparent !important;
   color: var(--text-primary) !important;
-  box-sizing: border-box !important;
-  outline: none !important;
 }
 
-/* 浅色模式下的其他月份格子背景 */
+/* ------------------------------
+   8. 背景与表格样式
+   ------------------------------ */
+
 .bg-gray-50 {
   background-color: var(--bg-content) !important;
 }
 
-/* 浅色模式下的本月格子背景 */
 .bg-white {
   background-color: var(--bg-secondary) !important;
 }
 
-/* 浅色模式下的学生管理页面表头背景 */
 .bg-gray-100 {
   background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
 }
 
-/* 深色模式下的学生管理页面表头背景 */
 .dark .bg-gray-100 {
   background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
@@ -489,230 +591,27 @@ header {
   background-color: var(--bg-content) !important;
 }
 
-/* 深色模式下的学生选择容器背景 */
 .dark .border-gray-300,
 .dark .border-gray-300.rounded-md {
   background-color: var(--bg-content) !important;
 }
 
-.dark .text-gray-700,
-.dark .text-gray-600,
-.dark .text-gray-500,
-.dark .text-gray-400,
-.dark .text-gray-800,
-.dark .text-gray-900 {
-  color: var(--text-primary) !important;
-}
-
-.dark .border-gray-200,
-.dark .border-gray-300,
-.dark .border-gray-400 {
+.divide-y > *,
+.divide-gray-200 > *,
+.border-b {
   border-color: var(--border-color) !important;
 }
 
-.dark input,
-.dark select,
-.dark #course-date,
-.dark #course-start-time,
-.dark #course-end-time,
-.dark #course-duration,
-.dark #course-fee {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
+.dark .divide-y > *,
+.dark .divide-gray-200 > * {
   border-color: var(--border-color) !important;
 }
 
-.dark textarea,
-.dark #course-note {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
+.dark #statistics-page .gap-4 > * {
   border-color: var(--border-color) !important;
 }
 
-/* 深色模式下的白色背景输入框 */
-.dark input.bg-white,
-.dark select.bg-white {
-  background-color: var(--bg-input) !important;
-}
-
-/* 浅色模式下的日期和时间选择器容器 */
-[data-action="toggle-date-picker"],
-[data-action="toggle-time-picker"] {
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的日期和时间选择器容器 */
-.dark [data-action="toggle-date-picker"],
-.dark [data-action="toggle-time-picker"] {
-  background-color: var(--bg-input) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的开始时间输入框容器 */
-.dark .relative.border.border-gray-300.rounded-md.overflow-hidden.cursor-pointer {
-  background-color: var(--bg-input) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的结束时间输入框容器 */
-.dark .relative.border.border-gray-300.rounded-md.overflow-hidden:not([data-action]) {
-  background-color: var(--bg-input) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的输入框 */
-input,
-select,
-textarea,
-#course-date,
-#course-start-time,
-#course-end-time,
-#course-duration,
-#course-note,
-#student-search {
-  background-color: var(--bg-input) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的学生列表悬停效果 */
-#students-list tr:hover {
-  background-color: var(--bg-content) !important;
-}
-
-/* 深色模式下的学生列表悬停效果 */
-.dark #students-list tr:hover,
-.dark #students-list tr:hover td {
-  background-color: var(--bg-content) !important;
-}
-
-/* 浅色模式下的带边框的div元素 */
-div.border,
-div.border-gray-300,
-div.border-gray-200 {
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的带边框的按钮元素 */
-button.border,
-button.border-gray-300,
-button.border-gray-200 {
-  border-color: var(--border-color) !important;
-}
-
-/* 学生选择容器内部背景 */
-#student-selection-area > div {
-  background-color: var(--bg-secondary) !important;
-  border: 1px solid var(--border-color) !important;
-}
-
-/* 深色模式下的学生选择容器内部背景 */
-.dark #student-selection-area > div {
-  background-color: var(--bg-secondary) !important;
-  border: 1px solid var(--border-color) !important;
-}
-
-/* 浅色模式下的取消按钮 */
-#cancel-confirm,
-#cancel-button {
-  background-color: var(--bg-content) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的取消按钮 */
-.dark #cancel-confirm,
-.dark #cancel-button {
-  background-color: var(--bg-content) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的学生管理页面学生列表表头 */
-#students-table th {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的学生管理页面学生列表表头 */
-.dark #students-table th {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的禁用或只读输入框 */
-input:disabled,
-select:disabled,
-textarea:disabled,
-input[readonly],
-select[readonly],
-textarea[readonly],
-#course-end-time,
-#course-fee:disabled {
-  background-color: var(--bg-input2) !important;
-  color: var(--text-secondary) !important;
-  cursor: not-allowed !important;
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的禁用或只读输入框 */
-.dark input:disabled,
-.dark select:disabled,
-.dark textarea:disabled,
-.dark input[readonly],
-.dark select[readonly],
-.dark textarea[readonly],
-.dark #course-end-time,
-.dark #course-fee:disabled {
-  background-color: var(--bg-input2) !important;
-  color: var(--text-secondary) !important;
-  cursor: not-allowed !important;
-}
-
-/* 深色模式下的只读输入框（如日期选择器） */
-.dark input[readonly] {
-  background-color: var(--bg-input2) !important;
-  color: var(--text-secondary) !important;
-  cursor: pointer !important;
-}
-
-/* 日期输入框 */
-#course-date,
-.dark #course-date {
-  color: var(--text-primary) !important;
-  cursor: pointer !important;
-}
-
-/* 只读和禁用的输入框中的数字 */
-input:disabled[type="number"],
-input[readonly][type="number"],
-select:disabled,
-textarea:disabled {
-  color: var(--text-secondary) !important;
-}
-
-/* 深色模式下只读和禁用的输入框中的数字 */
-.dark input:disabled[type="number"],
-.dark input[readonly][type="number"],
-.dark select:disabled,
-.dark textarea:disabled {
-  color: var(--text-secondary) !important;
-}
-
-.dark .modal-content,
-.dark .modal-header,
-.dark .modal-body,
-.dark .modal-footer {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
-}
-
-/* 深色模式下的模态框输入框 */
-.dark .modal-content input,
-.dark .modal-content select,
-.dark .modal-content textarea,
-.dark .bg-white.rounded-lg.shadow-xl input,
-.dark .bg-white.rounded-lg.shadow-xl select,
-.dark .bg-white.rounded-lg.shadow-xl textarea {
-  background-color: var(--bg-input) !important;
-  color: var(--text-primary) !important;
+.dark #statistics-page .bg-white {
   border-color: var(--border-color) !important;
 }
 
@@ -728,95 +627,299 @@ textarea:disabled {
   border-color: var(--border-color) !important;
 }
 
-/* 深色模式下的学生列表行缝隙 */
-.dark #students-list tr {
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的学生列表边框 */
-.dark #students-list,
-.dark #students-list td,
-.dark #students-list th {
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的统计页面数据表行缝隙 */
-.dark #statistics-page .gap-4 > * {
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的统计页面数据模块边框 */
-.dark #statistics-page .bg-white {
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的表格行分割线 */
-.divide-y > * {
-  border-color: var(--border-color) !important;
-}
-
-.divide-gray-200 > * {
-  border-color: var(--border-color) !important;
-}
-
-/* 浅色模式下的表格表头分割线 */
-.border-b {
-  border-color: var(--border-color) !important;
-}
-
-/* 深色模式下的表格行分割线 */
-.dark .divide-y > * {
-  border-color: var(--border-color) !important;
-}
-
-.dark .divide-gray-200 > * {
-  border-color: var(--border-color) !important;
-}
-
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6 {
-  color: var(--text-primary) !important;
-}
-
 .dark .flex.justify-center.items-center.mt-8 div {
   color: var(--text-primary) !important;
+}
+
+/* ------------------------------
+   9. 输入框与表单样式
+   ------------------------------ */
+
+input,
+select,
+textarea,
+#course-date,
+#course-start-time,
+#course-end-time,
+#course-duration,
+#course-note,
+#student-search {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-color) !important;
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled,
+input[readonly],
+select[readonly],
+textarea[readonly],
+#course-end-time,
+#course-fee:disabled {
+  background-color: var(--bg-input2) !important;
+  color: var(--text-secondary) !important;
+  cursor: not-allowed !important;
+  border-color: var(--border-color) !important;
+}
+
+input:disabled[type="number"],
+input[readonly][type="number"],
+select:disabled,
+textarea:disabled {
+  color: var(--text-secondary) !important;
+}
+
+#course-date {
+  color: var(--text-primary) !important;
+  cursor: pointer !important;
+}
+
+[data-action="toggle-date-picker"],
+[data-action="toggle-time-picker"] {
+  border-color: var(--border-color) !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea,
+.dark #course-date,
+.dark #course-start-time,
+.dark #course-end-time,
+.dark #course-duration,
+.dark #course-fee,
+.dark #course-note,
+.dark #student-search {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark input:disabled,
+.dark select:disabled,
+.dark textarea:disabled,
+.dark input[readonly],
+.dark select[readonly],
+.dark textarea[readonly],
+.dark #course-end-time,
+.dark #course-fee:disabled {
+  background-color: var(--bg-input2) !important;
+  color: var(--text-secondary) !important;
+  cursor: not-allowed !important;
+}
+
+.dark input[readonly] {
+  background-color: var(--bg-input2) !important;
+  color: var(--text-secondary) !important;
+  cursor: pointer !important;
+}
+
+.dark input:disabled[type="number"],
+.dark input[readonly][type="number"],
+.dark select:disabled,
+.dark textarea:disabled {
+  color: var(--text-secondary) !important;
+}
+
+.dark [data-action="toggle-date-picker"],
+.dark [data-action="toggle-time-picker"],
+.dark .relative.border.border-gray-300.rounded-md.overflow-hidden.cursor-pointer,
+.dark .relative.border.border-gray-300.rounded-md.overflow-hidden:not([data-action]) {
+  background-color: var(--bg-input) !important;
+  border-color: var(--border-color) !important;
 }
 
 .dark select {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e5e5e5' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
 }
 
-/* 浅色模式下的自定义选择器样式 */
-.custom-select-trigger {
-  background: var(--bg-input) !important;
+/* ------------------------------
+   10. 学生选择与列表样式
+   ------------------------------ */
+
+#student-selection-area > div {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.dark #student-selection-area > div {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+#students-list tr:hover {
+  background-color: var(--bg-content) !important;
+}
+
+.dark #students-list tr:hover,
+.dark #students-list tr:hover td {
+  background-color: var(--bg-content) !important;
+}
+
+#students-table th {
+  background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
+}
+
+.dark #students-table th {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark #students-list,
+.dark #students-list td,
+.dark #students-list th,
+.dark #students-list tr {
+  border-color: var(--border-color) !important;
+}
+
+/* ------------------------------
+   11. 按钮样式
+   ------------------------------ */
+
+div.border,
+div.border-gray-300,
+div.border-gray-200,
+button.border,
+button.border-gray-300,
+button.border-gray-200 {
+  border-color: var(--border-color) !important;
+}
+
+#cancel-confirm,
+#cancel-button {
+  background-color: var(--bg-content) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark #cancel-confirm,
+.dark #cancel-button {
+  background-color: var(--bg-content) !important;
+  border-color: var(--border-color) !important;
+}
+
+button, .btn {
+    transition: all 0.2s ease-in-out;
+}
+
+button:hover, .btn:hover {
+    opacity: 0.9;
+}
+
+button:active, .btn:active {
+    transform: scale(0.95);
+}
+
+button:not(:active), .btn:not(:active) {
+    transform: scale(1);
+}
+
+/* ------------------------------
+   12. 自定义选择器完整样式
+   ------------------------------ */
+
+.custom-select {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-select-trigger {
+    padding: 8px 32px 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: nowrap;
+    position: relative;
+}
+
+.custom-select-trigger span {
+    display: inline-block;
+    text-align: center;
 }
 
 .custom-select-trigger:hover {
-  border-color: var(--color-primary) !important;
+    border-color: var(--color-hover);
 }
 
 .custom-select-trigger.active {
-  border-color: var(--color-primary) !important;
+    border-color: var(--color-primary);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .custom-select-arrow {
-  color: var(--text-primary) !important;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
 }
 
-/* 浅色模式下的自定义选择器选项容器 */
+.custom-select-trigger.active .custom-select-arrow {
+    transform: translateY(-50%) rotate(180deg);
+}
+
 .custom-select-options {
-  background: var(--bg-input) !important;
-  border-color: var(--border-color) !important;
-  color: var(--text-primary) !important;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
 }
 
-/* 浅色模式下的下拉菜单 */
+.custom-select-options.open {
+    max-height: 200px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    pointer-events: auto;
+    transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease, pointer-events 0s 0.25s;
+}
+
+.custom-select-options.open::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.custom-option:hover {
+    background: var(--bg-content);
+}
+
+.custom-option.selected {
+    background: var(--bg-content);
+    color: var(--color-primary);
+}
+
+/* 下拉菜单 */
 #duration-dropdown,
 #start-time-container,
 #course-date-container {
@@ -824,7 +927,6 @@ textarea:disabled {
   border-color: var(--border-color) !important;
 }
 
-/* 浅色模式下的下拉菜单按钮 */
 #duration-dropdown button,
 #start-time-container button,
 #course-date-container button {
@@ -833,35 +935,74 @@ textarea:disabled {
   border-color: var(--border-color) !important;
 }
 
-/* 浅色模式下的下拉菜单按钮悬停效果 */
 #duration-dropdown button:hover,
 #start-time-container button:hover,
 #course-date-container button:hover {
   background: rgba(0, 0, 0, 0.05) !important;
 }
 
-/* 浅色模式下的自定义选择器选项悬停效果 */
-.custom-option:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
+/* 下拉菜单固定宽度 */
+#statistics-year-wrapper,
+#calendar-year-wrapper {
+    width: 90px;
 }
 
-/* 浅色模式下的自定义选择器选项选中效果 */
-.custom-option.selected {
-  background: rgba(59, 130, 246, 0.2) !important;
-  color: var(--color-primary) !important;
+#statistics-year-wrapper .custom-select-trigger,
+#calendar-year-wrapper .custom-select-trigger {
+    width: 90px;
+    justify-content: center;
 }
 
-/* 深色模式下的自定义选择器样式 */
+#statistics-month-wrapper,
+#calendar-month-wrapper {
+    width: 70px;
+}
+
+#statistics-month-wrapper .custom-select-trigger,
+#calendar-month-wrapper .custom-select-trigger {
+    width: 70px;
+    justify-content: center;
+}
+
+#statistics-organization-wrapper {
+    width: 120px;
+}
+
+#statistics-organization-wrapper .custom-select-trigger {
+    width: 120px;
+    justify-content: center;
+}
+
+#statistics-organization-wrapper .custom-select-options {
+    min-width: 120px;
+}
+
+#calendar-year-wrapper .custom-select-options,
+#calendar-month-wrapper .custom-select-options,
+#statistics-year-wrapper .custom-select-options,
+#statistics-month-wrapper .custom-select-options,
+#student-organization-wrapper .custom-select-options,
+#student-grade-wrapper .custom-select-options {
+    transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+#calendar-year-wrapper .custom-select-options.open,
+#calendar-month-wrapper .custom-select-options.open,
+#statistics-year-wrapper .custom-select-options.open,
+#statistics-month-wrapper .custom-select-options.open,
+#statistics-organization-wrapper .custom-select-options.open,
+#student-organization-wrapper .custom-select-options.open,
+#student-grade-wrapper .custom-select-options.open {
+    transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease, pointer-events 0s 0.25s;
+}
+
 .dark .custom-select-trigger {
   background: var(--bg-input) !important;
   border-color: var(--border-color) !important;
   color: var(--text-primary) !important;
 }
 
-.dark .custom-select-trigger:hover {
-  border-color: var(--color-primary) !important;
-}
-
+.dark .custom-select-trigger:hover,
 .dark .custom-select-trigger.active {
   border-color: var(--color-primary) !important;
 }
@@ -885,7 +1026,6 @@ textarea:disabled {
   color: var(--color-primary) !important;
 }
 
-/* 深色模式下的下拉菜单 */
 .dark #duration-dropdown,
 .dark #start-time-container,
 .dark #course-date-container {
@@ -907,7 +1047,10 @@ textarea:disabled {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* 浅色模式下的月份切换按钮 */
+/* ------------------------------
+   13. 日历主界面样式
+   ------------------------------ */
+
 #prev-month,
 #next-month {
   background-color: var(--bg-secondary) !important;
@@ -924,7 +1067,6 @@ textarea:disabled {
   color: var(--text-primary) !important;
 }
 
-/* 深色模式下的月份切换按钮 */
 .dark #prev-month,
 .dark #next-month {
   background-color: var(--bg-secondary) !important;
@@ -941,44 +1083,7 @@ textarea:disabled {
   color: var(--text-primary) !important;
 }
 
-/* 浅色模式下的日历星期表头 */
-.grid.grid-cols-7.bg-gray-100 {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
-  border-top-left-radius: 0.75rem !important;
-  border-top-right-radius: 0.75rem !important;
-  overflow: hidden !important;
-}
-
-/* 日历外部容器边框 */
-#calendar-grid.parent {
-  border: 1px solid var(--border-color) !important;
-}
-
-/* 日历外部容器边框 */
-.rounded-xl.shadow-sm.border {
-  border: 1px solid var(--border-color) !important;
-  overflow: hidden !important;
-}
-
-.grid.grid-cols-7 .text-center.py-3 {
-  color: var(--text-primary) !important;
-  border-color: var(--border-color) !important;
-  overflow: hidden !important;
-}
-
-/* 表头第一个和最后一个单元格的圆角 */
-.grid.grid-cols-7 .text-center.py-3:first-child {
-  border-top-left-radius: 0.75rem !important;
-  overflow: hidden !important;
-}
-
-.grid.grid-cols-7 .text-center.py-3:last-child {
-  border-top-right-radius: 0.75rem !important;
-  overflow: hidden !important;
-}
-
-/* 深色模式下的日历星期表头 */
+.grid.grid-cols-7.bg-gray-100,
 .dark .grid.grid-cols-7 {
   background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
@@ -987,93 +1092,57 @@ textarea:disabled {
   overflow: hidden !important;
 }
 
+.grid.grid-cols-7 .text-center.py-3,
 .dark .grid.grid-cols-7 .text-center.py-3 {
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
   overflow: hidden !important;
 }
 
-/* 深色模式下表头第一个和最后一个单元格的圆角 */
+.grid.grid-cols-7 .text-center.py-3:first-child,
 .dark .grid.grid-cols-7 .text-center.py-3:first-child {
   border-top-left-radius: 0.75rem !important;
   overflow: hidden !important;
 }
 
+.grid.grid-cols-7 .text-center.py-3:last-child,
 .dark .grid.grid-cols-7.bg-gray-100 .text-center.py-3:last-child {
   border-top-right-radius: 0.75rem !important;
   overflow: hidden !important;
 }
 
-/* 浅色模式下的日历今日格子 */
-.bg-red-50.text-red-400 {
-  background-color: rgba(239, 68, 68, 0.08) !important;
-  color: var(--color-danger) !important;
+#calendar-grid.parent,
+.rounded-xl.shadow-sm.border {
+  border: 1px solid var(--border-color) !important;
+  overflow: hidden !important;
 }
 
-/* 深色模式下的日历今日格子 */
-.dark .bg-red-50.text-red-400 {
-  background-color: rgba(239, 68, 68, 0.08) !important;
-  color: var(--color-danger) !important;
-}
-
-/* 日历格子的基础样式 */
 .calendar-cell {
   border: 1px solid var(--border-color) !important;
   position: relative !important;
   overflow: hidden !important;
 }
 
-/* 深色模式下的日历格子基础样式 */
 .dark .calendar-cell {
   border: 1px solid var(--border-color) !important;
 }
 
-/* 今日格子的红色边框 - 使用inset边框 */
-.today-border {
-  box-shadow: inset 0 0 0 2px var(--color-danger) !important;
-  transition: all 0.2s ease-in-out !important;
+.bg-red-50.text-red-400 {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+  color: var(--color-danger) !important;
 }
 
-/* 深色模式下的日历今日格子边框 */
+.dark .bg-red-50.text-red-400 {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+  color: var(--color-danger) !important;
+}
+
+.today-border,
 .dark .today-border {
   box-shadow: inset 0 0 0 2px var(--color-danger) !important;
-}
-
-/* 选中效果 - 使用inset边框 */
-.bg-blue-500 {
-  box-shadow: inset 0 0 0 2px var(--color-primary) !important;
   transition: all 0.2s ease-in-out !important;
 }
 
-/* 确保选中效果边框在深色模式下也正确显示 */
-.dark .bg-blue-500 {
-  box-shadow: inset 0 0 0 2px var(--color-primary) !important;
-}
-
-/* 日历主界面的选中效果 - 使用inset边框 */
-.calendar-cell-selected {
-  box-shadow: inset 0 0 0 2px var(--color-primary) !important;
-  transition: all 0.2s ease-in-out !important;
-}
-
-/* 深色模式下的日历主界面选中效果 */
-.dark .calendar-cell-selected {
-  box-shadow: inset 0 0 0 2px var(--color-primary) !important;
-}
-
-/* 悬停效果 - 使用inset边框 */
-.hover-cell:hover {
-  box-shadow: inset 0 0 0 2px var(--color-hover) !important;
-  position: relative;
-  z-index: 10;
-}
-
-/* 深色模式下的悬停效果 */
-.dark .hover-cell:hover {
-  box-shadow: inset 0 0 0 2px var(--color-hover) !important;
-}
-
-/* 今日格子的透明遮罩效果 */
 .today-cell {
   position: relative;
   overflow: hidden;
@@ -1090,7 +1159,31 @@ textarea:disabled {
   z-index: 0;
 }
 
-/* 日历选择器今日格子的选中效果 */
+.dark .today-cell::before {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.bg-blue-500,
+.calendar-cell-selected {
+  box-shadow: inset 0 0 0 2px var(--color-primary) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.dark .bg-blue-500,
+.dark .calendar-cell-selected {
+  box-shadow: inset 0 0 0 2px var(--color-primary) !important;
+}
+
+.hover-cell:hover {
+  box-shadow: inset 0 0 0 2px var(--color-hover) !important;
+  position: relative;
+  z-index: 10;
+}
+
+.dark .hover-cell:hover {
+  box-shadow: inset 0 0 0 2px var(--color-hover) !important;
+}
+
 .today-picker-cell {
   position: relative;
   overflow: hidden;
@@ -1102,52 +1195,309 @@ textarea:disabled {
   transition: all 0.2s ease-in-out !important;
 }
 
-/* 深色模式下的日历选择器今日格子 - 与浅色模式保持一致 */
 .dark .today-picker-cell {
   background-color: var(--color-primary) !important;
   color: white !important;
   border: 2px solid var(--color-primary) !important;
 }
 
-/* 深色模式下的日历今日格子 */
-.dark .today-cell::before {
-  background-color: rgba(239, 68, 68, 0.1);
+/* ------------------------------
+   14. 模态框样式
+   ------------------------------ */
+
+#modal-content > div {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.dark ::-webkit-scrollbar {
-  width: 6px;
+.modal-backdrop {
+    transition: opacity 0.4s ease-in-out;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+.modal-content {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: var(--text-primary);
-  border-radius: 3px;
+.dark .modal-content,
+.dark .modal-header,
+.dark .modal-body,
+.dark .modal-footer {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
 }
 
-/* 滚动条样式 */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.dark .modal-content input,
+.dark .modal-content select,
+.dark .modal-content textarea,
+.dark .bg-white.rounded-lg.shadow-xl input,
+.dark .bg-white.rounded-lg.shadow-xl select,
+.dark .bg-white.rounded-lg.shadow-xl textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-color) !important;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-  border-radius: 3px;
+/* ------------------------------
+   15. 设置按钮与下拉菜单样式
+   ------------------------------ */
+
+.settings-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-content);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 30;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--text-primary);
-  border-radius: 3px;
+.settings-btn:hover {
+    background: var(--bg-primary);
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--text-primary);
+.settings-btn:active {
+    transform: scale(0.95);
 }
 
-/* 主题滑动开关样式 */
+.settings-btn i {
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.settings-dropdown-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.settings-dropdown {
+    position: absolute;
+    top: 58px;
+    right: 0;
+    width: 200px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    z-index: 31;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.settings-dropdown.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    visibility: visible;
+}
+
+.settings-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+}
+
+.settings-avatar {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.settings-user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.settings-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.settings-dropdown-item:hover {
+    background: var(--bg-content);
+}
+
+.settings-dropdown-item i {
+    font-size: 15px;
+    width: 18px;
+    text-align: center;
+}
+
+.settings-dropdown-item-danger {
+    color: var(--color-danger);
+}
+
+.settings-dropdown-item-blue {
+    color: #3b82f6;
+}
+
+.settings-dropdown-item-blue:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.settings-dropdown-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
+}
+
+.settings-dropdown-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 8px;
+    height: 60px;
+}
+
+.settings-dropdown-row .settings-dropdown-item {
+    flex: 1;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.settings-dropdown-item-danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.settings-theme-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    height: 60px;
+}
+
+.settings-theme-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.settings-theme-item .theme-slider {
+    margin: 0;
+}
+
+/* ------------------------------
+   16. 同步状态卡片样式
+   ------------------------------ */
+
+.sync-card {
+    position: relative;
+    width: auto;
+    min-width: 90px;
+    max-width: 150px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.sync-card:hover {
+    background: rgba(255,255,255,0.08);
+    transform: translateY(-1px);
+}
+
+.sync-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sync-icon {
+    position: relative;
+}
+
+.sync-icon .sync-loader {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: conic-gradient(#3b82f6, transparent 60%);
+    animation: sync-spin 1s linear infinite;
+    position: relative;
+}
+
+.sync-icon .sync-loader::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+}
+
+.sync-icon .sync-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 10px #22c55e;
+    animation: sync-pulse 1.5s infinite;
+}
+
+.sync-icon .sync-dot.sync-error {
+    background: #ef4444;
+    box-shadow: 0 0 10px #ef4444;
+}
+
+.sync-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sync-card.sync-success {
+    border-color: rgba(34,197,94,0.8);
+    box-shadow: inset 0 0 8px rgba(34,197,94,0.2);
+}
+
+.sync-card.sync-error {
+    border-color: rgba(239,68,68,0.8);
+    box-shadow: inset 0 0 8px rgba(239,68,68,0.2);
+}
+
+.sync-card.sync-syncing {
+    border-color: rgba(59,130,246,0.8);
+    box-shadow: inset 0 0 8px rgba(59,130,246,0.2);
+}
+
+/* ------------------------------
+   17. 主题切换样式
+   ------------------------------ */
+
 .theme-slider {
   position: relative;
   width: 108px;
@@ -1163,23 +1513,30 @@ textarea:disabled {
   top: 4px;
   width: 28px;
   height: 28px;
-  background-color: var(--bg-secondary);
   border-radius: 50%;
-  transition: left 0.3s ease;
+  transition: left 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
   z-index: 1;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.theme-slider-indicator.light {
-  left: 4px;
+.theme-slider-indicator.light { 
+  left: 4px; 
+  background-color: rgba(251, 191, 36, 0.3);
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+}
+.theme-slider-indicator.auto { 
+  left: 40px; 
+  background-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+.theme-slider-indicator.dark { 
+  left: 76px; 
+  background-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
-.theme-slider-indicator.auto {
-  left: 40px;
-}
-
-.theme-slider-indicator.dark {
-  left: 76px;
+.dark .theme-slider-indicator.auto {
+  background-color: rgba(147, 197, 253, 0.3);
+  box-shadow: 0 2px 8px rgba(147, 197, 253, 0.2);
 }
 
 .theme-slider-icons {
@@ -1192,8 +1549,7 @@ textarea:disabled {
   z-index: 2;
 }
 
-.theme-slider-icons i {
-  font-size: 16px;
+.theme-slider-icons [data-theme] {
   color: var(--text-primary);
   transition: color 0.3s ease;
   cursor: pointer;
@@ -1204,88 +1560,106 @@ textarea:disabled {
   justify-content: center;
 }
 
-.theme-slider-icons i[data-theme="light"].active {
-  color: var(--color-warning);
-}
+.theme-slider-icons [data-theme="light"].active { color: var(--color-warning); }
+.theme-slider-icons [data-theme="auto"].active { color: var(--text-primary); }
+.theme-slider-icons [data-theme="dark"].active { color: var(--color-primary); }
 
-.theme-slider-icons i[data-theme="auto"].active {
-  color: var(--text-primary);
-}
+.dark .theme-slider-icons [data-theme] { color: var(--text-primary); }
+.dark .theme-slider-icons [data-theme="dark"].active { color: var(--color-primary); }
 
-.theme-slider-icons i[data-theme="dark"].active {
-  color: var(--color-primary);
-}
+/* ------------------------------
+   18. 课程标签样式
+   ------------------------------ */
 
-.dark .theme-slider-icons i {
-  color: var(--text-primary);
-}
-
-.dark .theme-slider-icons i[data-theme="dark"].active {
-  color: var(--color-primary);
-}
-
-/* 隐藏滚动条 */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-/* ==========================================
-   课程标签（Course Tag）的动画与视觉优化 (V2 完美版)
-   ========================================== */
-
-/* 1. 基础标签容器 */
 .course-tag-item {
-    /* 适当增加默认高度，为上下边框预留空间 */
     min-height: 2.2rem;
-    /* 开启相对定位，作为内部伪元素的定位基准 */
     position: relative;
-    /* 移除透明度变化，保持原色 */
     opacity: 1 !important;
-    /* 为整个标签添加圆角 */
     border-radius: 0.375rem;
 }
 
-/* 2. 提升文本层级，防止被向内生长的边框遮挡文字 */
 .course-tag-item > .tag-content {
     position: relative;
     z-index: 10;
 }
 
-/* 3. 核心：用伪元素创造一个悬浮在内部的边框层 */
 .course-tag-item::after {
     content: '';
     position: absolute;
-    /* 调整位置，让伪元素的边框与标签边缘对齐 */
     top: 0; right: 0; bottom: 0; left: 0;
-    
-    /* 初始状态：0px的实线边框，颜色跟随 CSS 变量 */
     border: 0px solid var(--tag-theme-color);
-    
-    /* 与父元素保持一致的圆角 */
     border-radius: 0.375rem;
-    
-    /* 不阻挡用户的点击事件 */
     pointer-events: none;
     box-sizing: border-box;
     z-index: 5;
-    
-    /* 过渡动画，监听 border-width 实现向内生长的效果 */
     transition: border-width 0.08s ease-out;
 }
 
-/* 悬停状态：显示类似选中的边框 */
-.course-tag-item:hover::after {
-    /* 所有边框的厚度设为 2px */
+.course-tag-item:hover::after,
+.course-tag-item.is-selected::after {
     border-width: 2px;
 }
 
-/* 4. 选中状态：激活向内生长的边框 */
-.course-tag-item.is-selected::after {
-    /* 所有边框的厚度设为 2px */
-    border-width: 2px;
+/* ------------------------------
+   19. 学生选择按钮样式
+   ------------------------------ */
+
+.student-btn {
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.student-btn:hover,
+.student-btn.selected:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* ------------------------------
+   20. 页面与动画样式
+   ------------------------------ */
+
+.page {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.page.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.page.hidden {
+    display: none;
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.calendar-grid {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.calendar-grid.slide-left {
+    animation: slideLeft 0.3s ease-in-out;
+}
+
+.calendar-grid.slide-right {
+    animation: slideRight 0.3s ease-in-out;
+}
+
+.animate-breathe {
+    animation: breathe 2s ease-in-out infinite;
+}
+
+/* ------------------------------
+   21. 卡片悬停效果
+   ------------------------------ */
+
+.hover-card {
+    transition: all 0.3s ease-in-out;
+}
+
+.hover-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }

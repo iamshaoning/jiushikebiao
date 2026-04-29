@@ -9,10 +9,10 @@ class NotificationService {
         
         // 通知配置
         this.icons = {
-            error: { icon: 'fa-exclamation-circle', color: 'var(--color-danger)' },
-            warning: { icon: 'fa-exclamation-triangle', color: 'var(--color-warning)' },
-            success: { icon: 'fa-check-circle', color: 'var(--color-success)' },
-            info: { icon: 'fa-info-circle', color: 'var(--color-primary)' }
+            error: { icon: 'triangle-alert', color: 'var(--color-danger)' },
+            warning: { icon: 'circle-alert', color: 'var(--color-warning)' },
+            success: { icon: 'circle-check', color: 'var(--color-success)' },
+            info: { icon: 'info', color: 'var(--color-primary)' }
         };
     }
 
@@ -56,25 +56,31 @@ class NotificationService {
 
         // 创建通知元素
         const notificationEl = document.createElement('div');
-        notificationEl.className = 'bg-white shadow-lg rounded-lg px-6 py-4 items-center transform translate-x-full opacity-0 transition-all duration-300 ease-out';
+        notificationEl.className = 'shadow-lg rounded-lg px-6 py-4 items-center transform translate-x-full opacity-0 transition-all duration-300 ease-out';
         notificationEl.style.width = 'auto';
         notificationEl.style.transform = 'translateX(100%) scale(0.95)';
         notificationEl.style.opacity = '0';
+        notificationEl.style.backgroundColor = 'var(--bg-primary)';
 
         // 构建通知内容
         const content = `
             <div class="flex items-center">
                 <div class="flex-shrink-0" style="color: ${config.color};">
-                    <i class="fa ${config.icon} text-xl"></i>
+                    <i data-lucide="${config.icon}" class="text-xl inline-block" style="width: 20px; height: 20px;"></i>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium text-gray-800">${message}</p>
+                    <p class="text-sm font-medium" style="color: var(--text-primary);">${message}</p>
                 </div>
             </div>
         `;
 
         notificationEl.innerHTML = content;
         this.container.appendChild(notificationEl);
+
+        // 初始化 Lucide 图标
+        if (window.lucide) {
+            lucide.createIcons();
+        }
 
         // 触发重排，使过渡效果生效
         void notificationEl.offsetWidth;
