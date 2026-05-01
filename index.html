@@ -550,10 +550,7 @@
         const state = window.state;
         const elements = window.elements;
         const coreUtils = window.coreUtils;
-        const dataService = window.dataService;
         const authService = window.authService;
-        const courseService = window.courseService;
-        const studentService = window.studentService;
         const serverStatusService = window.serverStatusService;
         const notificationService = window.notificationService;
         const modalService = window.modalService;
@@ -758,9 +755,6 @@
                     modalElement.style.display = 'none';
                 }, animationDuration);
             },
-            
-
-
             
             /**
              * 带超时处理的异步操作
@@ -1180,15 +1174,6 @@
                 renderMap[pageId]?.();
             },
             
-
-
-
-            
-
-            
-
-
-
             // 处理课程标签点击事件
             handleCourseClick: (element, courseId, event) => {
                 courseActionService.handleCourseClick(element, courseId, event);
@@ -1198,11 +1183,10 @@
         // 初始化路由
         routerService.init();
 
-        // 存储原始方法
+        // 存储原始方法（用于试用模式恢复）
         let originalSaveData = utils.saveData;
         let originalLoadData = utils.loadData;
         
-        // 加载渲染系统
         // 初始化事件监听（导航、搜索、下拉菜单等）
         eventBindingService.init();
 
