@@ -3,14 +3,14 @@
  * 负责处理认证界面的显示/隐藏、登录/注册流程、UI状态更新
  */
 class AuthUIService {
-    constructor(elements, utils, notificationService, authService, modalService, serverStatusService, loadSystem) {
+    constructor(elements, utils, notificationService, authService, modalService, serverStatusService) {
         this.elements = elements;
         this.utils = utils;
         this.notificationService = notificationService;
         this.authService = authService;
         this.modalService = modalService;
         this.serverStatusService = serverStatusService;
-        this.loadSystem = loadSystem;
+        this.loadSystemService = null;
         this.originalSaveData = null;
         this.originalLoadData = null;
     }
@@ -203,7 +203,7 @@ class AuthUIService {
                     this.hideAuthModal();
                     this.updateUIForTrialUser();
                     this.resetAuthUI();
-                    this.loadSystem(true);
+                    this.loadSystemService.loadSystem(true);
                 });
             }, 1000);
 
@@ -577,6 +577,13 @@ class AuthUIService {
     setOriginalMethods(saveData, loadData) {
         this.originalSaveData = saveData;
         this.originalLoadData = loadData;
+    }
+
+    /**
+     * 设置系统加载服务引用
+     */
+    setLoadSystemService(loadSystemService) {
+        this.loadSystemService = loadSystemService;
     }
 
     /**

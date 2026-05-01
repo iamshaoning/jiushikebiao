@@ -91,7 +91,7 @@
         window.clipboardUtils = clipboardUtils;
         window.stateUtils = stateUtils;
         // 调试开关
-        window.GLOBAL_DEBUG = true;
+        window.GLOBAL_DEBUG = false;
                 
         window.StatisticsParamsService = StatisticsParamsService;
         window.DatePickerService = DatePickerService;
@@ -539,6 +539,9 @@
         import { FeeCalculationService } from './src/services/feeCalculationService.js';
         import { CalendarRenderService } from './src/services/calendarRenderService.js';
         import { ListRenderService } from './src/services/listRenderService.js';
+        import EventBindingService from './src/services/eventBindingService.js';
+        import CourseActionService from './src/services/courseActionService.js';
+        import LoadSystemService from './src/services/loadSystemService.js';
         import { generateColor } from './src/utils/colorUtils.js';
 
         // 使用 window 上已经初始化的服务和状态
@@ -1028,13 +1031,22 @@
         themeService = new ThemeService(elements, utils, window.render);
         window.themeService = themeService;
 
+        // 初始化系统加载服务
+        const loadSystemService = new LoadSystemService();
+        window.loadSystemService = loadSystemService;
+        const loadSystem = loadSystemService.loadSystem.bind(loadSystemService);
+
         // 初始化认证UI服务
-        authUIService = new AuthUIService(elements, utils, notificationService, authService, modalService, serverStatusService, loadSystem);
+        authUIService = new AuthUIService(elements, utils, notificationService, authService, modalService, serverStatusService);
         window.authUIService = authUIService;
         authUIService.setOriginalMethods(utils.saveData, utils.loadData);
+        authUIService.setLoadSystemService(loadSystemService);
+
+        // 初始化系统加载服务（在authUIService之后）
+        loadSystemService.init(state, elements, utils, window.render, themeService, authUIService, serverStatusService, notificationService);
 
         // 初始化初始化服务
-        initService = new InitService(utils, notificationService, serverStatusService, authUIService, themeService, loadSystem, elements);
+        initService = new InitService(utils, notificationService, serverStatusService, authUIService, themeService, loadSystemService, elements);
         window.initService = initService;
         
         // 初始化图表服务
@@ -1063,6 +1075,14 @@
         // 初始化列表渲染服务
         const listRenderService = new ListRenderService(state, elements, utils);
         window.listRenderService = listRenderService;
+
+        // 初始化课程操作服务
+        const courseActionService = new CourseActionService(elements, window.lucide);
+        window.courseActionService = courseActionService;
+
+        // 初始化事件绑定服务
+        const eventBindingService = new EventBindingService(elements, state, utils, window.render, modalService, notificationService);
+        window.eventBindingService = eventBindingService;
         
         // 添加课程表单模板生成器到utils
         if (window._getCourseFormTemplate) {
@@ -1204,325 +1224,21 @@
 
             // 处理课程标签点击事件
             handleCourseClick: (element, courseId, event) => {
-                // 只处理左键点击
-                if (event && event.button !== 0) {
-                    return;
-                }
-                
-                // 给当前课程添加选中状态
-                element.classList.add('is-selected');
-
-                // 显示操作按钮组
-                if (!element.querySelector('.course-action-group')) {
-                    // 创建按钮组容器
-                    const btnGroup = document.createElement('div');
-                    btnGroup.className = 'course-action-group flex items-center space-x-1 transform translate-x-full opacity-0 transition-all duration-300';
-                    btnGroup.style.position = 'absolute';
-                    btnGroup.style.right = '4px';
-                    btnGroup.style.bottom = '4px';
-                    btnGroup.style.zIndex = '10';
-
-                    // 使用纯HTML字符串与data-action，彻底解耦
-                    btnGroup.innerHTML = `
-                        <div data-action="edit-course" data-id="${courseId}" class="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center cursor-pointer shadow-lg hover:bg-blue-600 active:bg-blue-700 active:scale-95">
-                            <i data-lucide="square-pen" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
-                        </div>
-                        <div data-action="copy-course" data-id="${courseId}" class="w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center cursor-pointer shadow-lg hover:bg-green-600 active:bg-green-700 active:scale-95">
-                            <i data-lucide="copy" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
-                        </div>
-                        <div data-action="delete-course" data-id="${courseId}" class="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center cursor-pointer shadow-lg hover:bg-red-600 active:bg-red-700 active:scale-95">
-                            <i data-lucide="trash-2" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
-                        </div>
-                    `;
-
-                    // 确保课程元素有相对定位
-                    element.style.position = 'relative';
-                    element.appendChild(btnGroup);
-
-                    if (window.lucide) {
-                        lucide.createIcons();
-                    }
-
-                    // 触发动画
-                    setTimeout(() => {
-                        btnGroup.style.transform = 'translateX(0)';
-                        btnGroup.style.opacity = '1';
-                    }, 10);
-                }
+                courseActionService.handleCourseClick(element, courseId, event);
             }
         });
         
         // 初始化路由
         routerService.init();
-        
-        // 通知系统
-
-
-        // 管理模态框状态管理器
-        let currentManagementModalConfig = null;
-
-        // 事件监听
-        const events = {
-            // 初始化事件监听
-            init: () => {
-                // 导航切换
-                elements.navButtons.forEach(button => {
-                    button.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const pageId = this.dataset.page;
-                        window.render.page(pageId);
-                    });
-                });
-                
-                // 学生搜索（使用防抖优化）
-                if (elements.studentSearch) {
-                    elements.studentSearch.addEventListener('input', utils.debounce(() => {
-                        window.render.students();
-                    }, 300));
-                }
-                
-                // 统计页面年份选择 - 自定义下拉菜单（根据课程数据动态生成年份范围）
-                if (typeof utils.generateYearDropdowns === 'function') {
-                    utils.generateYearDropdowns();
-                }
-                
-                // 统计页面月份选择 - 自定义下拉菜单
-                if (typeof utils.generateMonthDropdowns === 'function') {
-                    utils.generateMonthDropdowns();
-                }
-                
-                // 学生排序
-                const studentSortSelect = document.getElementById('student-sort');
-                if (studentSortSelect) {
-                    studentSortSelect.addEventListener('change', () => {
-                        const { year, month, organization } = utils.getStatisticsParams();
-                        window.render.statistics(year, month, organization);
-                    });
-                }
-                
-                // 快照管理按钮点击事件
-                if (document.getElementById('snapshot-manager')) {
-                    document.getElementById('snapshot-manager').addEventListener('click', function() {
-                        modalService.showSnapshotManager();
-                    });
-                }
-                
-                // 同步状态点击事件
-                if (elements.syncStatus) {
-                    elements.syncStatus.addEventListener('click', function() {
-                        // 触发数据比较
-                        const localDataStr = localStorage.getItem('coursemanagerdata');
-                        const localData = localDataStr ? JSON.parse(localDataStr) : null;
-                        
-                        // 检查用户是否已登录
-                        const auth = window.supabaseAuth;
-                        let isLoggedIn = false;
-                        let session = null;
-                        
-                        if (auth) {
-                            try {
-                                auth.getSession().then(({ data }) => {
-                                    session = data.session;
-                                    isLoggedIn = !!session;
-                                    
-                                    if (isLoggedIn && window.supabaseClient) {
-                                        const userId = session.user.id;
-                                        // 从服务器加载数据
-                                        window.supabaseClient
-                                            .from('coursemanagerdata')
-                                            .select('*')
-                                            .eq('userid', userId)
-                                            .single()
-                                            .then(({ data: serverData, error }) => {
-                                                if (!error && serverData) {
-                                                    // 比较本地和服务器数据的时间戳
-                                                    const localTimestamp = utils.getTimestamp(localData?.lastupdated);
-                                                    const serverTimestamp = utils.getTimestamp(serverData.lastupdated);
-                                                    
-                                                    if (serverTimestamp > localTimestamp) {
-                                                        // 服务器数据较新，直接更新
-                                                        utils.updateStateFromData(serverData, false);
-                                                        localStorage.setItem('coursemanagerdata', JSON.stringify(serverData));
-                                                        utils.refreshAllViews(true);
-                                                    } else if (localTimestamp > serverTimestamp) {
-                                                        // 本地数据较新，直接上传
-                                                        utils.saveData();
-                                                    } else {
-                                                        // 数据相同
-                                                    }
-                                                } else {
-                                                    notificationService.show('无法连接到服务器，请检查网络连接', 'error');
-                                                }
-                                            })
-                                            .catch(error => {
-                                                if (window.GLOBAL_DEBUG) console.error('从服务器加载数据失败:', error);
-                                                notificationService.show('无法连接到服务器，请检查网络连接', 'error');
-                                            });
-                                    } else {
-                                        notificationService.show('请先登录', 'warning');
-                                    }
-                                })
-                                .catch(error => {
-                                    if (window.GLOBAL_DEBUG) console.error('获取 session 失败:', error);
-                                    notificationService.show('请先登录', 'warning');
-                                });
-                            } catch (error) {
-                                if (window.GLOBAL_DEBUG) console.error('获取 session 失败:', error);
-                                notificationService.show('请先登录', 'warning');
-                            }
-                        } else {
-                            notificationService.show('认证服务未初始化', 'error');
-                        }
-                    });
-                }
-                
-                // 初始化机构下拉菜单选项
-                if (elements.statisticsOrganizationOptions && elements.statisticsOrganizationWrapper) {
-                    // 清空现有选项，只保留"全部机构"
-                    elements.statisticsOrganizationOptions.innerHTML = '<div class="custom-option selected" data-value="">全部机构</div>';
-                    // 添加所有机构选项
-                    state.organizations.forEach(org => {
-                        const optionDiv = document.createElement('div');
-                        optionDiv.className = 'custom-option';
-                        optionDiv.dataset.value = org;
-                        optionDiv.textContent = org;
-                        elements.statisticsOrganizationOptions.appendChild(optionDiv);
-                    });
-                    // 更新触发器显示文本
-                    if (elements.statisticsOrganizationTrigger) {
-                        const triggerText = elements.statisticsOrganizationTrigger.querySelector('span');
-                        if (triggerText) {
-                            triggerText.textContent = '全部机构';
-                        }
-                    }
-                }
-                
-                // 初始化日历排课页面的年月下拉菜单（根据课程数据动态生成年份范围）
-                // 日历页面年月选择 - 自定义下拉菜单事件
-                if (elements.calendarYearWrapper) {
-                    elements.calendarYearWrapper.addEventListener('change', (e) => {
-                        const year = parseInt(e.detail.value);
-                        const month = state.currentDate.getMonth();
-                        state.currentDate = new Date(year, month, 1);
-                        window.render.calendar();
-                        // 检查过期数据的逻辑已移至数据服务
-                    });
-                }
-                
-                if (elements.calendarMonthWrapper) {
-                    elements.calendarMonthWrapper.addEventListener('change', (e) => {
-                        const month = parseInt(e.detail.value);
-                        const year = state.currentDate.getFullYear();
-                        state.currentDate = new Date(year, month, 1);
-                        window.render.calendar();
-                        // 检查过期数据的逻辑已移至数据服务
-                    });
-                }
-                
-                // 检查过期数据
-                // 检查过期数据的逻辑已移至数据服务
-            }
-        };
-
-
 
         // 存储原始方法
         let originalSaveData = utils.saveData;
         let originalLoadData = utils.loadData;
         
         // 加载渲染系统
-        function loadSystem(isTrialMode = false) {
-            // 初始化 Lucide 图标
-            if (window.lucide) {
-                lucide.createIcons();
-            }
-
-            // 检查当前是否已经在系统内部（即系统框架是否已经显示）
-            const isSystemVisible = elements.nav && elements.nav.style.display === 'block' && elements.main && elements.main.style.display === 'block';
-
-            // 只有在系统首次加载时才切换到日历页面并显示框架
-            if (!isSystemVisible) {
-                window.render.page('calendar-page');
-                // 显示系统框架
-                const body = document.body;
-                if (body && elements.nav && elements.main) {
-                    body.style.opacity = '1';
-                    elements.nav.style.display = 'block';
-                    elements.main.style.display = 'block';
-                }
-                // 初始化主题服务
-                themeService.init();
-            }
-            
-            // 生成年份和月份下拉菜单选项（根据课程数据动态生成年份范围）
-            if (typeof utils.generateYearDropdowns === 'function') {
-                utils.generateYearDropdowns();
-            }
-            if (typeof utils.generateMonthDropdowns === 'function') {
-                utils.generateMonthDropdowns();
-            }
-            
-            if (isTrialMode) {
-                // 试用模式：使用内存中的临时数据，不与服务器交互，不保存到本地
-                
-                // 进入试用模式 - 停止服务器检测
-                authUIService.enterTrialMode();
-                
-                // 取消订阅并清理实时监听器
-                if (window.realtimeChannel) {
-                    try {
-                        window.realtimeChannel.unsubscribe();
-                        window.realtimeChannel = null;
-                    } catch (error) {
-                        if (window.GLOBAL_DEBUG) console.error('取消实时监听器订阅失败:', error);
-                    }
-                }
-                
-                // 重置状态为默认值
-                state.students = [];
-                state.courses = [];
-                state.organizations = [];
-                state.grades = [];
-                
-                // 显示试用模式通知
-                notificationService.show('您现在处于试用模式，数据不会被保存', 'info');
-                
-                // 重新渲染页面
-                window.render.students();
-                window.render.calendar();
-                const { year, month, organization } = utils.getStatisticsParams();
-                window.render.statistics(year, month, organization);
-                
-                // 覆盖saveData方法，使其在试用模式下不保存数据
-                utils.saveData = function() {
-                    // 重新渲染页面
-                    window.render.students();
-                    window.render.calendar();
-                    const { year, month, organization } = utils.getStatisticsParams();
-                    window.render.statistics(year, month, organization);
-                };
-                
-                // 覆盖loadData方法，使其在试用模式下不加载数据
-                utils.loadData = function() {
-                };
-                
-            } else {
-                // 退出试用模式 - 恢复服务器检测
-                authUIService.exitTrialMode();
-                
-                // 恢复原始方法
-                if (originalSaveData) utils.saveData = originalSaveData;
-                if (originalLoadData) utils.loadData = originalLoadData;
-                // 正常模式：启动服务器状态监测
-                serverStatusService.startMonitoring();
-                // 正常模式：加载数据
-                utils.loadData();
-            }
-        }
-
         // 初始化事件监听（导航、搜索、下拉菜单等）
-        events.init();
-        
+        eventBindingService.init();
+
         // 启动应用
         initService.init();
     </script>

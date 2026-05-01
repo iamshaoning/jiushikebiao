@@ -3,13 +3,13 @@
  * 负责应用的初始化流程、认证状态检查、会话管理、自动登出逻辑
  */
 class InitService {
-    constructor(utils, notificationService, serverStatusService, authUIService, themeService, loadSystem, elements) {
+    constructor(utils, notificationService, serverStatusService, authUIService, themeService, loadSystemService, elements) {
         this.utils = utils;
         this.notificationService = notificationService;
         this.serverStatusService = serverStatusService;
         this.authUIService = authUIService;
         this.themeService = themeService;
-        this.loadSystem = loadSystem;
+        this.loadSystemService = loadSystemService;
         this.elements = elements;
         this.authStateChangeTimer = null;
     }
@@ -54,7 +54,7 @@ class InitService {
                             // 用户已登录，更新UI并加载渲染系统
                             const user = session.user;
                             this.authUIService.updateUIForAuth(user);
-                            this.loadSystem();
+                            this.loadSystemService.loadSystem();
 
                             // 存储登录时间，用于会话管理
                             localStorage.setItem('sb-login-time', Date.now().toString());
@@ -94,7 +94,7 @@ class InitService {
                         if (event === 'SIGNED_IN' && session) {
                             // 用户已登录，更新UI并加载渲染系统
                             this.authUIService.updateUIForAuth(session.user);
-                            this.loadSystem();
+                            this.loadSystemService.loadSystem();
 
                             // 存储登录时间，用于会话管理
                             localStorage.setItem('sb-login-time', Date.now().toString());
