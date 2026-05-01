@@ -542,6 +542,8 @@
         import EventBindingService from './src/services/eventBindingService.js';
         import CourseActionService from './src/services/courseActionService.js';
         import LoadSystemService from './src/services/loadSystemService.js';
+        import PageRenderService from './src/services/pageRenderService.js';
+        import CourseTagRenderService from './src/services/courseTagRenderService.js';
         import { generateColor } from './src/utils/colorUtils.js';
 
         // 使用 window 上已经初始化的服务和状态
@@ -1080,6 +1082,14 @@
         const courseActionService = new CourseActionService(elements, window.lucide);
         window.courseActionService = courseActionService;
 
+        // 初始化页面渲染服务
+        const pageRenderService = new PageRenderService(elements);
+        window.pageRenderService = pageRenderService;
+
+        // 初始化课程标签渲染服务
+        const courseTagRenderService = new CourseTagRenderService(utils);
+        window.courseTagRenderService = courseTagRenderService;
+
         // 初始化事件绑定服务
         const eventBindingService = new EventBindingService(elements, state, utils, window.render, modalService, notificationService);
         window.eventBindingService = eventBindingService;
@@ -1100,29 +1110,7 @@
         Object.assign(window.render, {
             // 【新增】课程标签统一生成器
             getCourseTagHTML: (course) => {
-                const primaryColor = course.colors[0] || 'var(--color-secondary)';
-                return `
-                    <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10"
-                         data-action="course-click"
-                         data-course-id="${course.id}"
-                         style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);">
-                        <div class="tag-content p-1">
-                            <div class="flex flex-wrap gap-1 mb-1">
-                                ${course.studentNames.map((name, index) => {
-                                    const color = course.colors[index] || 'var(--color-secondary)';
-                                    return `
-                                        <span class="px-1 py-0.5 rounded text-xs"
-                                              style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">
-                                            ${utils.escapeHtml(name)}
-                                        </span>
-                                    `;
-                                }).join('')}
-                            </div>
-                            <div class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</div>
-                            ${course.note ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${utils.escapeHtml(course.note)}</div>` : ''}
-                        </div>
-                    </div>
-                `;
+                return courseTagRenderService.getCourseTagHTML(course);
             },
             
             // 渲染日历
@@ -1177,29 +1165,8 @@
             
             // 渲染页面
             page: (pageId) => {
-                // 找到当前激活的页面
-                const currentPage = document.querySelector('.page.active');
-                
-                // 更新导航状态
-                if (elements.navButtons) {
-                    elements.navButtons.forEach(item => item.classList.remove('active', 'bg-gray-100'));
-                }
-                document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active', 'bg-gray-100');
-                
-                // 如果有当前页面，先淡出
-                if (currentPage) {
-                    currentPage.classList.remove('active');
-                    currentPage.classList.add('hidden');
-                }
-                
-                // 显示目标页面并添加动画
-                const targetPage = document.getElementById(pageId);
-                if (targetPage) {
-                    targetPage.classList.remove('hidden');
-                    // 强制重绘以确保动画生效
-                    targetPage.offsetHeight;
-                    targetPage.classList.add('active');
-                }
+                // 使用页面渲染服务切换页面
+                pageRenderService.page(pageId);
                 
                 // 渲染页面内容
                 const renderMap = {
