@@ -6,7 +6,7 @@
    1. 字体引入与动画定义
    ------------------------------ */
 
-@import url("https://chinese-fonts-cdn.deno.dev/packages/lxgwwenkaibright/dist/LXGWBright-Medium/result.css");
+@import url("https://unpkg.com/@chinese-fonts/lxgwwenkaibright@latest/dist/LXGWBright-Medium/result.css");
 
 @font-face {
     font-family: 'MaoZedong';
@@ -244,15 +244,15 @@ input:focus, textarea:focus, select:focus, button:focus {
 }
 
 #login-tab {
-    background: rgba(59, 130, 246, 0.4) !important;
-    border-color: var(--color-primary) !important;
-    color: white !important;
+    background: rgba(59, 130, 246, 0.4);
+    border-color: var(--color-primary);
+    color: white;
 }
 
 #register-tab {
-    background: rgba(147, 51, 234, 0.4) !important;
-    border-color: transparent !important;
-    color: white !important;
+    background: rgba(147, 51, 234, 0.4);
+    border-color: transparent;
+    color: white;
 }
 
 #auth-email,
@@ -335,15 +335,15 @@ input:focus, textarea:focus, select:focus, button:focus {
 
 /* 深色模式下按钮保持原有样式 */
 .dark #login-tab {
-    color: #ffffff !important;
-    background: rgba(59, 130, 246, 0.4) !important;
-    border-color: rgba(59, 130, 246, 1) !important;
+    color: #ffffff;
+    background: rgba(59, 130, 246, 0.4);
+    border-color: rgba(59, 130, 246, 1);
 }
 
 .dark #register-tab {
-    color: #ffffff !important;
-    background: rgba(147, 51, 234, 0.4) !important;
-    border-color: transparent !important;
+    color: #ffffff;
+    background: rgba(147, 51, 234, 0.4);
+    border-color: transparent;
 }
 
 .dark #login-submit {
@@ -557,10 +557,20 @@ nav, header {
   margin: 0 auto !important;
 }
 
-.dark #date-grid .date-picker-selected,
-.dark #date-grid .date-picker-today,
+.dark #date-grid .date-picker-selected {
+  border-color: var(--color-primary) !important;
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+.dark #date-grid .date-picker-today {
+  border-color: var(--color-danger) !important;
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+}
+
 .dark #date-grid .date-picker-hover:hover {
-  border-color: inherit !important;
+  border-color: var(--color-hover) !important;
   background-color: transparent !important;
   color: var(--text-primary) !important;
 }
@@ -1492,6 +1502,19 @@ button:not(:active), .btn:not(:active) {
 .sync-card.sync-syncing {
     border-color: rgba(59,130,246,0.8);
     box-shadow: inset 0 0 8px rgba(59,130,246,0.2);
+}
+
+.sync-card.sync-trial,
+/* 试用模式状态，cardClass 为空时直接通过状态判断 */
+#sync-status:not(.sync-success):not(.sync-error):not(.sync-syncing) {
+    border-color: rgba(156,163,175,0.8) !important;
+    box-shadow: inset 0 0 8px rgba(156,163,175,0.2) !important;
+}
+
+.sync-icon .sync-dot.sync-trial {
+    background: #9ca3af;
+    box-shadow: 0 0 10px rgba(156,163,175,0.5);
+    animation: none;
 }
 
 /* ------------------------------

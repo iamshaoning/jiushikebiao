@@ -84,7 +84,7 @@ const dateUtils = {
                     
                     // 显示通知
                     if (typeof window.notificationService !== 'undefined') {
-                        window.notificationService.show('只能在当天排课', 'info');
+                        window.notificationService.show('只能在当天排课', 'warning');
                     }
                     
                     // 计算可设置的时长并自动填写

@@ -9,6 +9,7 @@ class ServerStatusService {
         this.supabaseAuth = null;
         this.previousStatus = null;
         this.statusInterval = null;
+        this.isTrialMode = false;
     }
 
     /**
@@ -25,8 +26,21 @@ class ServerStatusService {
      * 开始监测服务器状态
      */
     startMonitoring() {
+        // 试用模式下不启动监测
+        if (this.isTrialMode) {
+            return;
+        }
+
         if (this.statusInterval) {
             return;
+        }
+
+        // 如果没有初始化，尝试从 window 获取
+        if (!this.supabaseClient) {
+            this.supabaseClient = window.supabaseClient;
+        }
+        if (!this.supabaseAuth) {
+            this.supabaseAuth = window.supabaseAuth;
         }
 
         // 立即检测一次
@@ -53,6 +67,19 @@ class ServerStatusService {
      * @returns {Promise<string>} 服务器状态
      */
     async monitorServerStatus() {
+        // 试用模式下直接返回，不进行网络检测
+        if (this.isTrialMode) {
+            return 'trial';
+        }
+
+        // 如果没有初始化，尝试从 window 获取
+        if (!this.supabaseClient) {
+            this.supabaseClient = window.supabaseClient;
+        }
+        if (!this.supabaseAuth) {
+            this.supabaseAuth = window.supabaseAuth;
+        }
+
         if (!this.supabaseClient || !this.supabaseAuth) {
             this.updateServerStatus('loggedout');
             return 'loggedout';
@@ -140,8 +167,20 @@ class ServerStatusService {
     }
 
     /**
+     * 设置试用模式
+     * @param {boolean} isTrial - 是否为试用模式
+     */
+    setTrialMode(isTrial) {
+        this.isTrialMode = isTrial;
+        if (isTrial) {
+            this.stopMonitoring();
+            this.updateServerStatus('trial');
+        }
+    }
+
+    /**
      * 更新服务器状态
-     * @param {string} status - 服务器状态：online(绿色-正常), offline(红色-断开), loggedout(灰色-未登录)
+     * @param {string} status - 服务器状态：online(绿色-正常), offline(红色-断开), loggedout(灰色-未登录), trial(试用模式)
      */
     updateServerStatus(status) {
         // 保存之前的状态
@@ -172,13 +211,17 @@ class ServerStatusService {
                 syncing: {
                     cardClass: 'sync-syncing',
                     title: '同步中...'
+                },
+                trial: {
+                    cardClass: '',
+                    title: '试用模式'
                 }
             };
 
             const config = statusConfig[status] || statusConfig.loggedout;
 
             // 移除所有卡片状态类
-            this.safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing']);
+            this.safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing', 'sync-trial']);
             
             // 添加当前卡片状态类
             if (config.cardClass) {
@@ -190,6 +233,8 @@ class ServerStatusService {
                 elements.syncIcon.innerHTML = '<div class="sync-loader"></div>';
             } else if (status === 'offline') {
                 elements.syncIcon.innerHTML = '<div class="sync-dot sync-error"></div>';
+            } else if (status === 'trial') {
+                elements.syncIcon.innerHTML = '<div class="sync-dot sync-trial"></div>';
             } else {
                 elements.syncIcon.innerHTML = '<div class="sync-dot"></div>';
             }
@@ -214,6 +259,11 @@ class ServerStatusService {
      * 设置同步中状态
      */
     setSyncing() {
+        // 试用模式下不设置同步中状态
+        if (this.isTrialMode) {
+            return;
+        }
+
         const elements = {
             syncStatus: document.getElementById('sync-status'),
             syncIcon: document.getElementById('sync-icon'),

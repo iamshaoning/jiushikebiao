@@ -160,11 +160,11 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                     
                     if (!organizationMatch) {
                         if (typeof window.notificationService !== 'undefined') {
-                            window.notificationService.show('多人课只能选择同一机构的学生', 'error');
+                            window.notificationService.show('多人课只能选择同一机构的学生', 'warning');
                         }
                     } else if (!gradeMatch) {
                         if (typeof window.notificationService !== 'undefined') {
-                            window.notificationService.show('多人课只能选择同一年级的学生', 'error');
+                            window.notificationService.show('多人课只能选择同一年级的学生', 'warning');
                         }
                     } else {
                         btn.classList.toggle('selected');

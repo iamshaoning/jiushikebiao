@@ -144,14 +144,24 @@ class EventHandlerService {
             
             'prev-month': () => {
                 window.state.currentDate.setMonth(window.state.currentDate.getMonth() - 1);
+                if (typeof window.utils.generateYearDropdowns === 'function') {
+                    window.utils.generateYearDropdowns();
+                }
+                if (typeof window.utils.generateMonthDropdowns === 'function') {
+                    window.utils.generateMonthDropdowns();
+                }
                 window.render.calendar();
-                window.utils.generateYearDropdowns();
             },
             
             'next-month': () => {
                 window.state.currentDate.setMonth(window.state.currentDate.getMonth() + 1);
+                if (typeof window.utils.generateYearDropdowns === 'function') {
+                    window.utils.generateYearDropdowns();
+                }
+                if (typeof window.utils.generateMonthDropdowns === 'function') {
+                    window.utils.generateMonthDropdowns();
+                }
                 window.render.calendar();
-                window.utils.generateYearDropdowns();
             },
             
             'add-student-main': () => {
@@ -411,7 +421,7 @@ class EventHandlerService {
                     
                     const newName = newItemInput.value.trim();
                     if (!newName) {
-                        notificationService.show(`请输入${itemName}名称`, 'error');
+                        notificationService.show(`请输入${itemName}名称`, 'warning');
                         return;
                     }
                     if (newName === item) {
@@ -419,12 +429,12 @@ class EventHandlerService {
                         return;
                     }
                     if (currentManagementModalConfig.items.includes(newName)) {
-                        notificationService.show(`该${itemName}名称已存在`, 'error');
+                        notificationService.show(`该${itemName}名称已存在`, 'warning');
                         return;
                     }
 
                     if (window._isSaving) {
-                        notificationService.show('正在保存中，请稍候...', 'warning');
+                        notificationService.show('正在保存中，请稍候...', 'info');
                         return;
                     }
 
@@ -517,7 +527,7 @@ class EventHandlerService {
                 if (!config) return;
 
                 if (window._isSaving) {
-                    notificationService.show('正在保存中，请稍候...', 'warning');
+                    notificationService.show('正在保存中，请稍候...', 'info');
                     return;
                 }
 
@@ -525,7 +535,7 @@ class EventHandlerService {
                 const deleteItem = currentItem || item;
 
                 if (config.onDelete && config.onDelete(deleteItem)) {
-                    notificationService.show(`该${itemName}正在被使用，无法删除`, 'error');
+                    notificationService.show(`该${itemName}正在被使用，无法删除`, 'warning');
                     return;
                 }
 
@@ -575,7 +585,7 @@ class EventHandlerService {
                 }
                 
                 if (window._isSaving) {
-                    notificationService.show('正在保存中，请稍候...', 'warning');
+                    notificationService.show('正在保存中，请稍候...', 'info');
                     return;
                 }
                 
@@ -586,7 +596,7 @@ class EventHandlerService {
                 }
                 
                 if (window.currentManagementModalConfig.items.includes(newItem)) {
-                    notificationService.show(`该${itemName}名称已存在`, 'error');
+                    notificationService.show(`该${itemName}名称已存在`, 'warning');
                     return;
                 }
 

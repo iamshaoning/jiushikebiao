@@ -138,7 +138,7 @@ const snapshotUtils = {
         }
         
         if (typeof window.notificationService !== 'undefined') {
-            window.notificationService.show('数据同步失败，请检查网络连接', 'warning');
+            window.notificationService.show('数据同步失败，请检查网络连接', 'error');
         }
     },
     
