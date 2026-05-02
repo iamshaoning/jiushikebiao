@@ -40,7 +40,7 @@ class AuthService {
 
             return data;
         } catch (error) {
-            console.error('登录失败:', error);
+            // 不在 service 层记录日志，让调用层处理错误显示
             throw error;
         }
     }
@@ -65,7 +65,7 @@ class AuthService {
 
             return data;
         } catch (error) {
-            console.error('注册失败:', error);
+            // 不在 service 层记录日志，让调用层处理错误显示
             throw error;
         }
     }
@@ -84,7 +84,7 @@ class AuthService {
             // 清除登录时间
             this.clearLoginTime();
         } catch (error) {
-            console.error('登出失败:', error);
+            // 不在 service 层记录日志，让调用层处理错误显示
             throw error;
         }
     }
@@ -102,7 +102,7 @@ class AuthService {
             const { data } = await this.supabaseAuth.getSession();
             return data.session;
         } catch (error) {
-            console.error('获取会话失败:', error);
+            // 不在 service 层记录日志，让调用层处理错误显示
             throw error;
         }
     }

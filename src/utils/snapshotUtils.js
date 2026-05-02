@@ -9,7 +9,23 @@
 const snapshotUtils = {
     previousServerStatus: null,
     
-    createSnapshot: (type = 'manual', showNotification = true) => {
+    /**
+     * 获取当前用户ID
+     * @returns {string|null} 用户ID
+     */
+    getCurrentUserId: async () => {
+        try {
+            if (window.authService) {
+                const session = await window.authService.getSession();
+                return session?.user?.id || null;
+            }
+        } catch (error) {
+            console.error('获取用户ID失败:', error);
+        }
+        return null;
+    },
+    
+    createSnapshot: async (type = 'manual', showNotification = true) => {
         const localDataStr = localStorage.getItem('coursemanagerdata');
         if (!localDataStr) {
             if (type === 'manual' && typeof window.notificationService !== 'undefined') {
@@ -18,9 +34,18 @@ const snapshotUtils = {
             return;
         }
         
+        const userId = await snapshotUtils.getCurrentUserId();
+        if (!userId) {
+            if (type === 'manual' && typeof window.notificationService !== 'undefined') {
+                window.notificationService.show('请先登录后再创建快照', 'warning');
+            }
+            return;
+        }
+        
         const snapshot = {
             id: window.utils?.generateId ? window.utils.generateId() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
             timestamp: new Date().toISOString(),
+            userId: userId,
             data: JSON.parse(localDataStr),
             type: type
         };
@@ -74,17 +99,33 @@ const snapshotUtils = {
         }
     },
     
-    getSnapshots: () => {
-        return JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+    getSnapshots: async () => {
+        const allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        const userId = await snapshotUtils.getCurrentUserId();
+        
+        if (!userId) {
+            return [];
+        }
+        
+        return allSnapshots.filter(s => s.userId === userId);
     },
     
     restoreSnapshot: async (snapshotId) => {
-        const snapshots = snapshotUtils.getSnapshots();
-        const snapshot = snapshots.find(s => s.id === snapshotId);
+        const allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        const userId = await snapshotUtils.getCurrentUserId();
+        
+        if (!userId) {
+            if (typeof window.notificationService !== 'undefined') {
+                window.notificationService.show('请先登录', 'error');
+            }
+            return;
+        }
+        
+        const snapshot = allSnapshots.find(s => s.id === snapshotId && s.userId === userId);
         
         if (!snapshot) {
             if (typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('快照不存在', 'error');
+                window.notificationService.show('快照不存在或无权访问', 'error');
             }
             return;
         }
@@ -142,10 +183,28 @@ const snapshotUtils = {
         }
     },
     
-    deleteSnapshot: (snapshotId, showNotification = true) => {
-        const snapshots = snapshotUtils.getSnapshots();
-        const updatedSnapshots = snapshots.filter(s => s.id !== snapshotId);
+    deleteSnapshot: async (snapshotId, showNotification = true) => {
+        const allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        const userId = await snapshotUtils.getCurrentUserId();
         
+        if (!userId) {
+            if (showNotification !== false && typeof window.notificationService !== 'undefined') {
+                window.notificationService.show('请先登录', 'error');
+            }
+            return;
+        }
+        
+        const snapshotIndex = allSnapshots.findIndex(s => s.id === snapshotId && s.userId === userId);
+        
+        if (snapshotIndex === -1) {
+            if (showNotification !== false && typeof window.notificationService !== 'undefined') {
+                window.notificationService.show('快照不存在或无权访问', 'error');
+            }
+            return;
+        }
+        
+        const updatedSnapshots = [...allSnapshots];
+        updatedSnapshots.splice(snapshotIndex, 1);
         localStorage.setItem('coursemanagerSnapshots', JSON.stringify(updatedSnapshots));
         
         if (showNotification !== false && typeof window.notificationService !== 'undefined') {

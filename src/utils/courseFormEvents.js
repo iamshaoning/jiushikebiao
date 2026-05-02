@@ -27,9 +27,11 @@ export function initCourseFormEvents(isEdit, courseData = null) {
             courseFee.value = '';
             courseFee.disabled = (lessonType === '一对一');
             if (lessonType === '一对一') {
-                courseFee.classList.add('bg-gray-100', 'cursor-default');
+                courseFee.style.backgroundColor = 'var(--bg-content)';
+                courseFee.classList.add('cursor-default');
             } else {
-                courseFee.classList.remove('bg-gray-100', 'cursor-default');
+                courseFee.style.backgroundColor = '';
+                courseFee.classList.remove('cursor-default');
             }
         }
         
@@ -139,7 +141,6 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                         const feeInput = document.getElementById('course-fee');
                         if (feeInput) {
                             feeInput.value = calculatedFee.toFixed(2);
-                            feeInput.classList.remove('text-red-500');
                         }
                     }
                 } else {
@@ -262,10 +263,6 @@ export function initCourseFormEvents(isEdit, courseData = null) {
     // 绑定费用输入框事件
     const courseFee = document.getElementById('course-fee');
     if (courseFee) {
-        courseFee.addEventListener('input', function() {
-            this.classList.remove('text-red-500');
-        });
-        
         // 阻止回车键冒泡，避免触发表单提交
         courseFee.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {

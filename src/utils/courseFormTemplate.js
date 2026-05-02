@@ -14,7 +14,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
         <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
             <div class="p-6">
                 <div class="mb-4"><h3 class="text-lg font-semibold" style="color: var(--text-primary);">${title}</h3></div>
-                <div id="${isEdit ? 'edit-course-form' : 'add-course-form'}">
+                <form id="${isEdit ? 'edit-course-form' : 'add-course-form'}">
                     ${idInput}
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">日期</label>
@@ -69,7 +69,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                             <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">时长</label>
                             <div class="relative">
                                 <div class="relative border rounded-md overflow-hidden" data-action="toggle-duration-dropdown" style="border-color: var(--border-color); background-color: var(--bg-input);">
-                                    <input type="number" id="course-duration" value="${data.duration || 120}" class="w-full px-3 py-2 border-0 pr-16 cursor-pointer" style="background-color: var(--bg-input); color: var(--text-primary);">
+                                    <input type="number" id="course-duration" min="1" value="${data.duration || 120}" class="w-full px-3 py-2 border-0 pr-16 cursor-pointer" style="background-color: var(--bg-input); color: var(--text-primary);">
                                     <span class="absolute right-2 top-0 h-full flex items-center" style="color: var(--text-secondary);">分钟</span>
                                 </div>
                                 <div id="duration-dropdown" class="absolute z-50 mt-1 w-full border rounded-md shadow-lg hidden" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
@@ -97,9 +97,9 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                     </div>
                     <div class="flex justify-end">
                         <button type="button" class="close-modal px-4 py-2 rounded-lg mr-2" style="background-color: var(--color-danger); color: white;">关闭</button>
-                        <button type="button" id="${isEdit ? 'save-course' : 'add-course-save'}" class="px-4 py-2 rounded-lg" style="background-color: var(--color-primary); color: white;">保存</button>
+                        <button type="submit" id="${isEdit ? 'save-course' : 'add-course-save'}" class="px-4 py-2 rounded-lg" style="background-color: var(--color-primary); color: white;">保存</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     `;

@@ -458,25 +458,15 @@ class EventHandlerService {
                             }
                         }
 
-                        // 更新UI
-                        const nameSpan = itemElement.querySelector(`.${itemName}-name`);
-                        if (nameSpan) {
-                            nameSpan.textContent = newName;
-                        }
-                        itemElement.dataset[itemName] = newName;
+                        // 更新UI - 注意：具体的颜色更新和UI更新已经在 currentManagementModalConfig.editItem 中处理了
 
-                        // 更新按钮的data-item属性
-                        const editBtn = itemElement.querySelector('[data-action="edit-org-inline"]');
-                        const deleteBtn = itemElement.querySelector('[data-action="delete-org-inline"]');
-                        if (editBtn) {
-                            editBtn.dataset.item = newName;
-                        }
-                        if (deleteBtn) {
-                            deleteBtn.dataset.item = newName;
-                        }
+                window.utils.saveData();
+                notificationService.show(`${itemName}修改成功`, 'success');
 
-                        window.utils.saveData();
-                        notificationService.show(`${itemName}修改成功`, 'success');
+                        // 刷新视图 - 更新学生列表和日历
+                        if (currentManagementModalConfig.updateUI) {
+                            currentManagementModalConfig.updateUI();
+                        }
 
                         // 恢复输入框和按钮状态
                         cancelEdit();
@@ -487,16 +477,16 @@ class EventHandlerService {
                     }
                 };
                 
-                // 回车保存
+                // 添加编辑模式下的按键事件 - 回车保存，ESC取消
                 newItemInput.onkeydown = (event) => {
                     if (event.key === 'Enter') {
+                        event.preventDefault();
+                        event.stopPropagation();
                         addBtn.click();
                     }
-                };
-                
-                // ESC取消
-                newItemInput.onkeydown = (event) => {
                     if (event.key === 'Escape') {
+                        event.preventDefault();
+                        event.stopPropagation();
                         cancelEdit();
                     }
                 };
@@ -508,6 +498,17 @@ class EventHandlerService {
                     // 恢复按钮状态
                     addBtn.textContent = originalBtnText;
                     addBtn.style.backgroundColor = 'var(--color-primary)';
+                    
+                    // 重新绑定添加模式的回车键事件
+                    newItemInput.onkeydown = (event) => {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            const addBtnElement = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`);
+                            if (addBtnElement) {
+                                addBtnElement.click();
+                            }
+                        }
+                    };
                     
                     // 恢复添加按钮的原有事件
                     if (addBtn._originalClickHandler) {
@@ -615,10 +616,15 @@ class EventHandlerService {
                     const itemsList = document.getElementById(`${itemName}s-list`);
                     if (itemsList) {
                         const itemDiv = document.createElement('div');
-                        itemDiv.className = 'flex items-center justify-between p-2 bg-gray-50 rounded';
+                        itemDiv.className = 'flex items-center justify-between p-2 rounded';
+                        itemDiv.style.backgroundColor = 'var(--bg-secondary)';
                         itemDiv.dataset[itemName] = newItem;
+                        
+                        const colorType = itemName === '机构' ? 'organization' : 'grade';
+                        const bgColor = window.utils.generateColor(newItem, colorType);
+                        
                         itemDiv.innerHTML = `
-                            <span class="${itemName}-name">${window.utils.escapeHtml(newItem)}</span>
+                            <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bgColor} 20%, transparent); color: ${bgColor};" data-item="${newItem}" data-item-name="${itemName}" data-color="${bgColor}">${window.utils.escapeHtml(newItem)}</button>
                             <div class="flex items-center">
                                 <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${newItem}">
                                     <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
@@ -632,6 +638,47 @@ class EventHandlerService {
 
                         if (window.lucide) {
                             lucide.createIcons();
+                        }
+
+                        const colorPickerTrigger = itemDiv.querySelector(`.${itemName}-name.color-picker-trigger`);
+                        if (colorPickerTrigger) {
+                            colorPickerTrigger.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                const item = colorPickerTrigger.dataset.item;
+                                const currentColor = colorPickerTrigger.dataset.color;
+                                
+                                window.modalService.showColorPicker({
+                                    itemName: item,
+                                    itemType: colorType,
+                                    currentColor: currentColor,
+                                    onSelect: (newColor) => {
+                                        window.utils.setColor(item, newColor, colorType);
+                                        colorPickerTrigger.style.backgroundColor = `color-mix(in srgb, ${newColor} 20%, transparent)`;
+                                        colorPickerTrigger.style.color = newColor;
+                                        colorPickerTrigger.dataset.color = newColor;
+                                        
+                                        if (colorType === 'organization') {
+                                            window.state.courses.forEach(course => {
+                                                if (Array.isArray(course.organizations)) {
+                                                    course.organizations.forEach((org, idx) => {
+                                                        if (org === item) {
+                                                            if (course.colors && course.colors[idx]) {
+                                                                course.colors[idx] = newColor;
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        
+                                        window.utils.saveData();
+                                        
+                                        if (window.currentManagementModalConfig.updateUI) {
+                                            window.currentManagementModalConfig.updateUI();
+                                        }
+                                    }
+                                });
+                            });
                         }
                     }
                     

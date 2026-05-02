@@ -1,4 +1,5 @@
 import coreUtils from './coreUtils.js';
+import { generateColor as generateColorBase, resetColorAssignments, resetAllColorAssignments } from './colorUtils.js';
 
 const utils = {
     ...coreUtils,
@@ -23,14 +24,16 @@ const utils = {
         return h * 60 + m + Number(duration);
     },
     
-    generateColor: (text) => {
-        if (!text) return '#666666';
-        let hash = 0;
-        for (let i = 0; i < text.length; i++) {
-            hash = text.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        const h = hash % 360;
-        return `hsl(${h}, 65%, 45%)`;
+    generateColor: (text, type = 'organization') => {
+        return generateColorBase(text, type);
+    },
+    
+    resetColorAssignments: (type) => {
+        resetColorAssignments(type);
+    },
+    
+    resetAllColorAssignments: () => {
+        resetAllColorAssignments();
     },
     
     getStatisticsParams: function() {

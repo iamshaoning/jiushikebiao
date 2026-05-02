@@ -9,12 +9,18 @@ const stateUtils = {
     updateStateFromData: (data, useDefaults = true) => {
         const oldCourses = [...window.state.courses];
         
-        const defaults = { organizations: [], grades: [] };
+        const defaults = { organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
         window.state.students = data.students || [];
         window.state.courses = data.courses || [];
         window.state.organizations = data.organizations || (useDefaults ? defaults.organizations : []);
         window.state.grades = data.grades || (useDefaults ? defaults.grades : []);
+        window.state.organizationColors = data.organizationColors || {};
+        window.state.gradeColors = data.gradeColors || {};
         window.state.lastupdated = data.lastupdated;
+        
+        if (window.utils && window.utils.initColorsFromState) {
+            window.utils.initColorsFromState();
+        }
         
         if (window.snapshotUtils) {
             window.snapshotUtils.checkCourseChangeAndSnapshot(oldCourses, window.state.courses);
@@ -56,6 +62,8 @@ const stateUtils = {
                 courses: currentState.courses,
                 organizations: currentState.organizations,
                 grades: currentState.grades,
+                organizationColors: currentState.organizationColors || {},
+                gradeColors: currentState.gradeColors || {},
                 lastupdated: isoDateTimeString
             };
             
@@ -91,6 +99,8 @@ const stateUtils = {
                                         courses: appData.courses,
                                         organizations: appData.organizations,
                                         grades: appData.grades,
+                                        organizationColors: appData.organizationColors,
+                                        gradeColors: appData.gradeColors,
                                         lastupdated: appData.lastupdated
                                     }, { onConflict: 'userid' })
                                 , 10000, '同步数据超时');
@@ -131,6 +141,8 @@ const stateUtils = {
                     courses: currentState.courses,
                     organizations: currentState.organizations,
                     grades: currentState.grades,
+                    organizationColors: currentState.organizationColors || {},
+                    gradeColors: currentState.gradeColors || {},
                     lastupdated: isoDateTimeString
                 };
                 localStorage.setItem('coursemanagerdata', JSON.stringify(appData));
@@ -151,6 +163,8 @@ const stateUtils = {
             courses: window.state.courses,
             organizations: window.state.organizations,
             grades: window.state.grades,
+            organizationColors: window.state.organizationColors || {},
+            gradeColors: window.state.gradeColors || {},
             lastupdated: isoDateTimeString
         };
         localStorage.setItem('coursemanagerdata', JSON.stringify(appData));

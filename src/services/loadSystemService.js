@@ -15,6 +15,7 @@ class LoadSystemService {
         this.notificationService = null;
         this.originalSaveData = null;
         this.originalLoadData = null;
+        this.systemLoaded = false; // 标志位：系统是否已加载
     }
 
     /**
@@ -42,10 +43,10 @@ class LoadSystemService {
     }
 
     /**
-     * 加载渲染系统
+     * 加载系统
      * @param {boolean} isTrialMode - 是否为试用模式
      */
-    loadSystem(isTrialMode = false) {
+    async loadSystem(isTrialMode = false) {
         if (window.lucide) {
             lucide.createIcons();
         }
@@ -68,8 +69,10 @@ class LoadSystemService {
         if (isTrialMode) {
             this.enterTrialMode();
         } else {
-            this.enterNormalMode();
+            await this.enterNormalMode();
         }
+        
+        this.systemLoaded = true;
     }
 
     /**
@@ -121,9 +124,9 @@ class LoadSystemService {
     }
 
     /**
-     * 进入正常模式
+     * 退出试用模式
      */
-    enterNormalMode() {
+    exitTrialMode() {
         this.authUIService.exitTrialMode();
 
         if (this.originalSaveData) {
@@ -132,9 +135,22 @@ class LoadSystemService {
         if (this.originalLoadData) {
             this.utils.loadData = this.originalLoadData;
         }
+    }
 
+    /**
+     * 进入正常模式
+     */
+    async enterNormalMode() {
+        this.exitTrialMode();
         this.serverStatusService.startMonitoring();
-        this.utils.loadData();
+        
+        try {
+            await this.utils.loadData();
+        } catch (error) {
+            if (window.GLOBAL_DEBUG) console.error('加载数据失败:', error);
+            // 即使加载失败，也确保刷新视图
+            this.utils.refreshAllViews(true);
+        }
     }
 }
 

@@ -12,6 +12,96 @@ export class StatisticsRenderService {
     }
 
     /**
+     * 生成年份下拉菜单
+     */
+    generateYearDropdowns(utils) {
+        const currentYear = new Date().getFullYear();
+        const displayedYear = this.state.currentDate.getFullYear();
+        const courseYears = new Set();
+
+        this.state.courses.forEach(course => {
+            if (course.date) {
+                const year = parseInt(course.date.split('-')[0]);
+                if (!isNaN(year)) {
+                    courseYears.add(year);
+                }
+            }
+        });
+
+        let minYear = Math.min(currentYear - 1, displayedYear - 1);
+        let maxYear = Math.max(currentYear + 1, displayedYear + 1);
+        courseYears.forEach(year => {
+            minYear = Math.min(minYear, year);
+            maxYear = Math.max(maxYear, year);
+        });
+
+        utils.safeSet(this.elements.statisticsYearOptions, 'innerHTML', '');
+        for (let year = minYear; year <= maxYear; year++) {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-option';
+            optionDiv.dataset.value = year;
+            optionDiv.textContent = `${year}年`;
+            if (year === currentYear) {
+                optionDiv.classList.add('selected');
+                utils.safeSet(this.elements.statisticsYearTrigger, 'textContent', `${year}年`);
+            }
+            utils.safe(this.elements.statisticsYearOptions, 'appendChild', optionDiv);
+        }
+
+        utils.safeSet(this.elements.calendarYearOptions, 'innerHTML', '');
+        for (let i = minYear; i <= maxYear; i++) {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-option' + (i === this.state.currentDate.getFullYear() ? ' selected' : '');
+            optionDiv.dataset.value = i;
+            optionDiv.textContent = `${i}年`;
+            utils.safe(this.elements.calendarYearOptions, 'appendChild', optionDiv);
+        }
+        utils.safeSet(this.elements.calendarYearTrigger, 'textContent', `${this.state.currentDate.getFullYear()}年`);
+    }
+
+    /**
+     * 生成月份下拉菜单
+     */
+    generateMonthDropdowns(utils) {
+        const currentMonth = new Date().getMonth();
+        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+        const monthOptions = utils.safe(this.elements.statisticsMonthWrapper, 'querySelectorAll', '.custom-option');
+        const monthTrigger = utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-select-trigger span');
+        if (monthOptions) {
+            monthOptions.forEach((opt, index) => {
+                if (index === currentMonth) {
+                    opt.classList.add('selected');
+                    utils.safeSet(monthTrigger, 'textContent', opt.textContent);
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+        }
+
+        utils.safeSet(this.elements.calendarMonthOptions, 'innerHTML', '');
+        monthNames.forEach((monthName, index) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-option' + (index === this.state.currentDate.getMonth() ? ' selected' : '');
+            optionDiv.dataset.value = index;
+            optionDiv.textContent = monthName;
+            utils.safe(this.elements.calendarMonthOptions, 'appendChild', optionDiv);
+        });
+        const calendarMonthTrigger = utils.safe(this.elements.calendarMonthWrapper, 'querySelector', '.custom-select-trigger span');
+        utils.safeSet(calendarMonthTrigger, 'textContent', monthNames[this.state.currentDate.getMonth()]);
+    }
+
+    /**
+     * 获取统计参数
+     */
+    getStatisticsParams(utils) {
+        const year = parseInt(utils.safe(this.elements.statisticsYearWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getFullYear();
+        const month = parseInt(utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getMonth();
+        const organization = utils.safe(this.elements.statisticsOrgWrapper, 'querySelector', '.custom-option.selected')?.dataset.value || '';
+        return { year, month, organization };
+    }
+
+    /**
      * 渲染统计页面
      * @param {number} year - 年份
      * @param {number} month - 月份
@@ -21,7 +111,7 @@ export class StatisticsRenderService {
     statistics(year, month, organization = '', utils) {
         // 定义月份名称
         const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-        
+
         // 填充机构筛选下拉菜单
         const organizationOptions = document.getElementById('statistics-organization-options');
         const organizationTrigger = document.getElementById('statistics-organization-trigger');
@@ -47,10 +137,10 @@ export class StatisticsRenderService {
                 }
             }
         }
-        
+
         // 计算统计数据
         const stats = this.statisticsCalculatorService.calculateStatistics(year, month, organization, utils);
-        
+
         // 更新统计卡片
         utils.safeSet(this.elements.totalHours, 'textContent', stats.totalCourses);
         this.elements.totalHours.style.color = 'var(--color-primary)';
@@ -58,16 +148,16 @@ export class StatisticsRenderService {
         this.elements.totalFee.style.color = 'var(--color-success)';
         utils.safeSet(this.elements.totalStudents, 'textContent', stats.uniqueStudents.size);
         this.elements.totalStudents.style.color = 'var(--color-purple)';
-        
+
         // 渲染图表
         this.chartService.chart('organization-chart', stats.byOrganization, '机构课量分布', utils);
-        
+
         // 渲染表格
         this.orgTable(stats.byOrganization, stats.totalCourses, utils);
-        
+
         // 渲染详细课型分布表格
         this.detailedTypeTable(stats.detailedStats, utils);
-        
+
         // 渲染学生数据模块
         this.studentData(stats.byStudent, utils);
     }
@@ -81,9 +171,9 @@ export class StatisticsRenderService {
     orgTable(data, totalCourses, utils) {
         const tableBody = this.elements.organizationTable;
         if (!tableBody) return;
-        
+
         tableBody.innerHTML = '';
-        
+
         if (Object.keys(data).length === 0) {
             tableBody.innerHTML = `
                 <tr><td colspan="5" class="px-4 py-8 text-center" style="color: var(--text-secondary);">
@@ -91,11 +181,11 @@ export class StatisticsRenderService {
                 </td></tr>`;
             return;
         }
-        
+
         const fragment = document.createDocumentFragment();
         Object.entries(data).sort(([,a], [,b]) => b.courses - a.courses).forEach(([org, stats]) => {
             const pct = totalCourses > 0 ? (stats.courses / totalCourses * 100) : 0;
-            const color = utils.generateColor(org);
+            const color = utils.generateColor(org, 'organization');
             const row = document.createElement('tr');
             row.style.backgroundColor = 'var(--bg-secondary)';
             row.innerHTML = `
@@ -104,9 +194,7 @@ export class StatisticsRenderService {
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap" style="color: var(--text-primary);">${stats.courses}节</td>
                 <td class="px-4 py-3 whitespace-nowrap" style="color: var(--text-primary);">¥${stats.fee.toFixed(2)}</td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${stats.students?.size || 0}人</span>
-                </td>
+                <td class="px-4 py-3 whitespace-nowrap" style="color: var(--text-primary);">${stats.students?.size || 0}人</td>
                 <td class="px-4 py-3 whitespace-nowrap">
                     <div class="flex items-center">
                         <div class="w-24 rounded-full h-2 mr-2" style="background-color: var(--bg-content);">
@@ -129,7 +217,7 @@ export class StatisticsRenderService {
     detailedTypeTable(detailedStats, utils) {
         const detailedTableContainer = this.elements.detailedTypeTableContainer;
         if (!detailedTableContainer) return;
-        
+
         // 一对一课程详细统计
         let oneOnOneHTML = '';
         const oneOnOneStats = detailedStats['一对一'];
@@ -150,7 +238,7 @@ export class StatisticsRenderService {
                             </thead>
                             <tbody class="divide-y" style="border-color: var(--border-color);">
             `;
-            
+
             // 重构数据结构，按机构和年级排序
             const orgGradeStats = {};
             Object.entries(oneOnOneStats).forEach(([grade, orgStats]) => {
@@ -161,27 +249,23 @@ export class StatisticsRenderService {
                     orgGradeStats[org][grade] = stats;
                 });
             });
-            
+
             // 按机构名称排序
             Object.entries(orgGradeStats).sort(([orgA], [orgB]) => orgA.localeCompare(orgB)).forEach(([org, gradeStats]) => {
                 Object.entries(gradeStats).forEach(([grade, stats]) => {
                     oneOnOneHTML += `
                         <tr style="background-color: var(--bg-secondary);">
                             <td class="px-4 py-3 text-left">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(org)} 20%, transparent); color: ${utils.generateColor(org)}">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(org, 'organization')} 20%, transparent); color: ${utils.generateColor(org, 'organization')}">
                                     ${org}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-left">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(grade)} 20%, transparent); color: ${utils.generateColor(grade)}">
+                                <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(grade, 'grade')} 20%, transparent); color: ${utils.generateColor(grade, 'grade')}">
                                     ${grade}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-left">
-                                <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(String(stats.students.size))} 20%, transparent); color: ${utils.generateColor(String(stats.students.size))}">
-                                    ${stats.students.size} 人
-                                </span>
-                            </td>
+                            <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${stats.students.size}人</td>
                             <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${stats.courses}节</td>
                             <td class="px-4 py-3 text-left" style="color: var(--text-primary);">¥${stats.fee.toFixed(2)}</td>
                         </tr>
@@ -197,15 +281,15 @@ export class StatisticsRenderService {
         } else {
             oneOnOneHTML = `
                 <div class="mb-6">
-                    <h4 class="text-md font-medium text-gray-800 mb-3">一对一分布数据</h4>
-                    <div class="text-center py-8 text-gray-500">
+                    <h4 class="text-md font-medium mb-3" style="color: var(--text-primary);">一对一分布数据</h4>
+                    <div class="text-center py-8" style="color: var(--text-secondary);">
                         <i data-lucide="user-round" style="color: var(--text-secondary); display: block; margin-left: auto; margin-right: auto;" class="text-4xl mb-2"></i>
                         <p style="color: var(--text-secondary);">暂无一对一课程数据</p>
                     </div>
                 </div>
             `;
         }
-        
+
         // 多人课课程详细统计
         let groupHTML = '';
         const groupStats = detailedStats['多人课'];
@@ -226,7 +310,7 @@ export class StatisticsRenderService {
                             </thead>
                             <tbody class="divide-y" style="border-color: var(--border-color);">
             `;
-            
+
             // 重构数据结构，按机构、年级和人数排序
             const orgGradeCountStats = {};
             Object.entries(groupStats).forEach(([studentCount, gradeStats]) => {
@@ -242,7 +326,7 @@ export class StatisticsRenderService {
                     });
                 });
             });
-            
+
             // 按机构名称排序
             Object.entries(orgGradeCountStats).sort(([orgA], [orgB]) => orgA.localeCompare(orgB)).forEach(([org, gradeStats]) => {
                 Object.entries(gradeStats).forEach(([grade, countStats]) => {
@@ -250,20 +334,16 @@ export class StatisticsRenderService {
                         groupHTML += `
                             <tr style="background-color: var(--bg-secondary);">
                                 <td class="px-4 py-3 text-left">
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(org)} 20%, transparent); color: ${utils.generateColor(org)}">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(org, 'organization')} 20%, transparent); color: ${utils.generateColor(org, 'organization')}">
                                         ${org}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-left">
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(grade)} 20%, transparent); color: ${utils.generateColor(grade)}">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(grade, 'grade')} 20%, transparent); color: ${utils.generateColor(grade, 'grade')}">
                                         ${grade}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 text-left">
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(studentCount)} 20%, transparent); color: ${utils.generateColor(studentCount)}">
-                                        ${studentCount}人
-                                    </span>
-                                </td>
+                                <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${studentCount}人</td>
                                 <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${stats.courses}节</td>
                                 <td class="px-4 py-3 text-left" style="color: var(--text-primary);">¥${stats.fee.toFixed(2)}</td>
                             </tr>
@@ -288,7 +368,7 @@ export class StatisticsRenderService {
                 </div>
             `;
         }
-        
+
         // 组装完整的HTML
         detailedTableContainer.innerHTML = `
             <div class="flex justify-between items-center mb-4">
@@ -312,7 +392,7 @@ export class StatisticsRenderService {
     studentData(studentStats, utils) {
         const container = this.elements.studentDataContainer;
         if (!container) return;
-        
+
         // 按课程数量排序学生
         const sortedStudents = Object.entries(studentStats)
             .map(([studentId, stats]) => {
@@ -327,7 +407,7 @@ export class StatisticsRenderService {
                 };
             })
             .sort((a, b) => b.courses - a.courses);
-        
+
         if (sortedStudents.length > 0) {
             let html = `
                 <div class="overflow-x-auto">
@@ -343,11 +423,11 @@ export class StatisticsRenderService {
                         </thead>
                         <tbody class="divide-y" style="border-color: var(--border-color);">
             `;
-            
+
             sortedStudents.forEach(student => {
-                const orgColor = utils.generateColor(student.organization);
-                const gradeColor = utils.generateColor(student.grade);
-                
+                const orgColor = utils.generateColor(student.organization, 'organization');
+                const gradeColor = utils.generateColor(student.grade, 'grade');
+
                 html += `
                             <tr style="background-color: var(--bg-secondary);">
                                 <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${utils.escapeHtml(student.name)}</td>
@@ -366,13 +446,13 @@ export class StatisticsRenderService {
                             </tr>
                 `;
             });
-            
+
             html += `
                         </tbody>
                     </table>
                 </div>
             `;
-            
+
             container.innerHTML = `
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold" style="color: var(--text-primary);">学生课量数据</h3>

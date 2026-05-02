@@ -8,6 +8,7 @@ export class CalendarRenderService {
         this.state = state;
         this.elements = elements;
         this.utils = utils;
+        this.lucide = window.lucide || null;
         
         // 将 getCourseTagHTML 方法绑定到 this
         this.getCourseTagHTML = (course) => {
@@ -35,6 +36,77 @@ export class CalendarRenderService {
                 </div>
             `;
         };
+    }
+
+    /**
+     * 处理课程标签点击事件
+     * @param {HTMLElement} element - 课程标签元素
+     * @param {string} courseId - 课程ID
+     * @param {MouseEvent} event - 鼠标事件
+     */
+    handleCourseClick(element, courseId, event) {
+        if (event && event.button !== 0) {
+            return;
+        }
+
+        element.classList.add('is-selected');
+        this.showActionButtons(element, courseId);
+    }
+
+    /**
+     * 显示操作按钮组
+     * @param {HTMLElement} element - 课程标签元素
+     * @param {string} courseId - 课程ID
+     */
+    showActionButtons(element, courseId) {
+        if (!element.querySelector('.course-action-group')) {
+            const btnGroup = document.createElement('div');
+            btnGroup.className = 'course-action-group flex items-center space-x-1 transform translate-x-full opacity-0 transition-all duration-300';
+            btnGroup.style.position = 'absolute';
+            btnGroup.style.right = '4px';
+            btnGroup.style.bottom = '4px';
+            btnGroup.style.zIndex = '10';
+
+            btnGroup.innerHTML = `
+                <div data-action="edit-course" data-id="${courseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-primary);">
+                    <i data-lucide="square-pen" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
+                </div>
+                <div data-action="copy-course" data-id="${courseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-success);">
+                    <i data-lucide="copy" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
+                </div>
+                <div data-action="delete-course" data-id="${courseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-danger);">
+                    <i data-lucide="trash-2" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
+                </div>
+            `;
+
+            element.style.position = 'relative';
+            element.appendChild(btnGroup);
+
+            if (this.lucide) {
+                this.lucide.createIcons();
+            }
+
+            setTimeout(() => {
+                btnGroup.style.transform = 'translateX(0)';
+                btnGroup.style.opacity = '1';
+            }, 10);
+        }
+    }
+
+    /**
+     * 隐藏操作按钮组
+     * @param {HTMLElement} element - 课程标签元素
+     */
+    hideActionButtons(element) {
+        element.classList.remove('is-selected');
+        const btnGroup = element.querySelector('.course-action-group');
+        if (btnGroup) {
+            btnGroup.style.transform = 'translateX(100%)';
+            btnGroup.style.opacity = '0';
+            setTimeout(() => {
+                btnGroup.remove();
+            }, 300);
+        }
     }
 
     /**
@@ -295,16 +367,16 @@ export class CalendarRenderService {
         if (dateInfo) {
             if (dateInfo.isInLieu) {
                 // 调休 - 为了节假日连续休息，将本来周末的休息日调整到了这天，所以这天是休息日
-                scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full bg-purple-500 text-white flex items-center justify-center text-xs font-medium">调</span>';
+                scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-purple);">调</span>';
             } else if (dateInfo.isHoliday) {
                 // 节假日
-                scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-medium">休</span>';
+                scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-success);">休</span>';
             } else if (dateInfo.isWorkday) {
                 // 周末需要上班的日子 - 本来要休息，因为节假日调休而需要上班
                 const date = new Date(dateStr);
                 const dayOfWeek = date.getDay();
                 if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-medium">班</span>';
+                    scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-primary);">班</span>';
                 }
             }
         }
@@ -312,35 +384,48 @@ export class CalendarRenderService {
         // 生成节假日标签，根据不同节假日应用不同样式
         let holidayTag = '';
         if (dateInfo && dateInfo.isHoliday && dateInfo.name) {
-            const holidayName = dateInfo.name;
+            let holidayName = dateInfo.name;
+            
+            // 缩短特定节假日名称
+            if (holidayName.includes('劳动节')) {
+                holidayName = '劳动';
+            } else if (holidayName.includes('国庆')) {
+                holidayName = '国庆';
+            }
+            
             let tagClass = '';
             let holidayTagStyle = '';
-            if (holidayName.includes('元旦')) {
+            if (holidayName === '元旦') {
                 // 元旦：半透明浅红色背景，红字
-                tagClass = 'bg-red-200 bg-opacity-60 text-red-600';
-            } else if (holidayName.includes('春节')) {
+                tagClass = '';
+                holidayTagStyle = 'background-color: rgba(239, 68, 68, 0.2); color: var(--color-danger);';
+            } else if (holidayName === '春节') {
                 // 春节：金底红字
-                tagClass = 'bg-yellow-300 text-[var(--color-danger)] font-bold';
-            } else if (holidayName.includes('清明节') || holidayName.includes('清明')) {
+                tagClass = '';
+                holidayTagStyle = 'background-color: var(--color-gold); color: var(--color-danger); font-weight: bold;';
+            } else if (holidayName.includes('清明')) {
                 // 清明：透明底蓝字，加粗边框
                 tagClass = 'border-2';
                 holidayTagStyle = 'background-color: transparent; color: var(--color-info); border-color: var(--color-info);';
-            } else if (holidayName.includes('劳动节')) {
+            } else if (holidayName === '劳动') {
                 // 劳动节：透明底，金色字和加粗边框
                 tagClass = 'border-2';
                 holidayTagStyle = 'background-color: transparent; color: var(--color-warning); border-color: var(--color-warning);';
-            } else if (holidayName.includes('端午')) {
+            } else if (holidayName === '端午') {
                 // 端午：半透明浅绿色背景，绿字
-                tagClass = 'bg-green-200 bg-opacity-60 text-green-600';
-            } else if (holidayName.includes('中秋') || holidayName.includes('中秋节')) {
+                tagClass = '';
+                holidayTagStyle = 'background-color: rgba(34, 197, 94, 0.2); color: var(--color-success);';
+            } else if (holidayName.includes('中秋')) {
                 // 中秋：橙底白字
-                tagClass = 'bg-orange-500 text-white';
-            } else if (holidayName.includes('国庆')) {
+                tagClass = '';
+                holidayTagStyle = 'background-color: var(--color-orange); color: white;';
+            } else if (holidayName === '国庆') {
                 // 国庆：红底金字
-                tagClass = 'bg-[var(--color-danger)] text-[var(--color-gold)] font-bold';
+                tagClass = '';
+                holidayTagStyle = 'background-color: var(--color-danger); color: var(--color-gold); font-weight: bold;';
             } else {
                 // 其他未定义的节假日：黄底黑字
-                tagClass = 'bg-yellow-300 text-black';
+                holidayTagStyle = 'background-color: var(--color-warning); color: black;';
             }
 
             if (!holidayTag) {

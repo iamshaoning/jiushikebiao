@@ -4,11 +4,10 @@
  */
 
 class ViewRefreshService {
-    constructor(state, render, elements, statisticsParamsService) {
+    constructor(state, render, elements) {
         this.state = state;
         this.render = render;
         this.elements = elements;
-        this.statisticsParamsService = statisticsParamsService;
     }
 
     /**
@@ -53,8 +52,8 @@ class ViewRefreshService {
             scopes = ['students', 'courses', 'organizations', 'grades', 'calendar'];
         }
 
-        if (scopes.includes('courses')) {
-            this.statisticsParamsService.generateYearDropdowns();
+        if (scopes.includes('courses') && window.utils && window.utils.generateYearDropdowns) {
+            window.utils.generateYearDropdowns();
         }
 
         const currentPage = document.querySelector('.page.active');
@@ -76,8 +75,11 @@ class ViewRefreshService {
         }
         if (currentPage === this.elements.statisticsPage) {
             if (scopes.includes('statistics') || scopes.includes('courses')) {
-                const { year, month, organization } = this.statisticsParamsService.getStatisticsParams();
-                this.render.statistics(year, month, organization);
+                let params = { year: new Date().getFullYear(), month: new Date().getMonth(), organization: '' };
+                if (window.utils && window.utils.getStatisticsParams) {
+                    params = window.utils.getStatisticsParams();
+                }
+                this.render.statistics(params.year, params.month, params.organization);
             }
         }
     }

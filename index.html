@@ -19,27 +19,30 @@
         })();
     </script>
 
+    <!-- 第一模块：初始化基础服务和全局变量 -->
     <script type="module">
+        /**
+         * 导入依赖模块
+         */
+        // Supabase客户端
         import { createClient } from '@supabase/supabase-js';
+        // 核心服务模块
         import dataService from './src/services/dataService.js';
         import authService from './src/services/authService.js';
         import courseService from './src/services/courseService.js';
         import studentService from './src/services/studentService.js';
         import serverStatusService from './src/services/serverStatusService.js';
         import notificationService from './src/services/notificationService.js';
-        import { getCourseFormTemplate } from './src/utils/courseFormTemplate.js';
-        import { initCourseFormEvents } from './src/utils/courseFormEvents.js';
         import modalService from './src/services/modalService.js';
-        import { elements, initElements } from './src/utils/elements.js';
         import routerService from './src/services/routerService.js';
         import eventDispatcherService from './src/services/eventDispatcherService.js';
         import eventHandlerService from './src/services/eventHandlerService.js';
         import stateService from './src/services/stateService.js';
         import exportService from './src/services/exportService.js';
-        import StatisticsParamsService from './src/services/statisticsParamsService.js';
-        import DatePickerService from './src/services/datePickerService.js';
-        import DataLoadService from './src/services/dataLoadService.js';
-        import ViewRefreshService from './src/services/viewRefreshService.js';
+        // 工具函数模块
+        import { getCourseFormTemplate } from './src/utils/courseFormTemplate.js';
+        import { initCourseFormEvents } from './src/utils/courseFormEvents.js';
+        import { elements, initElements } from './src/utils/elements.js';
         import { VirtualList } from './src/components/VirtualList.js';
         import coreUtils from './src/utils/coreUtils.js';
         import dateUtils from './src/utils/dateUtils.js';
@@ -47,24 +50,35 @@
         import clipboardUtils from './src/utils/clipboardUtils.js';
         import stateUtils from './src/utils/stateUtils.js';
 
-        // 保存引用，稍后添加到window.utils
+        /**
+         * 临时保存引用，稍后添加到window.utils
+         */
         window._getCourseFormTemplate = getCourseFormTemplate;
         window._initCourseFormEvents = initCourseFormEvents;
         
-        // 初始化DOM元素引用缓存
+        /**
+         * 初始化DOM元素引用缓存
+         */
         initElements();
         
-        // 创建 render 基础对象，稍后在第二块扩展
+        /**
+         * 创建 render 基础对象，稍后在第二个模块扩展
+         */
         const render = {};
         
-        // 暴露 routerService 到 window，延迟路由注册
+        /**
+         * 暴露路由服务到window，延迟路由注册
+         */
         window._routerService = routerService;
         window.eventDispatcherService = eventDispatcherService;
         
         /* ============================================
          * 集中暴露全局变量
          * ============================================ */
-        // 核心服务
+        // 0. Supabase客户端创建函数
+        window.createClient = createClient;
+        
+        // 1. 核心服务
         window.dataService = dataService;
         window.authService = authService;
         window.courseService = courseService;
@@ -73,28 +87,32 @@
         window.notificationService = notificationService;
         window.modalService = modalService;
         window.exportService = exportService;
-        // 状态服务
+        
+        // 2. 状态服务
         stateService.init();
         window.state = stateService.getState();
         window.setState = stateService.setState;
         window.stateService = stateService;
-        // DOM元素缓存
+        
+        // 3. DOM元素缓存
         window.elements = elements;
-        // 渲染服务别名
+        
+        // 4. 渲染服务别名
         window.render = render;
-        // 路由服务
+        
+        // 5. 路由服务
         window.router = routerService;
-        // 工具模块
+        
+        // 6. 工具模块
         window.coreUtils = coreUtils;
         window.dateUtils = dateUtils;
         window.snapshotUtils = snapshotUtils;
         window.clipboardUtils = clipboardUtils;
         window.stateUtils = stateUtils;
-        // 调试开关
-        window.GLOBAL_DEBUG = false;
-                
-        window.StatisticsParamsService = StatisticsParamsService;
-        window.DatePickerService = DatePickerService;
+        window.VirtualList = VirtualList;
+        
+        // 7. 调试开关
+        window.GLOBAL_DEBUG = true;
     </script>
 </head>
 <body class="min-h-screen" style="opacity: 0; transition: opacity 0.5s ease-in-out;">
@@ -521,32 +539,38 @@
     <!-- 通知提示 -->
     <div id="notification-container" class="fixed top-20 right-4 z-50 flex flex-col items-end space-y-2"></div>
     
-    <!-- 统计控制器 -->
+    <!-- 第二模块：初始化剩余服务和应用启动 -->
     <script type="module">
-        import { createClient } from '@supabase/supabase-js';
-        // 只导入新增的服务模块（其他服务通过 window 访问）
-        import DataLoadService from './src/services/dataLoadService.js';
-        import ViewRefreshService from './src/services/viewRefreshService.js';
-        import ThemeService from './src/services/themeService.js';
-        import AuthUIService from './src/services/authUIService.js';
-        import InitService from './src/services/initService.js';
-        import CustomSelectService from './src/services/customSelectService.js';
+        /**
+         * 导入剩余的服务模块
+         * 注意：第一模块已通过window暴露了基础服务
+         */
+        // 渲染服务
         import { ChartService } from './src/services/chartService.js';
         import { StatisticsCalculatorService } from './src/services/statisticsCalculatorService.js';
         import { StatisticsRenderService } from './src/services/statisticsRenderService.js';
-        import { DataCompareService } from './src/services/dataCompareService.js';
         import { ConflictCheckService } from './src/services/conflictCheckService.js';
         import { FeeCalculationService } from './src/services/feeCalculationService.js';
         import { CalendarRenderService } from './src/services/calendarRenderService.js';
         import { ListRenderService } from './src/services/listRenderService.js';
-        import EventBindingService from './src/services/eventBindingService.js';
-        import CourseActionService from './src/services/courseActionService.js';
-        import LoadSystemService from './src/services/loadSystemService.js';
         import PageRenderService from './src/services/pageRenderService.js';
-        import CourseTagRenderService from './src/services/courseTagRenderService.js';
-        import { generateColor } from './src/utils/colorUtils.js';
+        // UI服务
+        import DatePickerService from './src/services/datePickerService.js';
+        import CustomSelectService from './src/services/customSelectService.js';
+        import ThemeService from './src/services/themeService.js';
+        import AuthUIService from './src/services/authUIService.js';
+        // 业务服务
+        import DataLoadService from './src/services/dataLoadService.js';
+        import ViewRefreshService from './src/services/viewRefreshService.js';
+        import InitService from './src/services/initService.js';
+        import EventBindingService from './src/services/eventBindingService.js';
+        import LoadSystemService from './src/services/loadSystemService.js';
+        // 工具函数
+        import { generateColor, removeColorAssignment, reassignColors, getUsedColors, setColor, getColorPalette, initColorsFromState } from './src/utils/colorUtils.js';
 
-        // 使用 window 上已经初始化的服务和状态
+        /**
+         * 使用 window 上已经初始化的服务和状态
+         */
         const state = window.state;
         const elements = window.elements;
         const coreUtils = window.coreUtils;
@@ -557,19 +581,26 @@
         const routerService = window._routerService;
         const eventDispatcherService = window.eventDispatcherService;
         
-        // Supabase配置
+        /**
+         * 配置Supabase
+         */
         window.supabaseConfig = {
             url: import.meta.env.VITE_SUPABASE_URL,
             key: import.meta.env.VITE_SUPABASE_ANON_KEY
         };
 
-        // 安全检查：确保Supabase配置存在
+        /**
+         * 安全检查：确保Supabase配置存在
+         */
         if (!window.supabaseConfig.url || !window.supabaseConfig.key) {
             if (window.GLOBAL_DEBUG) console.error('Supabase配置缺失');
         }
         
-                try {
-            const client = createClient(
+        /**
+         * 初始化Supabase客户端
+         */
+        try {
+            const client = window.createClient(
                 window.supabaseConfig.url,
                 window.supabaseConfig.key,
                 {
@@ -593,7 +624,9 @@
             window.supabaseReady = Promise.resolve(null);
         }
         
-        // 注册路由
+        /**
+         * 注册路由
+         */
         routerService.register('/', () => {
             window.render.page('calendar-page');
         });
@@ -606,7 +639,9 @@
             window.render.page('statistics-page');
         });
                 
-        // 更新导航按钮的点击事件
+        /**
+         * 更新导航按钮的点击事件
+         */
         document.querySelectorAll('[data-page]').forEach(button => {
             button.addEventListener('click', () => {
                 const page = button.dataset.page;
@@ -617,33 +652,30 @@
             });
         });
         
-        // 在模块加载时初始化全局事件分发器
+        /**
+         * 初始化全局事件分发器
+         */
         eventDispatcherService.init();
         
-        // 初始化自定义选择器服务
+        /**
+         * 初始化各个服务实例
+         */
+        // 1. 自定义选择器服务
         const customSelectService = new CustomSelectService();
         
-        // 初始化统计参数服务和日期选择器服务
-        const statisticsParamsService = new StatisticsParamsService(state, elements, coreUtils);
+        // 2. 日期选择器服务
         const datePickerService = new DatePickerService(coreUtils);
-        window.statisticsParamsService = statisticsParamsService;
         window.datePickerService = datePickerService;
         
-        // 初始化视图刷新服务
-        const viewRefreshService = new ViewRefreshService(state, window.render, elements, statisticsParamsService);
+        // 3. 视图刷新服务
+        const viewRefreshService = new ViewRefreshService(state, window.render, elements);
         window.viewRefreshService = viewRefreshService;
         
-        // 初始化数据加载服务（需要在 utils 创建后初始化）
-        let dataLoadService;
-
-        // 初始化主题服务
-        let themeService;
-
-        // 初始化认证UI服务
-        let authUIService;
-
-        // 初始化服务
-        let initService;
+        // 4. 声明服务变量，稍后初始化
+        let dataLoadService;     // 数据加载服务
+        let themeService;          // 主题服务
+        let authUIService;         // 认证UI服务
+        let initService;            // 初始化服务
         
         /* ============================================
          * 集中暴露全局变量
@@ -651,6 +683,7 @@
         // 服务实例
         window.serverStatusService = serverStatusService;
         window.notificationService = notificationService;
+        
         // 状态和状态更新函数
         window.state = state;
         window.setState = setState;
@@ -684,53 +717,36 @@
             copyCourses: clipboardUtils.copyCourses,
             pasteCourses: clipboardUtils.pasteCourses,
             updateStateFromData: stateUtils.updateStateFromData,
-            getStatisticsParams: statisticsParamsService.getStatisticsParams.bind(statisticsParamsService),
             saveData: stateUtils.saveData,
             saveToLocal: stateUtils.saveToLocal,
             syncToServer: stateUtils.syncToServer,
             
             /**
              * 统一错误处理函数
-             * @param {Error|string} error - 错误对象或错误信息
-             * @param {string} context - 错误上下文
-             * @param {boolean} showNotification - 是否显示通知
              */
             handleError: (error, context, showNotification = false) => {
                 const errorMessage = typeof error === 'string' ? error : error.message || '未知错误';
                 if (window.GLOBAL_DEBUG) console.error(`${context}:`, error);
-                
-                // 根据上下文显示不同的错误消息
+
                 if (showNotification) {
-                    if (context === '登录失败') {
-                        notificationService.show('登陆失败', 'error');
-                    } else if (context === '注册失败') {
-                        notificationService.show('注册失败，请稍后重试', 'error');
-                    } else {
-                        notificationService.show(errorMessage, 'error');
-                    }
+                    notificationService.show(errorMessage, 'error');
                 }
             },
             
             /**
              * 显示模态框，带动画效果
-             * @param {HTMLElement} modalElement - 模态框元素
-             * @param {HTMLElement} containerElement - 容器元素（用于缩放动画）
-             * @param {string} displayType - 显示类型，默认为 'flex'
              */
             showModal: (modalElement, containerElement, displayType = 'flex') => {
                 if (!modalElement || !containerElement) return;
-                
-                // 重置状态
+
                 modalElement.style.pointerEvents = 'auto';
                 modalElement.style.opacity = '0';
                 containerElement.classList.remove('scale-100', 'opacity-100');
                 containerElement.classList.add('scale-95', 'opacity-0');
-                
-                // 显示并应用动画
+
                 modalElement.style.display = displayType;
-                modalElement.offsetHeight; // 强制重绘
-                
-                // 渐显和缩放动画
+                modalElement.offsetHeight;
+
                 modalElement.style.opacity = '1';
                 containerElement.classList.remove('scale-95', 'opacity-0');
                 containerElement.classList.add('scale-100', 'opacity-100');
@@ -738,19 +754,14 @@
             
             /**
              * 隐藏模态框，带动画效果
-             * @param {HTMLElement} modalElement - 模态框元素
-             * @param {HTMLElement} containerElement - 容器元素（用于缩放动画）
-             * @param {number} animationDuration - 动画持续时间（毫秒）
              */
             hideModal: (modalElement, containerElement, animationDuration = 300) => {
                 if (!modalElement || !containerElement) return;
-                
-                // 应用淡出和缩放动画
+
                 modalElement.style.opacity = '0';
                 containerElement.classList.remove('scale-100', 'opacity-100');
                 containerElement.classList.add('scale-95', 'opacity-0');
-                
-                // 等待 CSS 动画完成后隐藏
+
                 setTimeout(() => {
                     modalElement.style.display = 'none';
                 }, animationDuration);
@@ -758,16 +769,11 @@
             
             /**
              * 带超时处理的异步操作
-             * @param {Function} promiseFn - 返回Promise的函数
-             * @param {number} timeout - 超时时间（毫秒）
-             * @param {string} timeoutMessage - 超时错误信息
-             * @returns {Promise<any>} 操作结果
              */
             withTimeout: async (promiseFn, timeout = 10000, timeoutMessage = '操作超时') => {
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error(timeoutMessage)), timeout);
                 });
-                
                 return Promise.race([promiseFn(), timeoutPromise]);
             },
             
@@ -777,6 +783,12 @@
              * @returns {string} 十六进制颜色值
              */
             generateColor: generateColor,
+            removeColorAssignment: removeColorAssignment,
+            reassignColors: reassignColors,
+            getUsedColors: getUsedColors,
+            setColor: setColor,
+            getColorPalette: getColorPalette,
+            initColorsFromState: initColorsFromState,
             
             /**
              * 存储之前的服务器状态
@@ -786,8 +798,22 @@
             /**
              * 比较本地和服务器数据
              */
-            compareLocalAndServerData: () => {
-                return dataCompareService.compareLocalAndServerData(utils);
+            compareLocalAndServerData: async () => {
+                const localData = dataService.getLocalData();
+                if (!localData) return true;
+                
+                if (window.supabaseClient) {
+                    try {
+                        const { data: serverData } = await window.supabaseClient
+                            .from('coursemanagerdata')
+                            .select('*')
+                            .single();
+                        return dataService.checkDataDifference(localData, serverData);
+                    } catch (error) {
+                        return true;
+                    }
+                }
+                return true;
             },
             
             /**
@@ -797,7 +823,7 @@
              * @returns {boolean} 是否有差异
              */
             checkDataDifference: (localData, serverData) => {
-                return dataCompareService.checkDataDifference(localData, serverData);
+                return dataService.checkDataDifference(localData, serverData);
             },
 
             /**
@@ -830,69 +856,7 @@
             calculateFee: () => {
                 feeCalculationService.calculateFee(utils);
             },
-
-            /**
-             * 生成点击外部关闭选择器的监听器
-             * @param {string} containerId - 容器ID
-             * @param {string} inputSelector - 输入元素选择器
-             * @returns {Function} 点击事件监听器
-             */
-            createCloseListener: (containerId, inputSelector) => {
-                const closeListener = function(event) {
-                    const container = document.getElementById(containerId);
-                    const input = document.querySelector(inputSelector);
-                    
-                    if (container && !container.contains(event.target) && (!input || !input.contains(event.target))) {
-                        container.classList.add('hidden');
-                        document.removeEventListener('click', closeListener);
-                    }
-                };
-                return closeListener;
-            },
             
-            /**
-             * 切换选择器显示/隐藏
-             * @param {string} containerId - 容器ID
-             * @param {Array|string} otherContainers - 其他容器ID或选择器
-             * @param {Function} closeListener - 点击外部关闭的监听器
-             * @param {Function} renderCallback - 渲染回调函数
-             */
-            togglePicker: (containerId, otherContainers, closeListener, renderCallback) => {
-                const container = document.getElementById(containerId);
-                if (container) {
-                    // 先隐藏其他选择器
-                    if (Array.isArray(otherContainers)) {
-                        otherContainers.forEach(id => {
-                            const otherContainer = document.getElementById(id);
-                            if (otherContainer) {
-                                otherContainer.classList.add('hidden');
-                            }
-                        });
-                    } else if (typeof otherContainers === 'string') {
-                        document.querySelectorAll(otherContainers).forEach(el => {
-                            if (el.id !== containerId) {
-                                el.classList.add('hidden');
-                            }
-                        });
-                    }
-                    
-                    // 直接显示当前选择器
-                    container.classList.remove('hidden');
-                    
-                    // 执行渲染回调
-                    if (typeof renderCallback === 'function') {
-                        renderCallback(containerId);
-                    }
-                    
-                    // 如果显示了选择器，添加点击外部关闭的监听
-                    if (!container.classList.contains('hidden') && typeof closeListener === 'function') {
-                        // 先移除之前的监听，避免重复绑定
-                        document.removeEventListener('click', closeListener);
-                        document.addEventListener('click', closeListener);
-                    }
-                }
-            },
-
             toggleTimePicker: datePickerService.toggleTimePicker.bind(datePickerService),
             toggleDatePicker: datePickerService.toggleDatePicker.bind(datePickerService),
             closeAllSelectDropdowns: customSelectService.closeAllSelectDropdowns.bind(customSelectService),
@@ -914,9 +878,14 @@
                 window.stateService.updateStateFromData(data, useDefaults);
             },
             
-            generateYearDropdowns: statisticsParamsService.generateYearDropdowns.bind(statisticsParamsService),
-            generateMonthDropdowns: statisticsParamsService.generateMonthDropdowns.bind(statisticsParamsService),
-
+            generateYearDropdowns: (utilsParam = utils) => statisticsRenderService.generateYearDropdowns(utilsParam),
+            generateMonthDropdowns: (utilsParam = utils) => statisticsRenderService.generateMonthDropdowns(utilsParam),
+            getStatisticsParams: (utilsParam = utils) => statisticsRenderService.getStatisticsParams(utilsParam),
+            
+            handleCourseClick: (element, courseId, event) => calendarRenderService.handleCourseClick(element, courseId, event),
+            showActionButtons: (element, courseId) => calendarRenderService.showActionButtons(element, courseId),
+            hideActionButtons: (element) => calendarRenderService.hideActionButtons(element),
+            
             refreshAllViews: viewRefreshService.refreshAllViews.bind(viewRefreshService),
             
             /**
@@ -932,19 +901,19 @@
             
             /**
              * 防抖保存数据函数
-             * @description 在utils对象创建后定义，使用utils.debounce包装utils.saveData
              */
             debouncedSaveData: null,
             
             /**
              * 防抖同步到服务器函数
-             * @description 在utils对象创建后定义，使用utils.debounce包装utils.syncToServer
              */
             debouncedSyncToServer: null,
             
             loadData: () => dataLoadService.loadData(),
             
-            // 初始化防抖保存数据函数（在utils对象创建后）
+            /**
+             * 初始化防抖保存数据函数
+             */
             initDebouncedSave: function() {
                 this.debouncedSaveData = this.debounce(this.saveData, 2000);
                 this.debouncedSyncToServer = this.debounce(this.syncToServer, 3000);
@@ -956,7 +925,6 @@
             
             createDatePickerTemplate: (id, inputId) => {
                 return `
-                    <!-- 自定义日期选择器 -->
                     <div id="${id}" class="absolute z-50 mt-1 w-full border rounded-md shadow-lg hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
                         <div class="p-3">
                             <div class="flex justify-between items-center mb-3">
@@ -985,12 +953,9 @@
             
             createTimePickerTemplate: (id, inputId) => {
                 return `
-                    <!-- 自定义时间选择器 -->
                     <div id="${id}" class="absolute z-50 mt-1 w-full border rounded-md shadow-lg hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
                         <div class="p-3">
-
                             <div class="flex">
-                                <!-- 小时选择 -->
                                 <div class="flex-1 border-r" style="border-color: var(--border-color);">
                                     <div class="overflow-hidden max-h-40 overflow-y-auto scrollbar-hide">
                                         ${Array.from({length: 24}, (_, i) => {
@@ -999,7 +964,6 @@
                                         }).join('')}
                                     </div>
                                 </div>
-                                <!-- 分钟选择 -->
                                 <div class="flex-1">
                                     <div class="overflow-hidden max-h-40 overflow-y-auto scrollbar-hide">
                                         ${Array.from({length: 12}, (_, i) => {
@@ -1012,82 +976,79 @@
                         </div>
                     </div>
                 `;
-            },
-            
+            }
         };
         
-        // 集中暴露全局变量
+        /**
+         * 集中暴露工具函数到全局
+         */
         window.utils = utils;
         
-        // 初始化数据加载服务（需要在 utils 创建后初始化，因为它依赖 utils）
+        /**
+         * 初始化服务（按依赖顺序）
+         */
+        // 1. 数据加载服务（需要在 utils 创建后初始化，因为它依赖 utils）
         dataLoadService = new DataLoadService(state, notificationService, serverStatusService, utils);
         window.dataLoadService = dataLoadService;
 
-        // 初始化主题服务
+        // 2. 主题服务
         themeService = new ThemeService(elements, utils, window.render);
         window.themeService = themeService;
 
-        // 初始化系统加载服务
+        // 3. 系统加载服务
         const loadSystemService = new LoadSystemService();
         window.loadSystemService = loadSystemService;
         const loadSystem = loadSystemService.loadSystem.bind(loadSystemService);
 
-        // 初始化认证UI服务
+        // 4. 认证UI服务
         authUIService = new AuthUIService(elements, utils, notificationService, authService, modalService, serverStatusService);
         window.authUIService = authUIService;
         authUIService.setOriginalMethods(utils.saveData, utils.loadData);
         authUIService.setLoadSystemService(loadSystemService);
 
-        // 初始化系统加载服务（在authUIService之后）
+        // 5. 初始化系统加载服务（在authUIService之后）
         loadSystemService.init(state, elements, utils, window.render, themeService, authUIService, serverStatusService, notificationService);
 
-        // 初始化初始化服务
+        // 6. 初始化初始化服务
         initService = new InitService(utils, notificationService, serverStatusService, authUIService, themeService, loadSystemService, elements);
         window.initService = initService;
         
-        // 初始化图表服务
+        // 7. 渲染相关服务
+        // 7.1 图表服务
         const chartService = new ChartService();
         
-        // 初始化统计计算服务
+        // 7.2 统计计算服务
         const statisticsCalculatorService = new StatisticsCalculatorService(state);
         
-        // 初始化统计渲染服务
+        // 7.3 统计渲染服务
         const statisticsRenderService = new StatisticsRenderService(state, elements, chartService, statisticsCalculatorService);
         window.statisticsRenderService = statisticsRenderService;
         
-        // 初始化数据比较服务
-        const dataCompareService = new DataCompareService(state, notificationService, viewRefreshService);
-        
-        // 初始化课程冲突检查服务
+        // 7.4 课程冲突检查服务
         const conflictCheckService = new ConflictCheckService(state);
         
-        // 初始化费用计算服务
+        // 7.5 费用计算服务
         const feeCalculationService = new FeeCalculationService(state);
         
-        // 初始化日历渲染服务
+        // 7.6 日历渲染服务
         const calendarRenderService = new CalendarRenderService(state, elements, utils);
         window.calendarRenderService = calendarRenderService;
         
-        // 初始化列表渲染服务
+        // 7.7 列表渲染服务
         const listRenderService = new ListRenderService(state, elements, utils);
         window.listRenderService = listRenderService;
 
-        // 初始化课程操作服务
-        const courseActionService = new CourseActionService(elements, window.lucide);
-        window.courseActionService = courseActionService;
-
-        // 初始化页面渲染服务
+        // 7.8 页面渲染服务
         const pageRenderService = new PageRenderService(elements);
         window.pageRenderService = pageRenderService;
 
-        // 初始化课程标签渲染服务
-        const courseTagRenderService = new CourseTagRenderService(utils);
-        window.courseTagRenderService = courseTagRenderService;
-
-        // 初始化事件绑定服务
+        // 8. 事件绑定服务
         const eventBindingService = new EventBindingService(elements, state, utils, window.render, modalService, notificationService);
         window.eventBindingService = eventBindingService;
         
+        /**
+         * 将临时保存的函数添加到utils并清理
+         */
         // 添加课程表单模板生成器到utils
         if (window._getCourseFormTemplate) {
             utils.getCourseFormTemplate = window._getCourseFormTemplate;
@@ -1100,64 +1061,90 @@
             delete window._initCourseFormEvents;
         }
 
-        // 渲染函数 - 将方法合并到renderService
+        /**
+         * 组装render对象，添加所有渲染方法
+         */
         Object.assign(window.render, {
-            // 【新增】课程标签统一生成器
+            /**
+             * 课程标签统一生成器
+             */
             getCourseTagHTML: (course) => {
-                return courseTagRenderService.getCourseTagHTML(course);
+                return calendarRenderService.getCourseTagHTML(course);
             },
             
-            // 渲染日历
+            /**
+             * 渲染日历
+             */
             calendar: (forceUpdate = false) => {
                 calendarRenderService.calendar(forceUpdate);
             },
             
-            // 更新所有包含课程的日期单元格
+            /**
+             * 更新所有包含课程的日期单元格
+             */
             updateCourseCells: () => {
                 calendarRenderService.updateCourseCells();
             },
             
-            // 更新单个日期单元格的课程
+            /**
+             * 更新单个日期单元格的课程
+             */
             updateDayCell: (cell, courses) => {
                 calendarRenderService.updateDayCell(cell, courses);
             },
             
-            // 获取日期详细信息
+            /**
+             * 获取日期详细信息
+             */
             getDateInfo: (dateStr) => {
                 return calendarRenderService.getDateInfo(dateStr);
             },
             
-            // 渲染学生列表
+            /**
+             * 渲染学生列表
+             */
             students: () => {
                 listRenderService.students();
             },
             
-            // 渲染统计页面
+            /**
+             * 渲染统计页面
+             */
             statistics: (year, month, organization = '') => {
                 statisticsRenderService.statistics(year, month, organization, utils);
             },
             
-            // 渲染图表
+            /**
+             * 渲染图表
+             */
             chart: (canvasId, data, title) => {
                 chartService.chart(canvasId, data, title, utils);
             },
             
-            // 渲染机构详细数据表格
+            /**
+             * 渲染机构详细数据表格
+             */
             orgTable: (data, totalCourses) => {
                 statisticsRenderService.orgTable(data, totalCourses, utils);
             },
             
-            // 渲染详细课型分布表格
+            /**
+             * 渲染详细课型分布表格
+             */
             detailedTypeTable: (detailedStats) => {
                 statisticsRenderService.detailedTypeTable(detailedStats, utils);
             },
             
-            // 渲染学生数据模块
+            /**
+             * 渲染学生数据模块
+             */
             studentData: (studentStats) => {
                 statisticsRenderService.studentData(studentStats, utils);
             },
             
-            // 渲染页面
+            /**
+             * 渲染页面
+             */
             page: (pageId) => {
                 // 使用页面渲染服务切换页面
                 pageRenderService.page(pageId);
@@ -1174,23 +1161,28 @@
                 renderMap[pageId]?.();
             },
             
-            // 处理课程标签点击事件
+            /**
+             * 处理课程标签点击事件
+             */
             handleCourseClick: (element, courseId, event) => {
-                courseActionService.handleCourseClick(element, courseId, event);
+                calendarRenderService.handleCourseClick(element, courseId, event);
             }
         });
         
-        // 初始化路由
+        /**
+         * 应用启动流程
+         */
+        // 1. 初始化路由
         routerService.init();
 
-        // 存储原始方法（用于试用模式恢复）
+        // 2. 存储原始方法（用于试用模式恢复）
         let originalSaveData = utils.saveData;
         let originalLoadData = utils.loadData;
         
-        // 初始化事件监听（导航、搜索、下拉菜单等）
+        // 3. 初始化事件监听（导航、搜索、下拉菜单等）
         eventBindingService.init();
 
-        // 启动应用
+        // 4. 启动应用
         initService.init();
     </script>
 </body></html>

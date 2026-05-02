@@ -3,6 +3,15 @@
  * 负责显示各种模态框
  */
 
+function isLightColor(hexColor) {
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    return brightness > 155;
+}
+
 class ModalService {
     constructor() {
         this.container = null;
@@ -22,7 +31,6 @@ class ModalService {
         this.nestedContainer = document.getElementById('nested-modal-container');
         this.nestedContent = document.getElementById('nested-modal-content');
 
-        // 如果容器不存在，创建它们
         if (!this.container) {
             this.container = document.createElement('div');
             this.container.id = 'modal-container';
@@ -56,50 +64,41 @@ class ModalService {
 
     /**
      * 显示模态框
-     * @param {string} content - 模态框内容
-     * @param {Object} options - 选项
      */
     show(content, options = {}) {
         if (!this.container || !this.content) {
             this.init();
         }
 
-        // 先移除之前的事件监听器
         this.eventListeners.forEach(({ element, type, listener }) => {
             element.removeEventListener(type, listener);
         });
         this.eventListeners = [];
 
-        // 清除之前的setTimeout
         if (this.setTimeoutId) {
             clearTimeout(this.setTimeoutId);
             this.setTimeoutId = null;
         }
 
-        // 阻止背景滚动
         const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
         document.body.style.overflow = 'hidden';
         if (scrollBarWidth > 0) {
             document.body.style.paddingRight = `${scrollBarWidth}px`;
         }
 
-        // 设置内容
         this.content.innerHTML = content;
 
-        // 显示模态框
         this.container.style.display = 'flex';
-        this.container.offsetHeight; // 触发重排
+        this.container.offsetHeight;
         this.container.style.opacity = '1';
         this.content.classList.remove('scale-90', 'opacity-0', 'translate-y-4');
         this.content.classList.add('scale-100', 'opacity-100', 'translate-y-0');
 
-        // 添加关闭按钮事件（同时支持 class="close-modal" 和 data-action="close-modal"）
         const closeButtons = this.content.querySelectorAll('.close-modal, [data-action="close-modal"]');
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => this.hide());
         });
 
-        // 事件委托：统一处理data-action按钮
         const actionListener = (e) => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
@@ -132,25 +131,21 @@ class ModalService {
                     }
                     break;
                 case 'select-time-hour':
-                    // 直接实现时间选择逻辑
                     const inputHour = document.getElementById(btn.dataset.inputId);
                     if (inputHour) {
                         const currentValue = inputHour.value || '00:00';
                         const [, minute] = currentValue.split(':');
                         inputHour.value = `${btn.dataset.hour}:${minute}`;
 
-                        // 关闭时间选择器
                         if (btn.dataset.inputId === 'course-start-time') {
                             const startContainer = document.getElementById('start-time-container');
                             window.utils.safeAddClass(startContainer, 'hidden');
                         }
 
-                        // 触发费用计算
                         if (typeof window.utils.calculateFee === 'function') {
                             window.utils.calculateFee();
                         }
 
-                        // 如果是开始时间，自动计算结束时间
                         if (btn.dataset.inputId === 'course-start-time' && typeof window.utils.calculateEndTime === 'function') {
                             const durationInput = document.getElementById('course-duration');
                             const duration = durationInput ? parseInt(durationInput.value) || 120 : 120;
@@ -165,18 +160,15 @@ class ModalService {
                         const [hour] = currentValue.split(':');
                         inputMinute.value = `${hour}:${btn.dataset.minute}`;
 
-                        // 关闭时间选择器
                         if (btn.dataset.inputId === 'course-start-time') {
                             const startContainer = document.getElementById('start-time-container');
                             window.utils.safeAddClass(startContainer, 'hidden');
                         }
 
-                        // 触发费用计算
                         if (typeof window.utils.calculateFee === 'function') {
                             window.utils.calculateFee();
                         }
 
-                        // 如果是开始时间，自动计算结束时间
                         if (btn.dataset.inputId === 'course-start-time' && typeof window.utils.calculateEndTime === 'function') {
                             const durationInput = document.getElementById('course-duration');
                             const duration = durationInput ? parseInt(durationInput.value) || 120 : 120;
@@ -189,16 +181,13 @@ class ModalService {
                     if (durationInput) {
                         durationInput.value = btn.dataset.duration;
 
-                        // 关闭下拉菜单
                         const durationDropdown = document.getElementById('duration-dropdown');
                         window.utils.safeAddClass(durationDropdown, 'hidden');
 
-                        // 计算结束时间
                         if (typeof window.utils.calculateEndTime === 'function') {
                             window.utils.calculateEndTime('course-start-time', 'course-end-time', parseInt(btn.dataset.duration));
                         }
 
-                        // 触发费用计算
                         if (typeof window.utils.calculateFee === 'function') {
                             window.utils.calculateFee();
                         }
@@ -212,7 +201,6 @@ class ModalService {
         this.content.addEventListener('click', actionListener);
         this.eventListeners.push({ element: this.content, type: 'click', listener: actionListener });
 
-        // 点击背景关闭（带拖动检测）
         let mouseDownPos = null;
         this.container.onmousedown = (e) => {
             if (e.target === this.container) {
@@ -230,53 +218,40 @@ class ModalService {
             }
         };
 
-        // ESC键关闭
         document.addEventListener('keydown', this.handleKeydown.bind(this));
 
-        // 执行回调
         if (options.onShow) {
             options.onShow();
         }
     }
 
-    /**
-     * 键盘事件处理
-     */
     handleKeydown(e) {
         if (e.key === 'Escape') {
             this.hide();
         }
     }
 
-    /**
-     * 隐藏模态框
-     */
     hide() {
         if (!this.container || !this.content) return;
 
         console.log('hide - 清理 currentManagementModalConfig');
         window.currentManagementModalConfig = null;
 
-        // 隐藏动画
         this.content.classList.remove('scale-100', 'opacity-100', 'translate-y-0');
         this.content.classList.add('scale-90', 'opacity-0', 'translate-y-4');
         this.container.style.opacity = '0';
 
-        // 恢复背景滚动
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
 
         setTimeout(() => {
             this.container.style.display = 'none';
-            // 触发hide事件
             const hideEvent = new Event('hide');
             this.container.dispatchEvent(hideEvent);
         }, 400);
 
-        // 移除事件监听
         document.removeEventListener('keydown', this.handleKeydown.bind(this));
 
-        // 移除模态框内容的事件监听器
         this.eventListeners.forEach(({ element, type, listener }) => {
             if (element) {
                 element.removeEventListener(type, listener);
@@ -284,41 +259,31 @@ class ModalService {
         });
         this.eventListeners = [];
 
-        // 清除setTimeout
         if (this.setTimeoutId) {
             clearTimeout(this.setTimeoutId);
             this.setTimeoutId = null;
         }
     }
 
-    /**
-     * 显示嵌套模态框
-     * @param {string} content - 模态框内容
-     * @param {Object} options - 选项
-     */
     showNested(content, options = {}) {
         if (!this.nestedContainer || !this.nestedContent) {
             this.init();
         }
 
-        // 阻止背景滚动
         document.body.style.position = 'fixed';
         document.body.style.top = `-${window.scrollY}px`;
         document.body.style.left = '0';
         document.body.style.right = '0';
         document.body.style.bottom = '0';
 
-        // 设置内容
         this.nestedContent.innerHTML = content;
 
-        // 显示模态框
         this.nestedContainer.style.display = 'flex';
-        this.nestedContainer.offsetHeight; // 触发重排
+        this.nestedContainer.offsetHeight;
         this.nestedContainer.style.opacity = '1';
         this.nestedContent.classList.remove('scale-90', 'opacity-0', 'translate-y-4');
         this.nestedContent.classList.add('scale-100', 'opacity-100', 'translate-y-0');
 
-        // ESC键关闭嵌套模态框
         const nestedHandleKeydown = (e) => {
             if (e.key === 'Escape') {
                 this.hideNested();
@@ -326,36 +291,28 @@ class ModalService {
         };
         document.addEventListener('keydown', nestedHandleKeydown);
 
-        // 点击背景关闭嵌套模态框
         this.nestedContainer.onclick = (e) => {
             if (e.target === this.nestedContainer) {
                 this.hideNested();
             }
         };
 
-        // 保存键盘处理函数引用以便后续移除
         this.nestedContainer._keydownHandler = nestedHandleKeydown;
 
-        // 执行回调
         if (options.onShow) {
             options.onShow();
         }
     }
 
-    /**
-     * 隐藏嵌套模态框
-     */
     hideNested() {
         if (!this.nestedContainer || !this.nestedContent) return;
 
-        // 隐藏动画
         this.nestedContent.classList.remove('scale-100', 'opacity-100', 'translate-y-0');
         this.nestedContent.classList.add('scale-90', 'opacity-0', 'translate-y-4');
         this.nestedContainer.style.opacity = '0';
 
         setTimeout(() => {
             this.nestedContainer.style.display = 'none';
-            // 恢复背景滚动
             const scrollY = parseInt(document.body.style.top) * -1;
             document.body.style.position = '';
             document.body.style.top = '';
@@ -365,42 +322,34 @@ class ModalService {
             window.scrollTo(0, scrollY);
         }, 300);
 
-        // 移除事件监听
         if (this.nestedContainer._keydownHandler) {
             document.removeEventListener('keydown', this.nestedContainer._keydownHandler);
             this.nestedContainer._keydownHandler = null;
         }
     }
 
-    /**
-     * 显示确认模态框
-     * @param {string} message - 确认消息
-     * @param {Function} onConfirm - 确认回调
-     * @param {string} type - 类型：delete, confirm
-     */
     showConfirm(message, onConfirm, type = 'confirm') {
-        // 根据类型设置不同的样式
         const typeConfig = {
             confirm: {
                 icon: 'badge-question-mark',
-                bgColor: 'bg-blue-100',
-                textColor: 'text-blue-500',
+                bgStyle: 'background-color: rgba(59, 130, 246, 0.1);',
+                textStyle: 'color: var(--color-primary);',
                 btnText: '确定',
-                btnColor: 'bg-blue-600 hover:bg-blue-700'
+                btnStyle: 'background-color: var(--color-primary);'
             },
             delete: {
                 icon: 'triangle-alert',
-                bgColor: 'bg-red-100',
-                textColor: 'text-red-500',
+                bgStyle: 'background-color: rgba(239, 68, 68, 0.1);',
+                textStyle: 'color: var(--color-danger);',
                 btnText: '删除',
-                btnColor: 'bg-red-600 hover:bg-red-700'
+                btnStyle: 'background-color: var(--color-danger);'
             },
             warning: {
                 icon: 'circle-alert',
-                bgColor: 'bg-yellow-100',
-                textColor: 'text-yellow-500',
+                bgStyle: 'background-color: rgba(245, 158, 11, 0.1);',
+                textStyle: 'color: var(--color-warning);',
                 btnText: '确定',
-                btnColor: 'bg-yellow-600 hover:bg-yellow-700'
+                btnStyle: 'background-color: var(--color-warning);'
             }
         };
 
@@ -409,8 +358,8 @@ class ModalService {
         const content = `
             <div class="p-6">
                 <div class="text-center mb-6">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full ${config.bgColor} ${config.textColor} mb-4">
-                        <i data-lucide="${config.icon}" class="text-2xl inline-block" style="width: 24px; height: 24px;"></i>
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="${config.bgStyle}">
+                        <i data-lucide="${config.icon}" class="text-2xl inline-block" style="${config.textStyle} width: 24px; height: 24px;"></i>
                     </div>
                     <p style="color: var(--text-primary);">${message}</p>
                 </div>
@@ -418,7 +367,7 @@ class ModalService {
                     <button id="cancel-confirm" class="flex-1 px-4 py-2 rounded-lg transition-colors" style="border: 1px solid var(--border-color); color: var(--text-primary); background-color: var(--bg-secondary);">
                         取消
                     </button>
-                    <button id="accept-confirm" class="flex-1 px-4 py-2 ${config.btnColor} text-white rounded-lg transition-colors">
+                    <button id="accept-confirm" class="flex-1 px-4 py-2 text-white rounded-lg transition-colors" style="${config.btnStyle}">
                         ${config.btnText}
                     </button>
                 </div>
@@ -449,7 +398,7 @@ class ModalService {
                     <div class="mb-4">
                         <h3 class="text-lg font-semibold" style="color: var(--text-primary);">添加学生</h3>
                     </div>
-                    <div id="add-student-form">
+                    <form id="add-student-form">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">姓名</label>
                             <input type="text" id="student-name" class="w-full px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
@@ -497,10 +446,10 @@ class ModalService {
                             </div>
                         </div>
                         <div class="flex justify-end">
-                            <button type="button" class="close-modal bg-red-500 text-white px-4 py-2 rounded-lg mr-2">关闭</button>
-                            <button type="button" id="add-student-save" class="bg-primary text-white px-4 py-2 rounded-lg">保存</button>
+                            <button type="button" class="close-modal text-white px-4 py-2 rounded-lg mr-2" style="background-color: var(--color-secondary);">关闭</button>
+                            <button type="submit" id="add-student-save" class="bg-primary text-white px-4 py-2 rounded-lg">保存</button>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         `;
@@ -510,17 +459,17 @@ class ModalService {
                 if (window.lucide) {
                     lucide.createIcons();
                 }
-                // 绑定保存按钮事件
-                const addStudentSave = document.getElementById('add-student-save');
-                if (addStudentSave) {
-                    addStudentSave.addEventListener('click', async () => {
+                const addStudentForm = document.getElementById('add-student-form');
+                if (addStudentForm) {
+                    addStudentForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
                         const name = document.getElementById('student-name').value.trim();
                         const organization = document.querySelector('#student-organization-options .custom-option.selected')?.dataset.value;
                         const grade = document.querySelector('#student-grade-options .custom-option.selected')?.dataset.value;
                         const duration = parseInt(document.getElementById('duration-one-on-one').value) || 120;
                         const fee = parseFloat(document.getElementById('fee-one-on-one').value) || 0;
 
-                        // 验证数据
                         if (!name) {
                             window.notificationService.show('请输入学生姓名', 'warning');
                             return;
@@ -534,7 +483,6 @@ class ModalService {
                             return;
                         }
 
-                        // 创建学生数据
                         const newStudent = {
                             id: 'student_' + Date.now(),
                             name,
@@ -549,22 +497,17 @@ class ModalService {
                             updatedAt: new Date().toISOString()
                         };
 
-                        // 添加学生
                         window.state.students.push(newStudent);
 
-                        // 设置同步状态并保存
                         if (window.serverStatusService) {
                             window.serverStatusService.setSyncing();
                         }
                         await window.utils.saveData();
 
-                        // 刷新视图
                         window.utils.refreshAllViews();
 
-                        // 关闭模态框
                         this.hide();
 
-                        // 显示成功提示
                         window.notificationService.show('学生添加成功', 'success');
                     });
                 }
@@ -573,256 +516,7 @@ class ModalService {
     }
 
     /**
-     * 显示添加课程模态框
-     * @param {string} date - 日期
-     */
-    showAddCourse(date) {
-        const content = window.utils.getCourseFormTemplate(false, { date });
-
-        this.show(content, {
-            onShow: () => {
-                // 重新初始化 Lucide 图标
-                if (window.lucide) {
-                    lucide.createIcons();
-                }
-
-                // 初始化课程表单事件
-                if (typeof window.utils.initCourseFormEvents === 'function') {
-                    window.utils.initCourseFormEvents(false, { date });
-                }
-
-                // 绑定保存按钮事件
-                const addCourseSave = document.getElementById('add-course-save');
-                if (addCourseSave) {
-                    addCourseSave.addEventListener('click', async () => {
-                        const date = document.getElementById('course-date').value;
-                        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
-                        const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
-                        const startTime = document.getElementById('course-start-time').value;
-                        const note = window.utils.escapeHtml(document.getElementById('course-note').value);
-
-                        // 验证数据
-                        if (!date) {
-                            window.notificationService.show('请选择日期', 'warning');
-                            return;
-                        }
-                        if (!lessonType) {
-                            window.notificationService.show('请选择课型', 'warning');
-                            return;
-                        }
-                        if (selectedStudents.length === 0) {
-                            window.notificationService.show('请选择学生', 'warning');
-                            return;
-                        }
-                        if (!startTime) {
-                            window.notificationService.show('请选择开始时间', 'warning');
-                            return;
-                        }
-
-                        // 获取时长和费用
-                        const duration = parseInt(document.getElementById('course-duration').value) || 120;
-                        const feeInput = document.getElementById('course-fee');
-                        const fee = parseFloat(feeInput?.value) || 0;
-
-                        // 创建课程数据
-                        const studentIds = selectedStudents.map(s => s.dataset.id);
-                        const studentNames = selectedStudents.map(s => s.dataset.name);
-                        const colors = selectedStudents.map(s => s.dataset.color || '#6b7280');
-                        
-                        const newCourse = {
-                            id: 'course_' + Date.now(),
-                            date,
-                            lessonType,
-                            studentIds,
-                            studentNames,
-                            colors,
-                            startTime,
-                            duration,
-                            fees: [fee],
-                            note,
-                            createdAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString()
-                        };
-
-                        // 检测课程冲突（只检测时间重叠，不考虑学生）
-                        const hasConflict = window.state.courses.some(existingCourse => {
-                            if (existingCourse.date !== newCourse.date) return false;
-                            
-                            const existingStart = new Date(`2000-01-01T${existingCourse.startTime}`).getTime();
-                            const existingEnd = existingStart + (existingCourse.duration * 60 * 1000);
-                            const newStart = new Date(`2000-01-01T${newCourse.startTime}`).getTime();
-                            const newEnd = newStart + (newCourse.duration * 60 * 1000);
-                            
-                            return !(newEnd <= existingStart || newStart >= existingEnd);
-                        });
-
-                        if (hasConflict) {
-                            window.notificationService.show('该时间段已有课程安排', 'warning');
-                            return;
-                        }
-
-                        // 添加课程
-                        window.state.courses.push(newCourse);
-
-                        // 设置同步状态并保存
-                        if (window.serverStatusService) {
-                            window.serverStatusService.setSyncing();
-                        }
-                        await window.utils.saveData();
-
-                        // 刷新视图
-                        window.utils.refreshAllViews();
-
-                        // 关闭模态框
-                        this.hide();
-
-                        // 显示成功提示
-                        window.notificationService.show('课程添加成功', 'success');
-                    });
-                }
-            }
-        });
-    }
-
-    /**
-     * 显示编辑课程模态框
-     * @param {Object} course - 课程数据
-     */
-    showEditCourse(course) {
-        const content = window.utils.getCourseFormTemplate(true, course);
-
-        this.show(content, {
-            onShow: () => {
-                // 重新初始化 Lucide 图标
-                if (window.lucide) {
-                    lucide.createIcons();
-                }
-
-                // 初始化课程表单事件
-                if (typeof window.utils.initCourseFormEvents === 'function') {
-                    window.utils.initCourseFormEvents(true, course);
-                }
-
-                // 绑定保存按钮事件
-                const saveCourse = document.getElementById('save-course');
-                if (saveCourse) {
-                    saveCourse.addEventListener('click', async () => {
-                        // 显示加载状态
-                        saveCourse.disabled = true;
-                        saveCourse.innerHTML = '<i data-lucide="loader-circle" class="inline-block animate-spin mr-2" style="width: 16px; height: 16px;"></i>保存中...';
-
-                        const courseId = document.getElementById('edit-course-id').value;
-                        const date = document.getElementById('course-date').value;
-                        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
-                        const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
-                        const startTime = document.getElementById('course-start-time').value;
-                        const note = window.utils.escapeHtml(document.getElementById('course-note').value);
-
-                        // 验证数据
-                        if (!date) {
-                            window.notificationService.show('请选择日期', 'warning');
-                            saveCourse.disabled = false;
-                            saveCourse.innerHTML = '保存';
-                            return;
-                        }
-                        if (!lessonType) {
-                            window.notificationService.show('请选择课型', 'warning');
-                            saveCourse.disabled = false;
-                            saveCourse.innerHTML = '保存';
-                            return;
-                        }
-                        if (selectedStudents.length === 0) {
-                            window.notificationService.show('请选择学生', 'warning');
-                            saveCourse.disabled = false;
-                            saveCourse.innerHTML = '保存';
-                            return;
-                        }
-                        if (!startTime) {
-                            window.notificationService.show('请选择开始时间', 'warning');
-                            saveCourse.disabled = false;
-                            saveCourse.innerHTML = '保存';
-                            return;
-                        }
-
-                        // 获取时长和费用
-                        const duration = parseInt(document.getElementById('course-duration').value) || 120;
-                        const feeInput = document.getElementById('course-fee');
-                        const fee = parseFloat(feeInput?.value) || 0;
-
-                        // 创建更新后的课程数据（用于冲突检测）
-                        const updatedStudentIds = selectedStudents.map(s => s.dataset.id);
-                        const updatedStudentNames = selectedStudents.map(s => s.dataset.name);
-                        const updatedColors = selectedStudents.map(s => s.dataset.color || '#6b7280');
-                        
-                        const updatedCourse = {
-                            ...course,
-                            id: courseId,
-                            date,
-                            lessonType,
-                            studentIds: updatedStudentIds,
-                            studentNames: updatedStudentNames,
-                            colors: updatedColors,
-                            startTime,
-                            duration,
-                            fees: [fee],
-                            note,
-                            updatedAt: new Date().toISOString()
-                        };
-
-                        // 检测课程冲突（只检测时间重叠，不考虑学生，排除当前正在编辑的课程）
-                        const hasConflict = window.state.courses.some(existingCourse => {
-                            // 跳过当前正在编辑的课程
-                            if (existingCourse.id === courseId) return false;
-                            if (existingCourse.date !== updatedCourse.date) return false;
-                            
-                            const existingStart = new Date(`2000-01-01T${existingCourse.startTime}`).getTime();
-                            const existingEnd = existingStart + (existingCourse.duration * 60 * 1000);
-                            const newStart = new Date(`2000-01-01T${updatedCourse.startTime}`).getTime();
-                            const newEnd = newStart + (updatedCourse.duration * 60 * 1000);
-                            
-                            return !(newEnd <= existingStart || newStart >= existingEnd);
-                        });
-
-                        if (hasConflict) {
-                            window.notificationService.show('该时间段已有课程安排', 'warning');
-                            saveCourse.disabled = false;
-                            saveCourse.innerHTML = '保存';
-                            return;
-                        }
-
-                        // 查找并更新课程
-                        const courseIndex = window.state.courses.findIndex(c => c.id === courseId);
-                        if (courseIndex !== -1) {
-                            window.state.courses[courseIndex] = updatedCourse;
-
-                            // 设置同步状态并保存
-                            if (window.serverStatusService) {
-                                window.serverStatusService.setSyncing();
-                            }
-                            await window.utils.saveData();
-
-                            // 刷新视图
-                            window.utils.refreshAllViews();
-
-                            // 关闭模态框
-                            this.hide();
-
-                            // 显示成功提示
-                            window.notificationService.show('课程编辑成功', 'success');
-                        } else {
-                            window.notificationService.show('课程不存在', 'error');
-                            saveCourse.disabled = false;
-                            saveCourse.innerHTML = '保存';
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    /**
      * 显示编辑学生模态框
-     * @param {Object} student - 学生数据
      */
     showEditStudent(student) {
         const content = `
@@ -880,7 +574,7 @@ class ModalService {
                             </div>
                         </div>
                         <div class="flex justify-end">
-                            <button type="button" class="close-modal bg-red-500 text-white px-4 py-2 rounded-lg mr-2">关闭</button>
+                            <button type="button" class="close-modal text-white px-4 py-2 rounded-lg mr-2" style="background-color: var(--color-secondary);">关闭</button>
                             <button type="submit" id="edit-student-save" class="bg-primary text-white px-4 py-2 rounded-lg">保存</button>
                         </div>
                     </form>
@@ -893,7 +587,6 @@ class ModalService {
                 if (window.lucide) {
                     lucide.createIcons();
                 }
-                // 绑定保存按钮事件
                 const editStudentForm = document.getElementById('edit-student-form');
                 if (editStudentForm) {
                     editStudentForm.addEventListener('submit', async (e) => {
@@ -906,7 +599,6 @@ class ModalService {
                         const duration = parseInt(document.getElementById('edit-duration-one-on-one').value) || 120;
                         const fee = parseFloat(document.getElementById('edit-fee-one-on-one').value) || 0;
 
-                        // 验证数据
                         if (!name) {
                             window.notificationService.show('请输入学生姓名', 'warning');
                             return;
@@ -920,7 +612,6 @@ class ModalService {
                             return;
                         }
 
-                        // 查找并更新学生
                         const studentIndex = window.state.students.findIndex(s => s.id === studentId);
                         if (studentIndex !== -1) {
                             const oldName = window.state.students[studentIndex].name;
@@ -938,7 +629,6 @@ class ModalService {
                                 updatedAt: new Date().toISOString()
                             };
 
-                            // 更新相关课程中的学生信息
                             window.state.courses.forEach(course => {
                                 if (course.studentNames && course.studentNames.includes(oldName)) {
                                     const idx = course.studentNames.indexOf(oldName);
@@ -948,19 +638,15 @@ class ModalService {
                                 }
                             });
 
-                            // 设置同步状态并保存
                             if (window.serverStatusService) {
                                 window.serverStatusService.setSyncing();
                             }
                             await window.utils.saveData();
 
-                            // 刷新视图
                             window.utils.refreshAllViews();
 
-                            // 关闭模态框
                             this.hide();
 
-                            // 显示成功提示
                             window.notificationService.show('学生编辑成功', 'success');
                         } else {
                             window.notificationService.show('学生不存在', 'error');
@@ -972,11 +658,251 @@ class ModalService {
     }
 
     /**
+     * 显示添加课程模态框
+     */
+    showAddCourse(date) {
+        const content = window.utils.getCourseFormTemplate(false, { date });
+
+        this.show(content, {
+            onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
+                if (typeof window.utils.initCourseFormEvents === 'function') {
+                    window.utils.initCourseFormEvents(false, { date });
+                }
+
+                const addCourseForm = document.getElementById('add-course-form');
+                if (addCourseForm) {
+                    addCourseForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const courseDate = document.getElementById('course-date').value;
+                        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
+                        const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
+                        const startTime = document.getElementById('course-start-time').value;
+                        const note = window.utils.escapeHtml(document.getElementById('course-note').value);
+
+                        if (!courseDate) {
+                            window.notificationService.show('请选择日期', 'warning');
+                            return;
+                        }
+                        if (!lessonType) {
+                            window.notificationService.show('请选择课型', 'warning');
+                            return;
+                        }
+                        if (selectedStudents.length === 0) {
+                            window.notificationService.show('请选择学生', 'warning');
+                            return;
+                        }
+                        if (!startTime) {
+                            window.notificationService.show('请选择开始时间', 'warning');
+                            return;
+                        }
+
+                        const duration = parseInt(document.getElementById('course-duration').value) || 120;
+                        const feeInput = document.getElementById('course-fee');
+                        const fee = parseFloat(feeInput?.value) || 0;
+
+                        const studentIds = selectedStudents.map(s => s.dataset.id);
+                        const studentNames = selectedStudents.map(s => s.dataset.name);
+                        const organizations = selectedStudents.map(s => s.dataset.organization);
+                        const colors = selectedStudents.map(s => s.dataset.color || 'var(--color-secondary)');
+                        
+                        const newCourse = {
+                            id: 'course_' + Date.now(),
+                            date: courseDate,
+                            lessonType,
+                            studentIds,
+                            studentNames,
+                            organizations,
+                            colors,
+                            startTime,
+                            duration,
+                            fees: [fee],
+                            note,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+
+                        const hasConflict = window.state.courses.some(existingCourse => {
+                            if (existingCourse.date !== newCourse.date) return false;
+                            
+                            const existingStart = new Date(`2000-01-01T${existingCourse.startTime}`).getTime();
+                            const existingEnd = existingStart + (existingCourse.duration * 60 * 1000);
+                            const newStart = new Date(`2000-01-01T${newCourse.startTime}`).getTime();
+                            const newEnd = newStart + (newCourse.duration * 60 * 1000);
+                            
+                            return !(newEnd <= existingStart || newStart >= existingEnd);
+                        });
+
+                        if (hasConflict) {
+                            window.notificationService.show('该时间段已有课程安排', 'warning');
+                            return;
+                        }
+
+                        window.state.courses.push(newCourse);
+
+                        if (window.serverStatusService) {
+                            window.serverStatusService.setSyncing();
+                        }
+                        await window.utils.saveData();
+
+                        window.utils.refreshAllViews();
+
+                        this.hide();
+
+                        window.notificationService.show('课程添加成功', 'success');
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * 显示编辑课程模态框
+     */
+    showEditCourse(course) {
+        const content = window.utils.getCourseFormTemplate(true, course);
+
+        this.show(content, {
+            onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
+                if (typeof window.utils.initCourseFormEvents === 'function') {
+                    window.utils.initCourseFormEvents(true, course);
+                }
+
+                const editCourseForm = document.getElementById('edit-course-form');
+                if (editCourseForm) {
+                    editCourseForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        
+                        const saveCourseBtn = document.getElementById('save-course');
+                        if (saveCourseBtn) {
+                            saveCourseBtn.disabled = true;
+                            saveCourseBtn.innerHTML = '<i data-lucide="loader-circle" class="inline-block animate-spin mr-2" style="width: 16px; height: 16px;"></i>保存中...';
+                        }
+
+                        const courseId = document.getElementById('edit-course-id').value;
+                        const courseDate = document.getElementById('course-date').value;
+                        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
+                        const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
+                        const startTime = document.getElementById('course-start-time').value;
+                        const note = window.utils.escapeHtml(document.getElementById('course-note').value);
+
+                        if (!courseDate) {
+                            window.notificationService.show('请选择日期', 'warning');
+                            if (saveCourseBtn) {
+                                saveCourseBtn.disabled = false;
+                                saveCourseBtn.innerHTML = '保存';
+                            }
+                            return;
+                        }
+                        if (!lessonType) {
+                            window.notificationService.show('请选择课型', 'warning');
+                            if (saveCourseBtn) {
+                                saveCourseBtn.disabled = false;
+                                saveCourseBtn.innerHTML = '保存';
+                            }
+                            return;
+                        }
+                        if (selectedStudents.length === 0) {
+                            window.notificationService.show('请选择学生', 'warning');
+                            if (saveCourseBtn) {
+                                saveCourseBtn.disabled = false;
+                                saveCourseBtn.innerHTML = '保存';
+                            }
+                            return;
+                        }
+                        if (!startTime) {
+                            window.notificationService.show('请选择开始时间', 'warning');
+                            if (saveCourseBtn) {
+                                saveCourseBtn.disabled = false;
+                                saveCourseBtn.innerHTML = '保存';
+                            }
+                            return;
+                        }
+
+                        const duration = parseInt(document.getElementById('course-duration').value) || 120;
+                        const feeInput = document.getElementById('course-fee');
+                        const fee = parseFloat(feeInput?.value) || 0;
+
+                        const updatedStudentIds = selectedStudents.map(s => s.dataset.id);
+                        const updatedStudentNames = selectedStudents.map(s => s.dataset.name);
+                        const updatedOrganizations = selectedStudents.map(s => s.dataset.organization);
+                        const updatedColors = selectedStudents.map(s => s.dataset.color || 'var(--color-secondary)');
+                        
+                        const updatedCourse = {
+                            ...course,
+                            id: courseId,
+                            date: courseDate,
+                            lessonType,
+                            studentIds: updatedStudentIds,
+                            studentNames: updatedStudentNames,
+                            organizations: updatedOrganizations,
+                            colors: updatedColors,
+                            startTime,
+                            duration,
+                            fees: [fee],
+                            note,
+                            updatedAt: new Date().toISOString()
+                        };
+
+                        const hasConflict = window.state.courses.some(existingCourse => {
+                            if (existingCourse.id === courseId) return false;
+                            if (existingCourse.date !== updatedCourse.date) return false;
+                            
+                            const existingStart = new Date(`2000-01-01T${existingCourse.startTime}`).getTime();
+                            const existingEnd = existingStart + (existingCourse.duration * 60 * 1000);
+                            const newStart = new Date(`2000-01-01T${updatedCourse.startTime}`).getTime();
+                            const newEnd = newStart + (updatedCourse.duration * 60 * 1000);
+                            
+                            return !(newEnd <= existingStart || newStart >= existingEnd);
+                        });
+
+                        if (hasConflict) {
+                            window.notificationService.show('该时间段已有课程安排', 'warning');
+                            saveCourseBtn.disabled = false;
+                            saveCourseBtn.innerHTML = '保存';
+                            return;
+                        }
+
+                        const courseIndex = window.state.courses.findIndex(c => c.id === courseId);
+                        if (courseIndex !== -1) {
+                            window.state.courses[courseIndex] = updatedCourse;
+
+                            if (window.serverStatusService) {
+                                window.serverStatusService.setSyncing();
+                            }
+                            await window.utils.saveData();
+
+                            window.utils.refreshAllViews();
+
+                            this.hide();
+
+                            window.notificationService.show('课程编辑成功', 'success');
+                        } else {
+                            window.notificationService.show('课程不存在', 'error');
+                            saveCourseBtn.disabled = false;
+                            saveCourseBtn.innerHTML = '保存';
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    /**
      * 显示通用管理模态框
-     * @param {Object} config - 配置对象
      */
     showManagementModal(config) {
         const { title, items, itemName, addItem, editItem, deleteItem, onDelete, updateUI } = config;
+
+        const colorType = itemName === '机构' ? 'organization' : 'grade';
 
         const content = `
             <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
@@ -991,11 +917,13 @@ class ModalService {
                         </div>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium mb-2" style="color: var(--text-primary);">已有${itemName}</h4>
+                        <h4 class="text-sm font-medium mb-2" style="color: var(--text-primary);">已有${itemName} <span class="text-xs font-normal" style="color: var(--text-secondary);">（点击名称可修改颜色）</span></h4>
                         <div id="${itemName}s-list" class="space-y-2 max-h-80 overflow-y-auto pr-2">
-                            ${items.map(item => `
-                                <div class="flex items-center justify-between p-2 rounded" style="background-color: var(--bg-content);" data-${itemName}="${item}">
-                                    <span class="${itemName}-name" style="color: var(--text-primary);">${window.utils.escapeHtml(item)}</span>
+                            ${items.map(item => {
+                                const bgColor = window.utils.generateColor(item, colorType);
+                                return `
+                                <div class="flex items-center justify-between p-2 rounded" style="background-color: var(--bg-secondary);" data-${itemName}="${item}">
+                                    <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bgColor} 20%, transparent); color: ${bgColor};" data-item="${item}" data-item-name="${itemName}" data-color="${bgColor}">${window.utils.escapeHtml(item)}</button>
                                     <div class="flex items-center">
                                         <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${item}">
                                             <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
@@ -1005,11 +933,12 @@ class ModalService {
                                         </button>
                                     </div>
                                 </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                     <div class="flex justify-end mt-6">
-                        <button type="button" class="close-modal bg-red-500 text-white px-4 py-2 rounded-lg">关闭</button>
+                        <button type="button" class="close-modal text-white px-4 py-2 rounded-lg" style="background-color: var(--color-secondary);">关闭</button>
                     </div>
                 </div>
             </div>
@@ -1017,8 +946,6 @@ class ModalService {
 
         console.log('showManagementModal - 被调用, title:', config.title, 'items:', config.items.length, config.items);
         
-        // 保存当前配置到全局变量 - 供 index.html 中的事件处理函数使用
-        console.log('showManagementModal - 设置 config:', config.items.length, 'items:', config.items);
         window.currentManagementModalConfig = config;
         
         this.show(content, {
@@ -1026,10 +953,56 @@ class ModalService {
                 if (window.lucide) {
                     lucide.createIcons();
                 }
+
+                const colorPickerTriggers = document.querySelectorAll(`.${itemName}-name.color-picker-trigger`);
+                colorPickerTriggers.forEach(trigger => {
+                    trigger.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const item = trigger.dataset.item;
+                        const currentColor = trigger.dataset.color;
+                        
+                        modalService.showColorPicker({
+                            itemName: item,
+                            itemType: colorType,
+                            currentColor: currentColor,
+                            onSelect: (newColor) => {
+                                // 更新颜色分配
+                                window.utils.setColor(item, newColor, colorType);
+                                
+                                // 更新当前显示的颜色标签
+                                trigger.style.backgroundColor = `color-mix(in srgb, ${newColor} 20%, transparent)`;
+                                trigger.style.color = newColor;
+                                trigger.dataset.color = newColor;
+                                
+                                // 更新相关课程的颜色
+                                if (colorType === 'organization') {
+                                    window.state.courses.forEach(course => {
+                                        if (Array.isArray(course.organizations)) {
+                                            course.organizations.forEach((org, idx) => {
+                                                if (org === item) {
+                                                    if (course.colors && course.colors[idx]) {
+                                                        course.colors[idx] = newColor;
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                                
+                                // 保存数据
+                                window.utils.saveData();
+                                
+                                // 更新视图
+                                if (updateUI) {
+                                    updateUI();
+                                }
+                            }
+                        });
+                    });
+                });
             }
         });
 
-        // 自动激活输入框
         setTimeout(() => {
             const newItemInput = document.getElementById(`new-${itemName}`);
 
@@ -1066,9 +1039,11 @@ class ModalService {
                 const oldOrg = config.items[index];
                 if (!oldOrg) return false;
 
-                const newColor = window.utils.generateColor(newOrg);
+                // 移除旧名称的颜色分配
+                window.utils.removeColorAssignment(oldOrg, 'organization');
+                // 为新名称生成新颜色
+                const newColor = window.utils.generateColor(newOrg, 'organization');
 
-                // 直接修改数据
                 window.state.organizations[index] = newOrg;
                 config.items[index] = newOrg;
 
@@ -1079,25 +1054,37 @@ class ModalService {
                 });
 
                 window.state.courses.forEach(course => {
-                    if (course.studentIds) {
+                    if (!course.colors) {
+                        course.colors = [];
+                    }
+                    
+                    if (Array.isArray(course.organizations)) {
                         course.organizations = course.organizations.map((o, idx) => {
                             if (o === oldOrg) {
-                                if (course.colors && course.colors[idx]) {
-                                    course.colors[idx] = newColor;
-                                }
+                                course.colors[idx] = newColor;
                                 return newOrg;
                             }
                             return o;
                         });
+                    } else if (course.studentIds) {
+                        course.studentIds.forEach((studentId, idx) => {
+                            const student = window.state.students.find(s => s.id === studentId);
+                            if (student && student.organization === oldOrg) {
+                                student.organization = newOrg;
+                                course.colors[idx] = newColor;
+                            }
+                        });
                     }
                 });
 
-                // 更新 DOM 中的显示
-                const itemElement = document.querySelector(`[data-机构="${newOrg}"]`);
+                const itemElement = document.querySelector(`[data-机构="${oldOrg}"]`);
                 if (itemElement) {
                     const nameSpan = itemElement.querySelector('.机构-name');
                     if (nameSpan) {
                         nameSpan.textContent = newOrg;
+                        // 更新颜色样式
+                        nameSpan.style.backgroundColor = `color-mix(in srgb, ${newColor} 20%, transparent)`;
+                        nameSpan.style.color = newColor;
                     }
                     itemElement.dataset['机构'] = newOrg;
                     const editBtn = itemElement.querySelector('[data-action="edit-org-inline"]');
@@ -1147,7 +1134,11 @@ class ModalService {
                 const oldGrade = config.items[index];
                 if (!oldGrade) return false;
 
-                // 直接修改数据
+                // 移除旧名称的颜色分配
+                window.utils.removeColorAssignment(oldGrade, 'grade');
+                // 为新名称生成新颜色
+                const newColor = window.utils.generateColor(newGrade, 'grade');
+
                 window.state.grades[index] = newGrade;
                 config.items[index] = newGrade;
 
@@ -1157,12 +1148,14 @@ class ModalService {
                     }
                 });
 
-                // 更新 DOM 中的显示
-                const itemElement = document.querySelector(`[data-年级="${newGrade}"]`);
+                const itemElement = document.querySelector(`[data-年级="${oldGrade}"]`);
                 if (itemElement) {
                     const nameSpan = itemElement.querySelector('.年级-name');
                     if (nameSpan) {
                         nameSpan.textContent = newGrade;
+                        // 更新颜色样式
+                        nameSpan.style.backgroundColor = `color-mix(in srgb, ${newColor} 20%, transparent)`;
+                        nameSpan.style.color = newColor;
                     }
                     itemElement.dataset['年级'] = newGrade;
                     const editBtn = itemElement.querySelector('[data-action="edit-org-inline"]');
@@ -1196,7 +1189,7 @@ class ModalService {
     }
 
     /**
-     * 关闭所有弹出层（课程标签按钮组、日历格子按钮组、选中状态等）
+     * 关闭所有弹出层
      */
     closeAllPopovers() {
         document.querySelectorAll('.cell-action-group').forEach(btnGroup => btnGroup.remove());
@@ -1206,26 +1199,99 @@ class ModalService {
     }
 
     /**
+     * 显示颜色选择模态框（嵌套在管理模态框上）
+     * @param {Object} options - 选项
+     * @param {string} options.itemName - 项目名称（如机构名、年级名）
+     * @param {string} options.itemType - 项目类型（'organization' 或 'grade'）
+     * @param {string} options.currentColor - 当前颜色
+     * @param {Function} options.onSelect - 选择颜色后的回调函数
+     */
+    showColorPicker(options) {
+        const { itemName, itemType, currentColor, onSelect } = options;
+
+        const colorPalette = window.utils.getColorPalette();
+        const usedColors = window.utils.getUsedColors(itemType);
+
+        const content = `
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold" style="color: var(--text-primary);">选择颜色</h3>
+                <p class="text-sm" style="color: var(--text-secondary);">为 "${itemName}" 选择一个颜色</p>
+            </div>
+
+            <div class="color-picker-grid grid grid-cols-4 gap-2 mb-6">
+                ${colorPalette.map(color => {
+                    const isUsed = usedColors.includes(color) && color !== currentColor;
+                    const isSelected = color === currentColor;
+                    return `
+                        <button
+                            class="color-picker-item h-8 rounded transition-all duration-200 flex items-center justify-center relative font-mono text-xs font-bold"
+                            ${isUsed ? 'disabled' : ''}
+                            style="background-color: ${color}; color: ${isLightColor(color) ? '#000' : '#fff'}; ${isUsed ? 'opacity: 0.4; cursor: not-allowed;' : 'cursor: pointer;'} ${isSelected ? 'ring-2 ring-offset-2 ring-offset-bg-secondary ring-white;' : ''}"
+                            data-color="${color}"
+                        >
+                            ${color.toUpperCase()}
+                            ${isSelected ? '<span class="ml-1">✓</span>' : ''}
+                            ${isUsed ? '<span class="ml-1">🔒</span>' : ''}
+                        </button>
+                    `;
+                }).join('')}
+            </div>
+
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-4 h-4 rounded" style="background-color: ${currentColor};"></div>
+                    <span class="text-sm font-mono" style="color: var(--text-secondary);">当前颜色: ${currentColor.toUpperCase()}</span>
+                </div>
+                <button type="button" class="close-color-picker text-white px-4 py-2 rounded-lg" style="background-color: var(--color-secondary);">取消</button>
+            </div>
+        `;
+
+        this.showNested(content, {
+            onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
+                const colorButtons = document.querySelectorAll('.color-picker-item:not([disabled])');
+                colorButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const color = btn.dataset.color;
+                        if (onSelect && typeof onSelect === 'function') {
+                            onSelect(color);
+                        }
+                        this.hideNested();
+                    });
+                });
+
+                const cancelBtn = document.querySelector('.close-color-picker');
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        this.hideNested();
+                    });
+                }
+            }
+        });
+    }
+
+    /**
      * 显示快照管理模态框
      */
-    showSnapshotManager() {
-        const snapshots = window.utils.getSnapshots();
+    async showSnapshotManager() {
+        const snapshots = await window.utils.getSnapshots();
         
-        // 按照类型分类快照
         const loginSnapshots = snapshots.filter(s => s.type === 'login' || s.type === 'auto');
         const courseChangeSnapshots = snapshots.filter(s => s.type === 'course_change');
         const manualSnapshots = snapshots.filter(s => s.type === 'manual');
         
-        // 生成快照HTML
-        const generateSnapshotHtml = (snapshots, title, type) => {
-            if (snapshots.length === 0) {
+        const generateSnapshotHtml = (snapshotList, title, type) => {
+            if (snapshotList.length === 0) {
                 return `<div class="mb-6">
                     <h4 class="font-medium mb-2" style="color: var(--text-primary);">${title}</h4>
                     <p class="text-center p-3 border rounded-lg" style="color: var(--text-secondary); border-color: var(--border-color);">暂无快照</p>
                 </div>`;
             }
             
-            const snapshotItems = snapshots.map(snapshot => {
+            const snapshotItems = snapshotList.map(snapshot => {
                 const date = new Date(snapshot.timestamp);
                 const formattedDate = date.toLocaleString();
                 const studentCount = snapshot.data.students?.length || 0;
@@ -1254,13 +1320,11 @@ class ModalService {
             </div>`;
         };
         
-        // 生成手动快照栏位（默认3个）
-        const generateManualSnapshotsHtml = (manualSnapshots) => {
+        const generateManualSnapshotsHtml = (manualList) => {
             const html = [];
             
-            // 添加现有手动快照
-            for (let i = 0; i < manualSnapshots.length; i++) {
-                const snapshot = manualSnapshots[i];
+            for (let i = 0; i < manualList.length; i++) {
+                const snapshot = manualList[i];
                 const date = new Date(snapshot.timestamp);
                 const formattedDate = date.toLocaleString();
                 const studentCount = snapshot.data.students?.length || 0;
@@ -1280,8 +1344,7 @@ class ModalService {
                 `);
             }
             
-            // 添加空栏位（最多3个）
-            for (let i = manualSnapshots.length; i < 3; i++) {
+            for (let i = manualList.length; i < 3; i++) {
                 html.push(`
                     <div class="p-3 border rounded-lg mb-2 flex justify-between items-center cursor-pointer hover:bg-content transition-colors" style="border-color: var(--border-color); background-color: var(--bg-secondary);" data-action="create-manual-snapshot">
                         <div class="text-center w-full">
@@ -1321,45 +1384,36 @@ class ModalService {
             }
         });
         
-        // 绑定事件
         setTimeout(() => {
-            // 绑定创建手动快照事件
             document.querySelectorAll('[data-action="create-manual-snapshot"]').forEach(div => {
-                div.addEventListener('click', function() {
-                    window.utils.createSnapshot('manual');
-                    // 重新显示快照管理窗口
+                div.addEventListener('click', async () => {
+                    await window.utils.createSnapshot('manual');
                     setTimeout(() => {
-                        modalService.showSnapshotManager();
+                        this.showSnapshotManager();
                     }, 500);
                 });
             });
             
-            // 绑定恢复快照事件
             document.querySelectorAll('.restore-snapshot').forEach(button => {
-                button.addEventListener('click', function() {
-                    const snapshotId = this.getAttribute('data-id');
-                    modalService.showConfirm('确定要恢复此快照吗？<br>这将覆盖当前数据。', () => {
-                        window.utils.restoreSnapshot(snapshotId);
-                        modalService.hide();
+                button.addEventListener('click', async (e) => {
+                    const snapshotId = e.target.getAttribute('data-id');
+                    this.showConfirm('确定要恢复此快照吗？<br>这将覆盖当前数据。', async () => {
+                        await window.utils.restoreSnapshot(snapshotId);
+                        this.hide();
                     }, 'warning');
                 });
             });
             
-            // 绑定覆盖快照事件
             document.querySelectorAll('.overwrite-snapshot').forEach(button => {
-                button.addEventListener('click', function() {
-                    const snapshotId = this.getAttribute('data-id');
-                    modalService.showConfirm('确定要覆盖此快照吗？', () => {
+                button.addEventListener('click', async (e) => {
+                    const snapshotId = e.target.getAttribute('data-id');
+                    this.showConfirm('确定要覆盖此快照吗？', async () => {
                         try {
-                            // 删除旧快照
-                            window.utils.deleteSnapshot(snapshotId, false);
-                            // 创建新快照
-                            window.utils.createSnapshot('manual', false);
-                            // 显示简化的通知
+                            await window.utils.deleteSnapshot(snapshotId, false);
+                            await window.utils.createSnapshot('manual', false);
                             window.notificationService.show('快照覆盖成功', 'success');
-                            // 重新显示快照管理窗口
                             setTimeout(() => {
-                                modalService.showSnapshotManager();
+                                this.showSnapshotManager();
                             }, 500);
                         } catch (error) {
                             window.notificationService.show('快照覆盖失败', 'error');
@@ -1371,6 +1425,5 @@ class ModalService {
     }
 }
 
-// 导出单例实例
 const modalService = new ModalService();
 export default modalService;

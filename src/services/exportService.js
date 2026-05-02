@@ -97,9 +97,10 @@ class ExportService {
      * @param {number} year - 年份
      * @param {number} month - 月份
      * @param {string} organization - 机构名称
+     * @param {Object} utils - 工具函数（可选）
      * @returns {string} HTML内容
      */
-    generateHTMLContent(data, filename, year, month, organization) {
+    generateHTMLContent(data, filename, year, month, organization, utils = null) {
         const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
         const monthName = monthNames[month];
         const title = `${year}年${monthName}课时费统计`;
@@ -143,29 +144,16 @@ class ExportService {
         const totalFee = organizationData.reduce((sum, r) => sum + (parseFloat(r.学生姓名) || 0), 0);
         const totalStudents = organizationData.reduce((sum, r) => sum + (parseInt(r.所属机构) || 0), 0);
 
-        const getColorFromName = (name) => {
-            const colors = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#8b5cf6','#0891b2','#d946ef'];
-            let hash = 0;
-            for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            const idx = Math.abs(hash) % colors.length;
-            return colors[idx];
-        };
+        const validUtils = utils || (typeof window !== 'undefined' && window.utils);
         const getOrgBadge = (name) => {
             if (!name) return '';
-            const color = getColorFromName(name);
+            const color = validUtils?.generateColor ? validUtils.generateColor(name, 'organization') : '#3b82f6';
             return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${name}</span>`;
         };
         const getGradeBadge = (name) => {
             if (!name) return '';
-            const color = getColorFromName(name);
+            const color = validUtils?.generateColor ? validUtils.generateColor(name, 'grade') : '#8b5cf6';
             return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${name}</span>`;
-        };
-        const getStudentBadge = (count) => {
-            if (!count) return '';
-            const color = getColorFromName(String(count));
-            return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${count} 人</span>`;
         };
         const systemUrl = typeof window !== 'undefined' ? (window.location.origin || '课程管理系统') : '课程管理系统';
 
@@ -175,7 +163,7 @@ class ExportService {
         if (organizationData.length > 0) {
             htmlContent += `<table><thead><tr><th>机构</th><th>课节数</th><th>课时费</th><th>学生数</th><th>占比</th></tr></thead><tbody>`;
             organizationData.forEach(row => {
-                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${row.时间 || ''} 节</td><td>¥${row.学生姓名 || '0'}</td><td>${getStudentBadge(row.所属机构 || '')}</td><td>${row.年级 || ''}</td></tr>`;
+                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${row.时间 || ''} 节</td><td>¥${row.学生姓名 || '0'}</td><td>${row.所属机构 || ''} 人</td><td>${row.年级 || ''}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         } else {
@@ -186,14 +174,14 @@ class ExportService {
         if (oneOnOneData.length > 0) {
             htmlContent += `<h3>一对一分布数据</h3><table><thead><tr><th>机构</th><th>年级</th><th>学生数</th><th>课节数</th><th>课时费</th></tr></thead><tbody>`;
             oneOnOneData.forEach(row => {
-                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${getStudentBadge(row.学生姓名 || '')}</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
+                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${row.学生姓名 || ''} 人</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         }
         if (groupData.length > 0) {
             htmlContent += `<h3>多人课分布数据</h3><table><thead><tr><th>机构</th><th>年级</th><th>上课人数</th><th>课节数</th><th>课时费</th></tr></thead><tbody>`;
             groupData.forEach(row => {
-                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${getStudentBadge(row.学生姓名 || '')}</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
+                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${row.学生姓名 || ''} 人</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         }
@@ -223,7 +211,8 @@ class ExportService {
      * @param {string} organization - 机构名称
      */
     exportHTML(data, filename, year, month, organization) {
-        const htmlContent = this.generateHTMLContent(data, filename, year, month, organization);
+        const utils = typeof window !== 'undefined' && window.utils;
+        const htmlContent = this.generateHTMLContent(data, filename, year, month, organization, utils);
         const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

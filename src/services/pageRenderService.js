@@ -17,9 +17,16 @@ class PageRenderService {
 
         // 更新导航状态
         if (this.elements.navButtons) {
-            this.elements.navButtons.forEach(item => item.classList.remove('active', 'bg-gray-100'));
+            this.elements.navButtons.forEach(item => {
+                item.classList.remove('active');
+                item.style.backgroundColor = '';
+            });
         }
-        document.querySelector(`[data-page="${pageId}"]`)?.classList.add('active', 'bg-gray-100');
+        const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+            activeBtn.style.backgroundColor = 'var(--bg-content)';
+        }
 
         // 如果有当前页面，先淡出
         if (currentPage) {

@@ -26,8 +26,8 @@ export class ListRenderService {
             const oneOnOneFee = fees['一对一'] || 0;
             const oneOnOneDuration = fees['一对一_duration'] || 120;
             const feeDisplay = `<div class="text-sm" style="color: var(--text-secondary);">${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟</div>`;
-            const orgColor = this.utils.generateColor(organization);
-            const gradeColor = this.utils.generateColor(student.grade || '未设置');
+            const orgColor = this.utils.generateColor(organization, 'organization');
+            const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');
             
             return `
                 <div class="flex items-center p-4 border-b transition-colors" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
@@ -186,8 +186,8 @@ export class ListRenderService {
                 const oneOnOneFee = fees['一对一'] || 0;
                 const oneOnOneDuration = fees['一对一_duration'] || 120;
                 const feeDisplay = `<div class="text-sm" style="color: var(--text-secondary);">${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟</div>`;
-                const orgColor = this.utils.generateColor(organization);
-                const gradeColor = this.utils.generateColor(student.grade || '未设置');
+                const orgColor = this.utils.generateColor(organization, 'organization');
+                const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');
                 
                 const tr = document.createElement('tr');
                 tr.className = 'transition-colors';

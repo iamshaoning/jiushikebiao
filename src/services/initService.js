@@ -49,11 +49,13 @@ class InitService {
                         const session = data.session;
                         if (session) {
                             // 登录时创建快照（如果本地有数据）- 在任何数据同步之前
-                            this.utils.createSnapshot('login');
+                            await this.utils.createSnapshot('login');
 
                             // 用户已登录，更新UI并加载渲染系统
                             const user = session.user;
                             this.authUIService.updateUIForAuth(user);
+                            
+                            // 调用系统加载服务（loadSystemService 内部会处理重复调用）
                             this.loadSystemService.loadSystem();
 
                             // 存储登录时间，用于会话管理
@@ -94,6 +96,8 @@ class InitService {
                         if (event === 'SIGNED_IN' && session) {
                             // 用户已登录，更新UI并加载渲染系统
                             this.authUIService.updateUIForAuth(session.user);
+                            
+                            // 调用系统加载服务（loadSystemService 内部会处理重复调用）
                             this.loadSystemService.loadSystem();
 
                             // 存储登录时间，用于会话管理
@@ -107,6 +111,8 @@ class InitService {
                                 // 清理会话相关数据
                                 localStorage.removeItem('sb-login-time');
                                 this.authUIService.updateUIForUnauth();
+                                // 重置系统加载标志，以便下次登录时可以重新加载
+                                this.loadSystemService.systemLoaded = false;
                             }, 500); // 防抖
                         }
                     } catch (error) {

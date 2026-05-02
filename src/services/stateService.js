@@ -14,6 +14,8 @@ class StateService {
             coursesByDate: new Map(),
             organizations: [],
             grades: [],
+            organizationColors: {},
+            gradeColors: {},
             lastupdated: null
         };
     }
@@ -78,12 +80,18 @@ class StateService {
     updateStateFromData(data, useDefaults = true) {
         const oldCourses = [...this.state.courses];
         
-        const defaults = { organizations: [], grades: [] };
+        const defaults = { organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
         this.state.students = data.students || [];
         this.state.courses = data.courses || [];
         this.state.organizations = data.organizations || (useDefaults ? defaults.organizations : []);
         this.state.grades = data.grades || (useDefaults ? defaults.grades : []);
+        this.state.organizationColors = data.organizationColors || {};
+        this.state.gradeColors = data.gradeColors || {};
         this.state.lastupdated = data.lastupdated;
+        
+        if (window.utils && window.utils.initColorsFromState) {
+            window.utils.initColorsFromState();
+        }
         
         if (window.utils && window.utils.checkCourseChangeAndSnapshot) {
             window.utils.checkCourseChangeAndSnapshot(oldCourses, this.state.courses);
@@ -91,7 +99,6 @@ class StateService {
         
         this.syncDataToMaps();
         
-        // 更新所有视图
         if (window.utils && window.utils.refreshAllViews) {
             window.utils.refreshAllViews(true);
         }

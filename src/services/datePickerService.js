@@ -51,9 +51,9 @@ class DatePickerService {
         return `
             <div class="date-picker" id="${id}-picker">
                 <div class="date-picker-header">
-                    <button class="date-picker-nav" data-action="prev-month">&lt;</button>
+                    <button type="button" class="date-picker-nav" data-action="prev-month">&lt;</button>
                     <span class="date-picker-title" id="${id}-title"></span>
-                    <button class="date-picker-nav" data-action="next-month">&gt;</button>
+                    <button type="button" class="date-picker-nav" data-action="next-month">&gt;</button>
                 </div>
                 <div class="date-picker-weekdays">
                     <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
@@ -195,6 +195,7 @@ class DatePickerService {
                     const day = daysInPrevMonth - i;
                     const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const dayElement = document.createElement('button');
+                    dayElement.type = 'button';
                     
                     const isSelected = dateStr === selectedDate;
                     
@@ -219,6 +220,7 @@ class DatePickerService {
                     const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
                     const isSelected = dateStr === selectedDate;
                     const dayElement = document.createElement('button');
+                    dayElement.type = 'button';
                     
                     if (isSelected) {
                         dayElement.className = 'w-full py-2 text-center text-sm date-picker-selected date-picker-hover';
@@ -244,6 +246,7 @@ class DatePickerService {
                 for (let day = 1; day <= remainingCells; day++) {
                     const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                     const dayElement = document.createElement('button');
+                    dayElement.type = 'button';
                     
                     const isSelected = dateStr === selectedDate;
                     

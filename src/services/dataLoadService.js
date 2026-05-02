@@ -113,8 +113,7 @@ class DataLoadService {
                     , 10000, '加载数据超时');
 
                     if (error) {
-                        this.utils.handleError(error, '从服务器加载数据失败');
-
+                        // PGRST116 表示查询返回 0 行，这是新用户的正常情况
                         if (error.code === 'PGRST116' && error.details === 'The result contains 0 rows') {
                             const defaultData = {
                                 userid: userId,
@@ -132,14 +131,23 @@ class DataLoadService {
                                         .insert(defaultData)
                                 , 10000, '创建初始数据超时');
                                 this.serverStatusService.updateServerStatus('online');
+                                
+                                // 创建初始数据后，更新本地状态并刷新视图
+                                this.utils.updateStateFromData(defaultData, false);
+                                localStorage.setItem('coursemanagerdata', JSON.stringify(defaultData));
+                                this.utils.refreshAllViews(true);
+                                this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
                             } catch (insertError) {
-                                this.utils.handleError(insertError, '创建初始数据失败');
+                                this.utils.handleError(insertError, '创建初始数据失败', true);
                                 this.serverStatusService.updateServerStatus('offline');
+                                this.notificationService.show('数据加载失败，请刷新页面重试', 'error');
                             }
-
-                            this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
+                            return;
                         }
-
+                        
+                        // 其他错误
+                        this.utils.handleError(error, '从服务器加载数据失败');
+                        this.serverStatusService.updateServerStatus('offline');
                         return;
                     }
 
