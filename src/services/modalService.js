@@ -96,7 +96,9 @@ class ModalService {
 
         const closeButtons = this.content.querySelectorAll('.close-modal, [data-action="close-modal"]');
         closeButtons.forEach(btn => {
-            btn.addEventListener('click', () => this.hide());
+            const closeHandler = () => this.hide();
+            btn.addEventListener('click', closeHandler);
+            this.eventListeners.push({ element: btn, type: 'click', listener: closeHandler });
         });
 
         const actionListener = (e) => {
@@ -726,18 +728,7 @@ class ModalService {
                             updatedAt: new Date().toISOString()
                         };
 
-                        const hasConflict = window.state.courses.some(existingCourse => {
-                            if (existingCourse.date !== newCourse.date) return false;
-                            
-                            const existingStart = new Date(`2000-01-01T${existingCourse.startTime}`).getTime();
-                            const existingEnd = existingStart + (existingCourse.duration * 60 * 1000);
-                            const newStart = new Date(`2000-01-01T${newCourse.startTime}`).getTime();
-                            const newEnd = newStart + (newCourse.duration * 60 * 1000);
-                            
-                            return !(newEnd <= existingStart || newStart >= existingEnd);
-                        });
-
-                        if (hasConflict) {
+                        if (window.utils?.checkTimeConflict(newCourse)) {
                             window.notificationService.show('该时间段已有课程安排', 'warning');
                             return;
                         }
@@ -852,19 +843,7 @@ class ModalService {
                             updatedAt: new Date().toISOString()
                         };
 
-                        const hasConflict = window.state.courses.some(existingCourse => {
-                            if (existingCourse.id === courseId) return false;
-                            if (existingCourse.date !== updatedCourse.date) return false;
-                            
-                            const existingStart = new Date(`2000-01-01T${existingCourse.startTime}`).getTime();
-                            const existingEnd = existingStart + (existingCourse.duration * 60 * 1000);
-                            const newStart = new Date(`2000-01-01T${updatedCourse.startTime}`).getTime();
-                            const newEnd = newStart + (updatedCourse.duration * 60 * 1000);
-                            
-                            return !(newEnd <= existingStart || newStart >= existingEnd);
-                        });
-
-                        if (hasConflict) {
+                        if (window.utils?.checkTimeConflict(updatedCourse)) {
                             window.notificationService.show('该时间段已有课程安排', 'warning');
                             saveCourseBtn.disabled = false;
                             saveCourseBtn.innerHTML = '保存';
@@ -1279,11 +1258,11 @@ class ModalService {
     async showSnapshotManager() {
         const snapshots = await window.utils.getSnapshots();
         
-        const loginSnapshots = snapshots.filter(s => s.type === 'login' || s.type === 'auto');
-        const courseChangeSnapshots = snapshots.filter(s => s.type === 'course_change');
+        const loginSnapshots = snapshots.filter(s => s.type === 'login');
+        const autoSnapshots = snapshots.filter(s => s.type === 'auto');
         const manualSnapshots = snapshots.filter(s => s.type === 'manual');
         
-        const generateSnapshotHtml = (snapshotList, title, type) => {
+        const generateSnapshotHtml = (snapshotList, title, type, showOverwrite = false) => {
             if (snapshotList.length === 0) {
                 return `<div class="mb-6">
                     <h4 class="font-medium mb-2" style="color: var(--text-primary);">${title}</h4>
@@ -1297,8 +1276,7 @@ class ModalService {
                 const studentCount = snapshot.data.students?.length || 0;
                 const courseCount = snapshot.data.courses?.length || 0;
                 const typeText = snapshot.type === 'login' ? '登录' : 
-                                snapshot.type === 'auto' ? '自动' : 
-                                snapshot.type === 'course_change' ? '课程变更' : '手动';
+                                snapshot.type === 'auto' ? '自动' : '手动';
                 
                 return `
                     <div class="p-3 border rounded-lg mb-2 flex justify-between items-center" style="border-color: var(--border-color);">
@@ -1308,7 +1286,7 @@ class ModalService {
                         </div>
                         <div class="flex space-x-2">
                             <button class="restore-snapshot px-2 py-1 rounded text-xs transition-colors" style="background-color: var(--color-success); color: white;" data-id="${snapshot.id}">恢复</button>
-                            ${type === 'manual' ? `<button class="overwrite-snapshot px-2 py-1 rounded text-xs transition-colors" style="background-color: var(--color-primary); color: white;" data-id="${snapshot.id}">覆盖</button>` : ''}
+                            ${showOverwrite ? `<button class="overwrite-snapshot px-2 py-1 rounded text-xs transition-colors" style="background-color: var(--color-primary); color: white;" data-id="${snapshot.id}">覆盖</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -1368,8 +1346,8 @@ class ModalService {
                         <h3 class="text-lg font-semibold" style="color: var(--text-primary);">快照管理</h3>
                     </div>
                     <div class="max-h-[75vh] overflow-y-auto">
-                        ${generateSnapshotHtml(loginSnapshots, '自动快照 (登录/每5分钟)', 'auto')}
-                        ${generateSnapshotHtml(courseChangeSnapshots, '课程变更快照 (变动>5节)', 'course_change')}
+                        ${generateSnapshotHtml(loginSnapshots, '登录快照', 'login', false)}
+                        ${generateSnapshotHtml(autoSnapshots, '自动快照 (每15分钟)', 'auto', false)}
                         ${generateManualSnapshotsHtml(manualSnapshots)}
                     </div>
                 </div>

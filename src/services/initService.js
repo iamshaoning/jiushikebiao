@@ -19,9 +19,6 @@ class InitService {
      */
     async init() {
         try {
-            // 应用兼容性处理
-            this.utils.polyfill();
-
             // 初始化防抖保存函数（在utils对象创建后）
             this.utils.initDebouncedSave();
 

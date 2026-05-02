@@ -1,8 +1,8 @@
 /**
  * 快照管理模块
  * 提供数据快照的创建、恢复、删除等功能
- * 支持手动、自动、登录、课程变更等多种快照类型
- * 
+ * 支持手动、自动、登录等多种快照类型
+ *
  * @module snapshotUtils
  * @exports snapshotUtils
  */
@@ -52,19 +52,19 @@ const snapshotUtils = {
         
         let snapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
         
-        const loginSnapshots = snapshots.filter(s => s.type === 'login' || s.type === 'auto');
-        const courseChangeSnapshots = snapshots.filter(s => s.type === 'course_change');
+        const loginSnapshots = snapshots.filter(s => s.type === 'login');
+        const autoSnapshots = snapshots.filter(s => s.type === 'auto');
         const manualSnapshots = snapshots.filter(s => s.type === 'manual');
         
-        if (type === 'login' || type === 'auto') {
+        if (type === 'login') {
             loginSnapshots.unshift(snapshot);
             if (loginSnapshots.length > 1) {
                 loginSnapshots.splice(1);
             }
-        } else if (type === 'course_change') {
-            courseChangeSnapshots.unshift(snapshot);
-            if (courseChangeSnapshots.length > 1) {
-                courseChangeSnapshots.splice(1);
+        } else if (type === 'auto') {
+            autoSnapshots.unshift(snapshot);
+            if (autoSnapshots.length > 1) {
+                autoSnapshots.splice(1);
             }
         } else {
             manualSnapshots.unshift(snapshot);
@@ -73,7 +73,7 @@ const snapshotUtils = {
             }
         }
         
-        snapshots = [...loginSnapshots, ...courseChangeSnapshots, ...manualSnapshots];
+        snapshots = [...loginSnapshots, ...autoSnapshots, ...manualSnapshots];
         localStorage.setItem('coursemanagerSnapshots', JSON.stringify(snapshots));
         
         if (showNotification !== false && type === 'manual' && typeof window.notificationService !== 'undefined') {
@@ -85,17 +85,7 @@ const snapshotUtils = {
         if (!window.autoSnapshotInterval) {
             window.autoSnapshotInterval = setInterval(() => {
                 snapshotUtils.createSnapshot('auto');
-            }, 5 * 60 * 1000);
-        }
-    },
-    
-    checkCourseChangeAndSnapshot: (oldCourses, newCourses) => {
-        const oldCount = oldCourses?.length || 0;
-        const newCount = newCourses?.length || 0;
-        const changeCount = Math.abs(newCount - oldCount);
-        
-        if (changeCount > 5) {
-            snapshotUtils.createSnapshot('course_change');
+            }, 15 * 60 * 1000);
         }
     },
     

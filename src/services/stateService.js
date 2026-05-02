@@ -55,10 +55,6 @@ class StateService {
         
         updater(this.state);
         
-        if (window.utils && window.utils.checkCourseChangeAndSnapshot) {
-            window.utils.checkCourseChangeAndSnapshot(oldCourses, this.state.courses);
-        }
-        
         if (window.serverStatusService) {
             window.serverStatusService.setSyncing();
         }
@@ -91,10 +87,6 @@ class StateService {
         
         if (window.utils && window.utils.initColorsFromState) {
             window.utils.initColorsFromState();
-        }
-        
-        if (window.utils && window.utils.checkCourseChangeAndSnapshot) {
-            window.utils.checkCourseChangeAndSnapshot(oldCourses, this.state.courses);
         }
         
         this.syncDataToMaps();

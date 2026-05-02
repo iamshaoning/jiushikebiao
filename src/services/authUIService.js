@@ -558,6 +558,45 @@ class AuthUIService {
     }
 
     /**
+     * 登出方法（公共方法，供外部调用）
+     */
+    logout() {
+        this.modalService.showConfirm('确定要登出吗？', () => {
+            if (window.supabaseAuth) {
+                this.authService.logout()
+                    .then(() => {
+                        this.cleanupRealtimeChannel();
+                        this.serverStatusService.stopMonitoring();
+
+                        if (this.elements.nav && this.elements.main) {
+                            this.elements.nav.style.display = 'none';
+                            this.elements.main.style.display = 'none';
+                        }
+
+                        document.body.style.opacity = '1';
+                        this.updateUIForUnauth();
+                        this.notificationService.success('登出成功');
+                    })
+                    .catch((error) => {
+                        if (window.GLOBAL_DEBUG) console.error('登出失败:', error);
+                        this.notificationService.error('登出失败: ' + error.message);
+                    });
+            } else {
+                this.serverStatusService.stopMonitoring();
+
+                if (this.elements.nav && this.elements.main) {
+                    this.elements.nav.style.display = 'none';
+                    this.elements.main.style.display = 'none';
+                }
+
+                document.body.style.opacity = '1';
+                this.updateUIForUnauth();
+                this.notificationService.success('登出成功');
+            }
+        }, 'confirm');
+    }
+
+    /**
      * 清理实时数据通道
      */
     cleanupRealtimeChannel() {

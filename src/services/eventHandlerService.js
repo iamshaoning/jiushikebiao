@@ -114,18 +114,31 @@ class EventHandlerService {
             },
             
             'show-login': () => {
-                const auth = window.auth;
-                auth.showLogin();
+                if (window.authUIService?.showAuthModal) {
+                    window.authUIService.showAuthModal();
+                }
             },
-            
+
             'show-register': () => {
-                const auth = window.auth;
-                auth.showRegister();
+                if (window.authUIService?.showAuthModal) {
+                    window.authUIService.showAuthModal();
+                    const registerTab = document.getElementById('register-tab');
+                    if (registerTab) {
+                        registerTab.click();
+                    }
+                }
             },
-            
+
             'logout': () => {
-                const auth = window.auth;
-                auth.logout();
+                if (window.authUIService?.logout) {
+                    window.authUIService.logout();
+                }
+            },
+
+            'navigate-home': () => {
+                if (window.routerService) {
+                    window.routerService.navigate('/');
+                }
             },
             
             'export-data': () => {

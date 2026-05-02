@@ -39,6 +39,7 @@
         import eventHandlerService from './src/services/eventHandlerService.js';
         import stateService from './src/services/stateService.js';
         import exportService from './src/services/exportService.js';
+        import errorHandlerService from './src/services/errorHandlerService.js';
         // 工具函数模块
         import { getCourseFormTemplate } from './src/utils/courseFormTemplate.js';
         import { initCourseFormEvents } from './src/utils/courseFormEvents.js';
@@ -88,22 +89,26 @@
         window.modalService = modalService;
         window.exportService = exportService;
         
-        // 2. 状态服务
+        // 2. 错误处理服务（优先初始化）
+        errorHandlerService.init();
+        window.errorHandlerService = errorHandlerService;
+        
+        // 3. 状态服务
         stateService.init();
         window.state = stateService.getState();
         window.setState = stateService.setState;
         window.stateService = stateService;
         
-        // 3. DOM元素缓存
+        // 4. DOM元素缓存
         window.elements = elements;
         
-        // 4. 渲染服务别名
+        // 5. 渲染服务别名
         window.render = render;
         
-        // 5. 路由服务
+        // 6. 路由服务
         window.router = routerService;
         
-        // 6. 工具模块
+        // 7. 工具模块
         window.coreUtils = coreUtils;
         window.dateUtils = dateUtils;
         window.snapshotUtils = snapshotUtils;
@@ -111,7 +116,7 @@
         window.stateUtils = stateUtils;
         window.VirtualList = VirtualList;
         
-        // 7. 调试开关
+        // 8. 调试开关
         window.GLOBAL_DEBUG = true;
     </script>
 </head>
@@ -473,6 +478,18 @@
             </div>
 
         </div>
+
+        <!-- 404页面 -->
+        <div id="404-page" class="page hidden">
+            <div class="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                <h1 class="text-9xl font-bold mb-6" style="color: var(--color-primary);">404</h1>
+                <h2 class="text-2xl font-semibold mb-4" style="color: var(--text-primary);">页面未找到</h2>
+                <p class="text-lg mb-8" style="color: var(--text-secondary);">抱歉，您访问的页面不存在。</p>
+                <button onclick="window.location.hash='/'; setTimeout(() => window.routerService?.handleRouteChange(), 10);" style="background-color: var(--color-primary);" class="text-white px-8 py-3 rounded-lg text-lg transition-colors hover:opacity-90">
+                    返回首页
+                </button>
+            </div>
+        </div>
     </main>
     
     <!-- 登录模态框 -->
@@ -638,6 +655,10 @@
         routerService.register('/statistics', () => {
             window.render.page('statistics-page');
         });
+        
+        routerService.registerNotFound(() => {
+            window.render.page('404-page');
+        });
                 
         /**
          * 更新导航按钮的点击事件
@@ -713,7 +734,6 @@
             restoreSnapshot: snapshotUtils.restoreSnapshot,
             deleteSnapshot: snapshotUtils.deleteSnapshot,
             startAutoSnapshotTimer: snapshotUtils.startAutoSnapshotTimer,
-            checkCourseChangeAndSnapshot: snapshotUtils.checkCourseChangeAndSnapshot,
             copyCourses: clipboardUtils.copyCourses,
             pasteCourses: clipboardUtils.pasteCourses,
             updateStateFromData: stateUtils.updateStateFromData,

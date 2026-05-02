@@ -1,10 +1,23 @@
 /**
  * 状态和数据管理模块
  * 提供状态更新、数据保存、同步到服务器等功能
+ * 注意：已委托给 dataService 处理底层数据操作
  * 
  * @module stateUtils
  * @exports stateUtils
  */
+
+const LOCAL_STORAGE_KEY = 'coursemanagerdata';
+
+const CONSTANTS = {
+    DEBOUNCE_SAVE_DELAY: 2000,
+    DEBOUNCE_SYNC_DELAY: 3000,
+    SESSION_TIMEOUT: 5000,
+    SYNC_TIMEOUT: 10000,
+    DEFAULT_DURATION: 120,
+    MAX_DURATION_MINUTES: 1440
+};
+
 const stateUtils = {
     updateStateFromData: (data, useDefaults = true) => {
         const oldCourses = [...window.state.courses];
@@ -18,34 +31,41 @@ const stateUtils = {
         window.state.gradeColors = data.gradeColors || {};
         window.state.lastupdated = data.lastupdated;
         
-        if (window.utils && window.utils.initColorsFromState) {
-            window.utils.initColorsFromState();
+        try {
+            if (window.utils && typeof window.utils.initColorsFromState === 'function') {
+                window.utils.initColorsFromState();
+            }
+        } catch (error) {
+            if (window.GLOBAL_DEBUG) console.error('初始化颜色失败:', error);
         }
         
-        if (window.snapshotUtils) {
-            window.snapshotUtils.checkCourseChangeAndSnapshot(oldCourses, window.state.courses);
-        }
-        
-        if (window.syncDataToMaps) {
-            window.syncDataToMaps();
+        try {
+            if (typeof window.syncDataToMaps === 'function') {
+                window.syncDataToMaps();
+            }
+        } catch (error) {
+            if (window.GLOBAL_DEBUG) console.error('同步数据到Maps失败:', error);
         }
     },
     
     getStatisticsParams: function() {
-        const yearTrigger = document.querySelector('#statistics-year-wrapper .custom-select-trigger span');
-        const monthTrigger = document.querySelector('#statistics-month-wrapper .custom-select-trigger span');
-        const orgTrigger = document.querySelector('#statistics-organization-trigger span');
+        const yearTrigger = window.elements?.statisticsYearTrigger || document.querySelector('#statistics-year-wrapper .custom-select-trigger span');
+        const monthTrigger = window.elements?.statisticsMonthTrigger || document.querySelector('#statistics-month-wrapper .custom-select-trigger span');
+        const orgTrigger = window.elements?.statisticsOrganizationTrigger || document.querySelector('#statistics-organization-trigger span');
         
-        // 月份需要减1，因为JavaScript的月份是从0开始的（0代表1月）
-        const monthText = monthTrigger?.textContent || '';
-        const monthNum = parseInt(monthText) || (new Date().getMonth() + 1);
+        const monthText = monthTrigger?.textContent?.trim() || '';
+        const parsedMonth = parseInt(monthText, 10);
+        const monthNum = isNaN(parsedMonth) ? (new Date().getMonth() + 1) : parsedMonth;
         
-        // 机构：如果显示"全部机构"，返回空字符串表示显示所有机构
-        const orgText = orgTrigger?.textContent || '';
+        const orgText = orgTrigger?.textContent?.trim() || '';
         const organization = orgText === '全部机构' ? '' : orgText;
         
+        const yearText = yearTrigger?.textContent?.trim() || '';
+        const parsedYear = parseInt(yearText, 10);
+        const year = isNaN(parsedYear) ? new Date().getFullYear() : parsedYear;
+        
         return {
-            year: parseInt(yearTrigger?.textContent) || new Date().getFullYear(),
+            year: year,
             month: monthNum - 1,
             organization: organization
         };
@@ -70,9 +90,9 @@ const stateUtils = {
             currentState.lastupdated = appData.lastupdated;
             
             try {
-                localStorage.setItem('coursemanagerdata', JSON.stringify(appData));
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
             } catch (error) {
-                console.error('[saveData] 本地保存失败:', error);
+                console.error('本地保存失败:', error);
             }
             
             const isOffline = window.elements?.syncIcon?.classList.contains('sync-offline');
@@ -81,49 +101,87 @@ const stateUtils = {
                 window.serverStatusService.setSyncing();
                 
                 const auth = window.supabaseAuth;
+                
                 if (window.supabaseClient && auth) {
                     try {
-                        const { data: sessionData } = await utils.withTimeout(() => auth.getSession(), 5000, '获取会话超时');
-                        const session = sessionData.session;
-                        
-                        if (session) {
-                            const userId = session.user.id;
+                        let sessionData = null;
+                        try {
+                            let result;
+                            if (window.utils?.withTimeout) {
+                                result = await window.utils.withTimeout(() => auth.getSession(), CONSTANTS.SESSION_TIMEOUT, '获取会话超时');
+                            } else {
+                                result = await auth.getSession();
+                            }
                             
+                            if (result && typeof result === 'object') {
+                                if (result.data && typeof result.data === 'object') {
+                                    sessionData = result.data;
+                                } else if (result.session) {
+                                    sessionData = result;
+                                }
+                            }
+                        } catch (sessionError) {
+                            console.error('获取session异常:', sessionError);
+                        }
+                        
+                        const session = sessionData?.session;
+                        const userId = session?.user?.id;
+                        
+                        if (session && userId) {
                             try {
-                                const { error } = await utils.withTimeout(() => 
-                                    window.supabaseClient
-                                        .from('coursemanagerdata')
-                                        .upsert({
-                                        userid: userId,
-                                        students: appData.students,
-                                        courses: appData.courses,
-                                        organizations: appData.organizations,
-                                        grades: appData.grades,
-                                        organizationColors: appData.organizationColors,
-                                        gradeColors: appData.gradeColors,
-                                        lastupdated: appData.lastupdated
-                                    }, { onConflict: 'userid' })
-                                , 10000, '同步数据超时');
+                                const upsertData = {
+                                    userid: userId,
+                                    students: appData.students,
+                                    courses: appData.courses,
+                                    organizations: appData.organizations,
+                                    grades: appData.grades,
+                                    organizationColors: appData.organizationColors,
+                                    gradeColors: appData.gradeColors,
+                                    lastupdated: appData.lastupdated
+                                };
+                                
+                                const upsertPromise = window.supabaseClient
+                                    .from('coursemanagerdata')
+                                    .upsert(upsertData, { onConflict: 'userid' });
+                                
+                                let upsertResult;
+                                if (window.utils?.withTimeout) {
+                                    upsertResult = await window.utils.withTimeout(() => upsertPromise, CONSTANTS.SYNC_TIMEOUT, '同步数据超时');
+                                } else {
+                                    upsertResult = await upsertPromise;
+                                }
+                                
+                                const { error } = upsertResult;
                                 
                                 if (error) {
-                                    utils.handleError(error, '数据同步到服务器失败', true);
-                                    window.serverStatusService.updateServerStatus('offline');
+                                    throw error;
                                 } else {
-                                    const localDataStr = localStorage.getItem('coursemanagerdata');
+                                    const localDataStr = localStorage.getItem(LOCAL_STORAGE_KEY);
                                     if (localDataStr) {
                                         const localData = JSON.parse(localDataStr);
                                         localData.userid = userId;
-                                        localStorage.setItem('coursemanagerdata', JSON.stringify(localData));
+                                        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
                                     }
                                     window.serverStatusService.updateServerStatus('online');
                                 }
                             } catch (syncError) {
-                                utils.handleError(syncError, '同步数据到服务器失败', true);
+                                if (window.utils?.handleError) {
+                                    window.utils.handleError(syncError, '同步数据到服务器失败', true);
+                                } else {
+                                    console.error('同步数据到服务器失败:', syncError);
+                                }
                                 window.serverStatusService.updateServerStatus('offline');
                             }
+                        } else {
+                            if (window.GLOBAL_DEBUG) console.log('session不存在或userId无效，跳过服务器同步');
+                            window.serverStatusService.updateServerStatus('loggedout');
                         }
                     } catch (error) {
-                        utils.handleError(error, '获取 session 失败', true);
+                        if (window.utils?.handleError) {
+                            window.utils.handleError(error, '获取 session 失败', true);
+                        } else {
+                            console.error('获取 session 失败:', error);
+                        }
                         window.serverStatusService.updateServerStatus('loggedout');
                     }
                 } else {
@@ -131,7 +189,11 @@ const stateUtils = {
                 }
             }
         } catch (error) {
-            utils.handleError(error, '保存数据失败', true);
+            if (window.utils?.handleError) {
+                window.utils.handleError(error, '保存数据失败', true);
+            } else {
+                console.error('保存数据失败:', error);
+            }
             try {
                 const now = new Date();
                 const isoDateTimeString = now.toISOString();
@@ -145,7 +207,7 @@ const stateUtils = {
                     gradeColors: currentState.gradeColors || {},
                     lastupdated: isoDateTimeString
                 };
-                localStorage.setItem('coursemanagerdata', JSON.stringify(appData));
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
             } catch (localError) {
                 if (window.GLOBAL_DEBUG) console.error('本地存储也失败:', localError);
             }
@@ -156,18 +218,22 @@ const stateUtils = {
     debouncedSyncToServer: null,
     
     saveToLocal: () => {
-        const now = new Date();
-        const isoDateTimeString = now.toISOString();
-        const appData = {
-            students: window.state.students,
-            courses: window.state.courses,
-            organizations: window.state.organizations,
-            grades: window.state.grades,
-            organizationColors: window.state.organizationColors || {},
-            gradeColors: window.state.gradeColors || {},
-            lastupdated: isoDateTimeString
-        };
-        localStorage.setItem('coursemanagerdata', JSON.stringify(appData));
+        try {
+            const now = new Date();
+            const isoDateTimeString = now.toISOString();
+            const appData = {
+                students: window.state.students,
+                courses: window.state.courses,
+                organizations: window.state.organizations,
+                grades: window.state.grades,
+                organizationColors: window.state.organizationColors || {},
+                gradeColors: window.state.gradeColors || {},
+                lastupdated: isoDateTimeString
+            };
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
+        } catch (error) {
+            console.error('保存到本地失败:', error);
+        }
     },
     
     syncToServer: async (force = false) => {
@@ -187,7 +253,7 @@ const stateUtils = {
             }
             
             const userId = session.user.id;
-            const localDataStr = localStorage.getItem('coursemanagerdata');
+            const localDataStr = localStorage.getItem(LOCAL_STORAGE_KEY);
             
             if (!localDataStr) {
                 window.serverStatusService.updateServerStatus('online');
@@ -214,17 +280,28 @@ const stateUtils = {
             window.serverStatusService.updateServerStatus('online');
             return true;
         } catch (error) {
-            utils.handleError(error, '同步到服务器失败', true);
+            if (window.utils?.handleError) {
+                window.utils.handleError(error, '同步到服务器失败', true);
+            } else {
+                console.error('同步到服务器失败:', error);
+            }
             window.serverStatusService.updateServerStatus('offline');
             return false;
         }
     },
     
     initDebouncedSave: function() {
-        this.debouncedSaveData = this.debounce(this.saveData, 2000);
-        this.debouncedSyncToServer = this.debounce(this.syncToServer, 3000);
+        const debounce = window.utils?.debounce || ((fn, delay) => {
+            let timeoutId;
+            return function(...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn.apply(this, args), delay);
+            };
+        });
+        this.debouncedSaveData = debounce(this.saveData.bind(this), CONSTANTS.DEBOUNCE_SAVE_DELAY);
+        this.debouncedSyncToServer = debounce(this.syncToServer.bind(this), CONSTANTS.DEBOUNCE_SYNC_DELAY);
     }
 };
 
-export { stateUtils };
+export { stateUtils, CONSTANTS };
 export default stateUtils;

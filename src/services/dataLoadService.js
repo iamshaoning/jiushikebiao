@@ -29,8 +29,14 @@ class DataLoadService {
 
             if (auth) {
                 try {
-                    const { data } = await this.utils.withTimeout(() => auth.getSession(), 10000, '获取会话超时');
-                    session = data.session;
+                    const result = await this.utils.withTimeout(() => auth.getSession(), 10000, '获取会话超时');
+                    if (result && typeof result === 'object') {
+                        if (result.data && typeof result.data === 'object') {
+                            session = result.data.session;
+                        } else if (result.session) {
+                            session = result.session;
+                        }
+                    }
                     isLoggedIn = !!session;
                 } catch (error) {
                     this.utils.handleError(error, '获取 session 失败');
@@ -121,6 +127,8 @@ class DataLoadService {
                                 courses: [],
                                 organizations: [],
                                 grades: [],
+                                organizationColors: {},
+                                gradeColors: {},
                                 lastupdated: new Date().toISOString()
                             };
 
@@ -173,6 +181,8 @@ class DataLoadService {
                                                 courses: localData.courses,
                                                 organizations: localData.organizations,
                                                 grades: localData.grades,
+                                                organizationColors: localData.organizationColors || {},
+                                                gradeColors: localData.gradeColors || {},
                                                 lastupdated: localData.lastupdated
                                             })
                                     , 5000, '上传数据超时');
@@ -196,6 +206,8 @@ class DataLoadService {
                             courses: localData.courses,
                             organizations: localData.organizations,
                             grades: localData.grades,
+                            organizationColors: localData.organizationColors || {},
+                            gradeColors: localData.gradeColors || {},
                             lastupdated: localData.lastupdated
                         };
                         if (this.currentDeviceId) {
@@ -225,6 +237,8 @@ class DataLoadService {
                             courses: [],
                             organizations: [],
                             grades: [],
+                            organizationColors: {},
+                            gradeColors: {},
                             lastupdated: isoDateTimeString
                         };
                         if (this.currentDeviceId) {

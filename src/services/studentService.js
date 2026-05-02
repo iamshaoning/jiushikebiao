@@ -4,6 +4,7 @@
  */
 
 import dataService from './dataService.js';
+import coreUtils from '../utils/coreUtils.js';
 
 class StudentService {
     constructor() {
@@ -29,7 +30,7 @@ class StudentService {
         }
 
         const newStudent = {
-            id: this.generateId(),
+            id: coreUtils.generateId(),
             ...student,
             createdAt: new Date().toISOString()
         };
@@ -179,23 +180,7 @@ class StudentService {
             throw new Error('学生服务未初始化');
         }
 
-        const appData = {
-            students: this.state.students,
-            courses: this.state.courses,
-            organizations: this.state.organizations,
-            grades: this.state.grades,
-            lastupdated: dataService.getCurrentTimestamp()
-        };
-
-        dataService.saveLocalData(appData);
-    }
-
-    /**
-     * 生成唯一ID
-     * @returns {string} 唯一ID
-     */
-    generateId() {
-        return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+        dataService.saveAppData(this.state);
     }
 }
 

@@ -3,35 +3,28 @@
  * 负责根据文本生成独立颜色、颜色分配管理等功能
  */
 
-// 预定义的美观颜色数组（按视觉对比度排列）
+const LOCAL_STORAGE_KEY = 'coursemanagerdata';
+const AUTH_TOKEN_KEY = 'sb-auth-token';
+
 const colorPalette = [
     '#000000', '#7FFFD4', '#B87333', '#FFB6C1',
-
     '#C0C0C0', '#0ABAB5', '#FFBF00', '#EE82EE',
-
     '#32CD32', '#1E90FF', '#FF4500', '#9400D3',
-
     '#2E8B57', '#003153', '#800020', '#7B68EE',
 ];
 
-// 按类型存储颜色分配映射
 const colorAssignments = {
-    organization: new Map(), // 机构颜色映射
-    grade: new Map()        // 年级颜色映射
+    organization: new Map(),
+    grade: new Map()
 };
 
-// 每种类型的下一个可用颜色索引
 const nextColorIndex = {
     organization: 0,
     grade: 0
 };
 
-/**
- * 根据文本和类型生成唯一颜色
- * @param {string} text - 用于生成颜色的文本
- * @param {string} type - 类型：'organization' | 'grade'
- * @returns {string} 十六进制颜色值
- */
+let isSyncing = false;
+
 export function generateColor(text, type = 'organization') {
     const validType = colorAssignments[type] ? type : 'organization';
     
@@ -43,69 +36,44 @@ export function generateColor(text, type = 'organization') {
     colorAssignments[validType].set(text, color);
     nextColorIndex[validType]++;
     
-    syncColorsToState(validType);
+    scheduleSyncToState(validType);
     return color;
 }
 
-/**
- * 根据文本获取已分配的颜色（如果存在）
- * @param {string} text - 文本
- * @param {string} type - 类型
- * @returns {string|null} 颜色值或null
- */
 export function getAssignedColor(text, type = 'organization') {
     const validType = colorAssignments[type] ? type : 'organization';
     return colorAssignments[validType].get(text) || null;
 }
 
-/**
- * 重置指定类型的颜色分配
- * @param {string} type - 类型
- */
 export function resetColorAssignments(type) {
     if (colorAssignments[type]) {
         colorAssignments[type].clear();
         nextColorIndex[type] = 0;
+        scheduleSyncToState(type);
     }
 }
 
-/**
- * 重置所有颜色分配
- */
 export function resetAllColorAssignments() {
     Object.keys(colorAssignments).forEach(key => {
         colorAssignments[key].clear();
         nextColorIndex[key] = 0;
     });
+    scheduleSyncToState('organization');
+    scheduleSyncToState('grade');
 }
 
-/**
- * 获取指定类型已分配的颜色数量
- * @param {string} type - 类型
- * @returns {number} 已分配颜色数量
- */
 export function getAssignedCount(type) {
     const validType = colorAssignments[type] ? type : 'organization';
     return colorAssignments[validType].size;
 }
 
-/**
- * 移除特定文本的颜色分配
- * @param {string} text - 文本
- * @param {string} type - 类型
- */
 export function removeColorAssignment(text, type) {
     if (colorAssignments[type]) {
         colorAssignments[type].delete(text);
-        syncColorsToState(type);
+        scheduleSyncToState(type);
     }
 }
 
-/**
- * 重新分配特定类型的所有颜色（重置并重新分配给所有现有项）
- * @param {string} type - 类型
- * @param {string[]} items - 现有项目列表
- */
 export function reassignColors(type, items) {
     if (colorAssignments[type]) {
         colorAssignments[type].clear();
@@ -113,83 +81,168 @@ export function reassignColors(type, items) {
         items.forEach(item => {
             generateColor(item, type);
         });
-        syncColorsToState(type);
     }
 }
 
-/**
- * 获取特定类型的所有已分配颜色
- * @param {string} type - 类型
- * @returns {string[]} 已分配的颜色数组
- */
 export function getUsedColors(type) {
     const validType = colorAssignments[type] ? type : 'organization';
     return Array.from(colorAssignments[validType].values());
 }
 
-/**
- * 检查颜色是否已被使用
- * @param {string} color - 颜色值
- * @param {string} type - 类型
- * @returns {boolean} 是否已被使用
- */
 export function isColorUsed(color, type) {
     const validType = colorAssignments[type] ? type : 'organization';
     return colorAssignments[validType].has(color);
 }
 
-/**
- * 设置特定文本的颜色（强制覆盖）
- * @param {string} text - 文本
- * @param {string} color - 颜色值
- * @param {string} type - 类型
- */
 export function setColor(text, color, type = 'organization') {
     const validType = colorAssignments[type] ? type : 'organization';
+    const existingColor = colorAssignments[validType].get(text);
+    if (existingColor === color) {
+        return;
+    }
     colorAssignments[validType].set(text, color);
-    syncColorsToState(validType);
+    scheduleSyncToState(validType);
 }
 
-/**
- * 同步颜色到state
- * @param {string} type - 类型
- */
-function syncColorsToState(type) {
-    if (!window.state) return;
-    if (type === 'organization') {
-        window.state.organizationColors = {};
-        colorAssignments.organization.forEach((color, text) => {
-            window.state.organizationColors[text] = color;
-        });
-    } else if (type === 'grade') {
-        window.state.gradeColors = {};
-        colorAssignments.grade.forEach((color, text) => {
-            window.state.gradeColors[text] = color;
-        });
+let syncTimeout = null;
+let pendingSyncTypes = new Set();
+
+function scheduleSyncToState(type) {
+    pendingSyncTypes.add(type);
+    
+    if (syncTimeout) {
+        clearTimeout(syncTimeout);
+    }
+    
+    syncTimeout = setTimeout(() => {
+        performSyncToState();
+    }, 10);
+}
+
+function performSyncToState() {
+    if (!window.state) {
+        pendingSyncTypes.clear();
+        return;
+    }
+    
+    if (pendingSyncTypes.has('organization')) {
+        syncOrganizationColors();
+    }
+    
+    if (pendingSyncTypes.has('grade')) {
+        syncGradeColors();
+    }
+    
+    pendingSyncTypes.clear();
+}
+
+function syncOrganizationColors() {
+    const newColors = {};
+    let hasChanges = false;
+    const currentColors = window.state.organizationColors || {};
+    
+    colorAssignments.organization.forEach((color, text) => {
+        newColors[text] = color;
+        if (currentColors[text] !== color) {
+            hasChanges = true;
+        }
+    });
+    
+    const currentKeys = Object.keys(currentColors);
+    if (currentKeys.length !== colorAssignments.organization.size) {
+        hasChanges = true;
+    } else {
+        for (const key of currentKeys) {
+            if (!(key in newColors)) {
+                hasChanges = true;
+                break;
+            }
+        }
+    }
+    
+    if (hasChanges) {
+        window.state.organizationColors = newColors;
     }
 }
 
-/**
- * 从state初始化颜色
- */
+function syncGradeColors() {
+    const newColors = {};
+    let hasChanges = false;
+    const currentColors = window.state.gradeColors || {};
+    
+    colorAssignments.grade.forEach((color, text) => {
+        newColors[text] = color;
+        if (currentColors[text] !== color) {
+            hasChanges = true;
+        }
+    });
+    
+    const currentKeys = Object.keys(currentColors);
+    if (currentKeys.length !== colorAssignments.grade.size) {
+        hasChanges = true;
+    } else {
+        for (const key of currentKeys) {
+            if (!(key in newColors)) {
+                hasChanges = true;
+                break;
+            }
+        }
+    }
+    
+    if (hasChanges) {
+        window.state.gradeColors = newColors;
+    }
+}
+
 export function initColorsFromState() {
     if (!window.state) return;
-    if (window.state.organizationColors) {
-        Object.entries(window.state.organizationColors).forEach(([text, color]) => {
-            colorAssignments.organization.set(text, color);
+    
+    const orgColors = window.state.organizationColors;
+    const gradeColors = window.state.gradeColors;
+    
+    if (orgColors) {
+        const orgEntries = Object.entries(orgColors);
+        let maxOrgIndex = 0;
+        
+        orgEntries.forEach(([text, color]) => {
+            const existing = colorAssignments.organization.get(text);
+            if (existing !== color) {
+                colorAssignments.organization.set(text, color);
+            }
+            const paletteIndex = colorPalette.indexOf(color);
+            if (paletteIndex !== -1 && paletteIndex >= maxOrgIndex) {
+                maxOrgIndex = paletteIndex + 1;
+            }
         });
+        
+        if (maxOrgIndex > 0) {
+            nextColorIndex.organization = maxOrgIndex;
+        }
     }
-    if (window.state.gradeColors) {
-        Object.entries(window.state.gradeColors).forEach(([text, color]) => {
-            colorAssignments.grade.set(text, color);
+    
+    if (gradeColors) {
+        const gradeEntries = Object.entries(gradeColors);
+        let maxGradeIndex = 0;
+        
+        gradeEntries.forEach(([text, color]) => {
+            const existing = colorAssignments.grade.get(text);
+            if (existing !== color) {
+                colorAssignments.grade.set(text, color);
+            }
+            const paletteIndex = colorPalette.indexOf(color);
+            if (paletteIndex !== -1 && paletteIndex >= maxGradeIndex) {
+                maxGradeIndex = paletteIndex + 1;
+            }
         });
+        
+        if (maxGradeIndex > 0) {
+            nextColorIndex.grade = maxGradeIndex;
+        }
     }
 }
 
-/**
- * 获取预定义的颜色调色板
- * @returns {string[]} 颜色数组
- */
 export function getColorPalette() {
     return [...colorPalette];
 }
+
+export { LOCAL_STORAGE_KEY, AUTH_TOKEN_KEY };

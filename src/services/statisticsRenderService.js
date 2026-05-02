@@ -97,7 +97,7 @@ export class StatisticsRenderService {
     getStatisticsParams(utils) {
         const year = parseInt(utils.safe(this.elements.statisticsYearWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getFullYear();
         const month = parseInt(utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getMonth();
-        const organization = utils.safe(this.elements.statisticsOrgWrapper, 'querySelector', '.custom-option.selected')?.dataset.value || '';
+        const organization = utils.safe(this.elements.statisticsOrganizationWrapper, 'querySelector', '.custom-option.selected')?.dataset.value || '';
         return { year, month, organization };
     }
 

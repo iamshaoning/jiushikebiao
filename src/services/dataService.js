@@ -173,6 +173,22 @@ class DataService {
     getCurrentTimestamp() {
         return new Date().toISOString();
     }
+
+    /**
+     * 统一保存应用数据（供上层服务调用）
+     * @param {Object} state - 应用状态对象
+     * @returns {boolean} 是否保存成功
+     */
+    saveAppData(state) {
+        const appData = {
+            students: state.students,
+            courses: state.courses,
+            organizations: state.organizations,
+            grades: state.grades,
+            lastupdated: this.getCurrentTimestamp()
+        };
+        return this.saveLocalData(appData);
+    }
 }
 
 // 导出单例实例

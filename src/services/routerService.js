@@ -10,10 +10,18 @@ class RouterService {
     constructor() {
         this.routes = {};
         this.currentRoute = null;
+        this.notFoundCallback = null;
     }
     
     register(path, callback) {
         this.routes[path] = callback;
+    }
+    
+    /**
+     * 注册404页面回调
+     */
+    registerNotFound(callback) {
+        this.notFoundCallback = callback;
     }
     
     init() {
@@ -31,10 +39,10 @@ class RouterService {
             const callback = this.routes[path];
             if (callback) {
                 callback();
-            } else {
-                if (this.routes['/']) {
-                    this.routes['/']();
-                }
+            } else if (this.notFoundCallback) {
+                this.notFoundCallback();
+            } else if (this.routes['/']) {
+                this.routes['/']();
             }
         }
     }

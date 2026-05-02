@@ -105,6 +105,10 @@ class LoadSystemService {
         this.state.courses = [];
         this.state.organizations = [];
         this.state.grades = [];
+        this.state.organizationColors = {};
+        this.state.gradeColors = {};
+
+        localStorage.removeItem('coursemanagerdata');
 
         this.notificationService.show('您现在处于试用模式，数据不会被保存', 'info');
 
