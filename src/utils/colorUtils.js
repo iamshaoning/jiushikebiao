@@ -114,7 +114,30 @@ export function setColor(text, color, type = 'organization') {
     }
     colorAssignments[validType].set(text, color);
     if (window.GLOBAL_DEBUG) console.log(`[颜色] setColor() - 已将 '${text}' 颜色更新为: ${color}`);
-    scheduleSyncToState(validType);
+    
+    // 立即同步到 state（不延迟）
+    if (window.state) {
+        if (validType === 'organization') {
+            const newColors = { ...(window.state.organizationColors || {}) };
+            newColors[text] = color;
+            window.state.organizationColors = newColors;
+            if (window.GLOBAL_DEBUG) console.log(`[颜色] setColor() - 立即同步 organizationColors:`, JSON.stringify(newColors));
+        } else if (validType === 'grade') {
+            const newColors = { ...(window.state.gradeColors || {}) };
+            newColors[text] = color;
+            window.state.gradeColors = newColors;
+            if (window.GLOBAL_DEBUG) console.log(`[颜色] setColor() - 立即同步 gradeColors:`, JSON.stringify(newColors));
+        }
+    }
+    
+    // 仍然调用 scheduleSyncToState 以保持一致性（但去除延迟）
+    pendingSyncTypes.add(validType);
+    if (syncTimeout) {
+        clearTimeout(syncTimeout);
+    }
+    syncTimeout = setTimeout(() => {
+        performSyncToState();
+    }, 0); // 改为 0 延迟
 }
 
 let syncTimeout = null;
