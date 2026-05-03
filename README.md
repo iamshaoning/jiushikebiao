@@ -1,7 +1,7 @@
 # 课程管理系统
 
-[![github-link](https://img.shields.io/badge/github-link-blue?logo=github)](https://iamshaoning.github.io/kechengguanlixitong)
-[![pages](https://img.shields.io/badge/pages-cloudflare-blue?logo=cloudflare)](https://kechengguanlixitong.pages.dev)
+![Github Pages](https://img.shields.io/badge/Github-Pages-blue?logo=github)
+![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-blue?logo=cloudflare)
 
 一个由 AI 辅助开发的课程管理系统，专为课外辅导老师设计。系统支持学生管理、课程安排、课时费统计等功能，数据可同步到云端，支持多设备访问。
 
