@@ -740,6 +740,11 @@ class ModalService {
 
                         window.state.courses.push(newCourse);
 
+                        // 记录到时间轴
+                        if (window.timelineService) {
+                            window.timelineService.recordAddCourse(newCourse, false);
+                        }
+
                         if (window.serverStatusService) {
                             window.serverStatusService.setSyncing();
                         }
@@ -857,7 +862,13 @@ class ModalService {
 
                         const courseIndex = window.state.courses.findIndex(c => c.id === courseId);
                         if (courseIndex !== -1) {
+                            const oldCourse = { ...window.state.courses[courseIndex] };
                             window.state.courses[courseIndex] = updatedCourse;
+
+                            // 记录到时间轴
+                            if (window.timelineService) {
+                                window.timelineService.recordUpdateCourse(oldCourse, updatedCourse, '');
+                            }
 
                             if (window.serverStatusService) {
                                 window.serverStatusService.setSyncing();
@@ -1405,6 +1416,285 @@ class ModalService {
                 });
             });
         }, 0);
+    }
+
+    /**
+     * 显示时间轴
+     */
+    showTimeline() {
+        if (!window.timelineService) {
+            return;
+        }
+
+        const timeline = window.timelineService.getTimeline();
+        
+        const getActionIcon = (type) => {
+            switch (type) {
+                case 'add-course':
+                case 'paste-courses':
+                    return 'plus-circle';
+                case 'update-course':
+                    return 'edit-3';
+                case 'delete-course':
+                case 'delete-day-courses':
+                    return 'trash-2';
+                case 'restore-snapshot':
+                    return 'history';
+                default:
+                    return 'circle-dot';
+            }
+        };
+
+        const getActionIconColor = (type) => {
+            switch (type) {
+                case 'add-course':
+                case 'paste-courses':
+                    return 'success';
+                case 'update-course':
+                    return 'primary';
+                case 'delete-course':
+                case 'delete-day-courses':
+                    return 'danger';
+                case 'restore-snapshot':
+                    return 'warning';
+                default:
+                    return 'secondary';
+            }
+        };
+
+        const formatTimestamp = (isoString) => {
+            const date = new Date(isoString);
+            return date.toLocaleString('zh-CN', {
+                month: 'numeric',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        const getColorStyle = (colorType) => {
+            switch (colorType) {
+                case 'success':
+                    return 'var(--color-success)';
+                case 'primary':
+                    return 'var(--color-primary)';
+                case 'danger':
+                    return 'var(--color-danger)';
+                case 'warning':
+                    return 'var(--color-warning)';
+                default:
+                    return 'var(--text-secondary)';
+            }
+        };
+
+        const getBackgroundColor = (colorType, undone) => {
+            if (undone) return 'var(--bg-tertiary)';
+            switch (colorType) {
+                case 'success':
+                    return 'rgba(34, 197, 94, 0.1)';
+                case 'primary':
+                    return 'rgba(59, 130, 246, 0.1)';
+                case 'danger':
+                    return 'rgba(239, 68, 68, 0.1)';
+                case 'warning':
+                    return 'rgba(245, 158, 11, 0.1)';
+                default:
+                    return 'var(--bg-tertiary)';
+            }
+        };
+
+        const generateExpandedCourses = (action) => {
+            if (!action.courses || action.courses.length === 0) return '';
+            
+            return action.courses.map(course => {
+                const studentNames = [];
+                if (course.studentIds && course.studentIds.length > 0) {
+                    course.studentIds.forEach(id => {
+                        const student = window.timelineService.getStudentInfo(id);
+                        studentNames.push(student.name);
+                    });
+                }
+                return `
+                    <div class="timeline-expanded-item" style="padding: 8px 12px; border-left: 2px solid var(--border-color); margin-left: 16px; color: var(--text-secondary);">
+                        ${window.timelineService.formatDate(course.date)} ${window.timelineService.formatTime(course.startTime)} ${studentNames.join('、')} ${course.lessonType}
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const generateChangesHtml = (action) => {
+            if (action.type !== 'update-course' || !action.changes || action.changes.length === 0) {
+                return '';
+            }
+
+            const colorType = getActionIconColor(action.type);
+            const accentColor = getColorStyle(colorType);
+
+            return `
+                <div class="timeline-changes" style="margin-top: 12px; padding: 12px; background-color: ${getBackgroundColor(colorType, false)}; border-radius: 8px; border-left: 3px solid ${accentColor};">
+                    <div style="font-weight: 600; margin-bottom: 8px; color: ${accentColor}; display: flex; align-items: center; gap: 6px;">
+                        <i data-lucide="arrow-right-left" class="inline-block" style="width: 16px; height: 16px;"></i>
+                        变更内容
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        ${action.changes.map(change => {
+                            if (change.hasChange) {
+                                return `
+                                    <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                                        <span style="font-weight: 500; min-width: 60px; color: var(--text-primary);">${change.field}</span>
+                                        <span style="color: var(--text-secondary);">已变更</span>
+                                    </div>
+                                `;
+                            }
+                            return `
+                                <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0;">
+                                    <span style="font-weight: 500; min-width: 60px; color: var(--text-primary);">${change.field}</span>
+                                    <span style="color: var(--color-danger); text-decoration: line-through; padding: 2px 8px; border-radius: 4px; background-color: rgba(239, 68, 68, 0.1);">${change.old}</span>
+                                    <i data-lucide="arrow-right" class="inline-block" style="width: 14px; height: 14px; color: var(--text-secondary);"></i>
+                                    <span style="color: var(--color-success); padding: 2px 8px; border-radius: 4px; background-color: rgba(34, 197, 94, 0.1);">${change.new}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        };
+
+        const generateTimelineHtml = () => {
+            if (timeline.length === 0) {
+                return `
+                    <div class="text-center py-12" style="color: var(--text-secondary);">
+                        <i data-lucide="clock" class="inline-block mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                        <p>暂无操作记录</p>
+                    </div>
+                `;
+            }
+
+            return timeline.map((action, index) => {
+                const colorType = getActionIconColor(action.type);
+                const accentColor = getColorStyle(colorType);
+                const bgColor = getBackgroundColor(colorType, action.undone);
+
+                return `
+                    <div class="timeline-item ${action.undone ? 'timeline-item-undone' : ''}" data-id="${action.id}" style="position: relative; padding-left: 44px; padding-bottom: 28px;">
+                        <div class="timeline-dot" style="position: absolute; left: 0; top: 6px; width: 24px; height: 24px; border-radius: 50%; background-color: ${bgColor}; border: 2px solid ${accentColor}; display: flex; align-items: center; justify-content: center; z-index: 1;">
+                            <i data-lucide="${getActionIcon(action.type)}" class="inline-block" style="width: 14px; height: 14px; color: ${accentColor};"></i>
+                        </div>
+                        <div class="timeline-line" style="position: absolute; left: 11px; top: 30px; bottom: 0; width: 2px; background-color: var(--border-color); ${index === timeline.length - 1 ? 'display: none;' : ''}"></div>
+                        <div class="timeline-content" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; ${action.undone ? 'opacity: 0.6;' : ''}">
+                            <div class="timeline-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div class="timeline-description" style="font-weight: 600; color: var(--text-primary); ${action.undone ? 'text-decoration: line-through;' : ''}">${action.description}</div>
+                                <div class="timeline-time" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; background-color: var(--bg-tertiary); padding: 4px 10px; border-radius: 12px;">${formatTimestamp(action.timestamp)}</div>
+                            </div>
+                            ${generateChangesHtml(action)}
+                            ${(action.type === 'paste-courses' || action.type === 'delete-day-courses') ? `
+                                <div class="timeline-expand-container" style="margin-top: 12px;">
+                                    <button data-action="toggle-timeline-expand" data-id="${action.id}" class="timeline-expand-btn" style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--color-primary); cursor: pointer; background: none; border: none; padding: 6px 10px; border-radius: 6px; transition: background-color 0.2s; :hover { background-color: var(--bg-tertiary); }">
+                                        <i data-lucide="${action.expanded ? 'chevron-down' : 'chevron-right'}" class="inline-block" style="width: 16px; height: 16px;"></i>
+                                        ${action.expanded ? '收起详情' : '展开详情'}
+                                    </button>
+                                    <div class="timeline-expanded-content" style="${action.expanded ? '' : 'display: none;'} margin-top: 12px;">
+                                        ${generateExpandedCourses(action)}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${action.type !== 'restore-snapshot' ? `
+                                <div class="timeline-actions" style="display: flex; gap: 8px; margin-top: 12px;">
+                                    ${action.undone ? `
+                                        <button data-action="redo-timeline-action" data-id="${action.id}" class="timeline-action-btn timeline-redo" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.2s; background-color: rgba(34, 197, 94, 0.1); color: var(--color-success); border: none;">
+                                            <i data-lucide="rotate-ccw" class="inline-block" style="width: 16px; height: 16px;"></i>
+                                            重做
+                                        </button>
+                                    ` : `
+                                        <button data-action="undo-timeline-action" data-id="${action.id}" class="timeline-action-btn timeline-undo" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.2s; background-color: rgba(59, 130, 246, 0.1); color: var(--color-primary); border: none;">
+                                            <i data-lucide="undo-2" class="inline-block" style="width: 16px; height: 16px;"></i>
+                                            撤销
+                                        </button>
+                                    `}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        const content = `
+            <div class="rounded-lg shadow-xl w-full max-w-2xl mx-4" style="background-color: var(--bg-secondary);">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                            <i data-lucide="history" class="inline-block" style="width: 20px; height: 20px;"></i>
+                            操作历史
+                        </h3>
+                        <button id="clear-timeline-btn" class="timeline-action-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.2s; background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger); border: none;">
+                            <i data-lucide="trash" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            清空历史
+                        </button>
+                    </div>
+                    <div id="timeline-container" class="max-h-[75vh] overflow-y-auto" style="padding-right: 8px;">
+                        ${generateTimelineHtml()}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.show(content, {
+            onShow: () => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+
+                const bindTimelineEvents = () => {
+                    document.querySelectorAll('[data-action="undo-timeline-action"]').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const id = e.currentTarget.getAttribute('data-id');
+                            const success = window.timelineService.undoAction(id);
+                            if (success) {
+                                window.notificationService.show('撤销成功', 'success');
+                                this.showTimeline();
+                            } else {
+                                window.notificationService.show('撤销失败', 'error');
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('[data-action="redo-timeline-action"]').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const id = e.currentTarget.getAttribute('data-id');
+                            const success = window.timelineService.redoAction(id);
+                            if (success) {
+                                window.notificationService.show('重做成功', 'success');
+                                this.showTimeline();
+                            } else {
+                                window.notificationService.show('重做失败', 'error');
+                            }
+                        });
+                    });
+
+                    document.querySelectorAll('[data-action="toggle-timeline-expand"]').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const id = e.currentTarget.getAttribute('data-id');
+                            window.timelineService.toggleExpand(id);
+                            this.showTimeline();
+                        });
+                    });
+
+                    const clearBtn = document.getElementById('clear-timeline-btn');
+                    if (clearBtn) {
+                        clearBtn.addEventListener('click', () => {
+                            this.showConfirm('确定要清空所有操作历史吗？', () => {
+                                window.timelineService.clearTimeline();
+                                this.hide();
+                                window.notificationService.show('历史已清空', 'success');
+                            }, 'delete');
+                        });
+                    }
+                };
+
+                bindTimelineEvents();
+            }
+        });
     }
 }
 

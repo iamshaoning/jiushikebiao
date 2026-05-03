@@ -22,6 +22,7 @@ class EventBindingService {
         this.bindStatisticsDropdownEvents();
         this.bindStudentSortEvent();
         this.bindSnapshotManagerEvent();
+        this.bindTimelineButtonEvent();
         this.bindSyncStatusEvent();
         this.bindOrganizationOptionsEvent();
         this.bindCalendarDropdownEvents();
@@ -87,6 +88,18 @@ class EventBindingService {
         if (snapshotManager) {
             snapshotManager.addEventListener('click', () => {
                 this.modalService.showSnapshotManager();
+            });
+        }
+    }
+
+    /**
+     * 绑定时间轴按钮事件
+     */
+    bindTimelineButtonEvent() {
+        const timelineBtn = document.getElementById('timeline-btn');
+        if (timelineBtn) {
+            timelineBtn.addEventListener('click', () => {
+                this.modalService.showTimeline();
             });
         }
     }

@@ -120,6 +120,43 @@ const snapshotUtils = {
             return;
         }
         
+        // 记录快照恢复操作到时间轴
+        if (typeof window.timelineService !== 'undefined') {
+            const snapshotDate = new Date(snapshot.timestamp);
+            const formattedDate = snapshotDate.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const typeLabels = {
+                'login': '登录快照',
+                'auto': '自动快照',
+                'manual': '手动快照'
+            };
+            
+            // 添加快照恢复记录
+            const timeline = JSON.parse(localStorage.getItem('coursemanagertimeline') || '[]');
+            const restoreRecord = {
+                id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+                type: 'restore-snapshot',
+                timestamp: new Date().toISOString(),
+                snapshotType: snapshot.type,
+                snapshotDate: formattedDate,
+                snapshotId: snapshotId,
+                description: `恢复了 ${typeLabels[snapshot.type]} (${formattedDate})`
+            };
+            timeline.unshift(restoreRecord);
+            
+            // 保持最大记录数
+            if (timeline.length > 100) {
+                timeline.splice(100);
+            }
+            localStorage.setItem('coursemanagertimeline', JSON.stringify(timeline));
+        }
+        
         // 更新快照数据的时间戳，确保服务器接受新数据
         const restoredData = {
             ...snapshot.data,

@@ -116,6 +116,11 @@ const clipboardUtils = {
                 
                 if (coursesToAdd.length > 0) {
                     window.setState(draft => draft.courses.push(...coursesToAdd), 'courses');
+                    
+                    // 记录到时间轴
+                    if (window.timelineService) {
+                        window.timelineService.recordPasteCourses(coursesToAdd);
+                    }
                 }
                 
                 if (addedCount > 0) {

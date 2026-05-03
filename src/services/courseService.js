@@ -5,6 +5,7 @@
 
 import dataService from './dataService.js';
 import coreUtils from '../utils/coreUtils.js';
+import timelineService from './timelineService.js';
 
 class CourseService {
     constructor() {
@@ -22,9 +23,10 @@ class CourseService {
     /**
      * 添加课程
      * @param {Object} course - 课程信息
+     * @param {boolean} isPaste - 是否是粘贴操作
      * @returns {Object} 添加的课程
      */
-    addCourse(course) {
+    addCourse(course, isPaste = false) {
         if (!this.state) {
             throw new Error('课程服务未初始化');
         }
@@ -38,6 +40,11 @@ class CourseService {
         this.state.courses.push(newCourse);
         this.syncDataToMaps();
         this.saveData();
+        
+        // 记录到时间轴
+        if (window.timelineService) {
+            window.timelineService.recordAddCourse(newCourse, isPaste);
+        }
 
         return newCourse;
     }
@@ -46,9 +53,10 @@ class CourseService {
      * 更新课程
      * @param {string} courseId - 课程ID
      * @param {Object} updates - 更新的信息
+     * @param {string} reason - 变更原因
      * @returns {Object|null} 更新后的课程
      */
-    updateCourse(courseId, updates) {
+    updateCourse(courseId, updates, reason = '') {
         if (!this.state) {
             throw new Error('课程服务未初始化');
         }
@@ -57,16 +65,25 @@ class CourseService {
         if (courseIndex === -1) {
             return null;
         }
+        
+        const oldCourse = { ...this.state.courses[courseIndex] };
 
         this.state.courses[courseIndex] = {
             ...this.state.courses[courseIndex],
             ...updates
         };
+        
+        const newCourse = this.state.courses[courseIndex];
 
         this.syncDataToMaps();
         this.saveData();
+        
+        // 记录到时间轴
+        if (window.timelineService) {
+            window.timelineService.recordUpdateCourse(oldCourse, newCourse, reason);
+        }
 
-        return this.state.courses[courseIndex];
+        return newCourse;
     }
 
     /**
@@ -79,16 +96,83 @@ class CourseService {
             throw new Error('课程服务未初始化');
         }
 
+        const courseToDelete = this.state.courses.find(c => c.id === courseId);
         const initialLength = this.state.courses.length;
         this.state.courses = this.state.courses.filter(c => c.id !== courseId);
         const deleted = this.state.courses.length < initialLength;
 
-        if (deleted) {
+        if (deleted && courseToDelete) {
             this.syncDataToMaps();
             this.saveData();
+            
+            // 记录到时间轴
+            if (window.timelineService) {
+                window.timelineService.recordDeleteCourse(courseToDelete);
+            }
         }
 
         return deleted;
+    }
+
+    /**
+     * 批量删除一天的课程
+     * @param {string} date - 日期（YYYY-MM-DD）
+     * @returns {Array} 删除的课程
+     */
+    deleteDayCourses(date) {
+        if (!this.state) {
+            throw new Error('课程服务未初始化');
+        }
+
+        const coursesToDelete = this.getCoursesByDate(date);
+        if (coursesToDelete.length === 0) {
+            return [];
+        }
+
+        const courseIdsToDelete = coursesToDelete.map(c => c.id);
+        this.state.courses = this.state.courses.filter(c => !courseIdsToDelete.includes(c.id));
+
+        this.syncDataToMaps();
+        this.saveData();
+        
+        // 记录到时间轴
+        if (window.timelineService && coursesToDelete.length > 0) {
+            window.timelineService.recordDeleteDayCourses(date, coursesToDelete);
+        }
+
+        return coursesToDelete;
+    }
+
+    /**
+     * 批量粘贴添加课程
+     * @param {Array} courses - 课程列表
+     * @returns {Array} 添加的课程
+     */
+    pasteCourses(courses) {
+        if (!this.state) {
+            throw new Error('课程服务未初始化');
+        }
+
+        const addedCourses = [];
+        courses.forEach(course => {
+            const newCourse = {
+                id: coreUtils.generateId(),
+                ...course,
+                createdAt: new Date().toISOString()
+            };
+            this.state.courses.push(newCourse);
+            addedCourses.push(newCourse);
+        });
+
+        this.syncDataToMaps();
+        this.saveData();
+        
+        // 记录到时间轴
+        if (window.timelineService && addedCourses.length > 0) {
+            window.timelineService.recordPasteCourses(addedCourses);
+        }
+
+        return addedCourses;
     }
 
     /**

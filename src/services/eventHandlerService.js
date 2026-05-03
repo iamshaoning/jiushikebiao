@@ -331,6 +331,11 @@ class EventHandlerService {
                 }
                 
                 modalService.showConfirm(`确定要删除 ${date} 的全部课程吗？`, () => {
+                    // 记录到时间轴
+                    if (window.timelineService && courses.length > 0) {
+                        window.timelineService.recordDeleteDayCourses(date, [...courses]);
+                    }
+                    
                     courses.forEach(course => {
                         window.setState(draft => {
                             const index = draft.courses.findIndex(c => c.id === course.id);
@@ -361,7 +366,14 @@ class EventHandlerService {
             
             'delete-course': (payload) => {
                 const courseId = payload.id;
+                const courseToDelete = window.state.courses.find(c => c.id === courseId);
+                
                 modalService.showConfirm('确定要删除这节课程吗？', () => {
+                    // 记录到时间轴
+                    if (window.timelineService && courseToDelete) {
+                        window.timelineService.recordDeleteCourse(courseToDelete);
+                    }
+                    
                     window.setState(draft => {
                         draft.courses = draft.courses.filter(c => c.id !== courseId);
                     }, 'courses');
