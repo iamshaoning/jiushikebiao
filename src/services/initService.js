@@ -91,6 +91,9 @@ class InitService {
                 auth.onAuthStateChange((event, session) => {
                     try {
                         if (event === 'SIGNED_IN' && session) {
+                            // 登录时创建快照（如果本地有数据）- 在任何数据同步之前
+                            this.utils.createSnapshot('login');
+
                             // 用户已登录，更新UI并加载渲染系统
                             this.authUIService.updateUIForAuth(session.user);
                             
