@@ -1569,6 +1569,10 @@ class ModalService {
                 const accentColor = getColorStyle(colorType);
                 const bgColor = getBackgroundColor(colorType, action.undone);
 
+                // 生成课程标签
+                const courseTag = (action.course || action.newCourse) ? window.timelineService.generateCourseTag(action.course || action.newCourse) : '';
+                const oldCourseTag = action.oldCourse ? window.timelineService.generateCourseTag(action.oldCourse) : '';
+                
                 return `
                     <div class="timeline-item ${action.undone ? 'timeline-item-undone' : ''}" data-id="${action.id}" style="position: relative; padding-left: 44px; padding-bottom: 28px;">
                         <div class="timeline-dot" style="position: absolute; left: 0; top: 6px; width: 24px; height: 24px; border-radius: 50%; background-color: ${bgColor}; border: 2px solid ${accentColor}; display: flex; align-items: center; justify-content: center; z-index: 1;">
@@ -1580,6 +1584,27 @@ class ModalService {
                                 <div class="timeline-description" style="font-weight: 600; color: var(--text-primary); ${action.undone ? 'text-decoration: line-through;' : ''}">${action.description}</div>
                                 <div class="timeline-time" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; background-color: var(--bg-tertiary); padding: 4px 10px; border-radius: 12px;">${formatTimestamp(action.timestamp)}</div>
                             </div>
+                            ${action.type === 'update-course' && oldCourseTag && courseTag ? `
+                                <div class="timeline-course-compare" style="margin-top: 12px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <div style="flex: 1;">
+                                            <div style="font-size: 11px; color: var(--color-danger); margin-bottom: 4px;">修改前</div>
+                                            ${oldCourseTag}
+                                        </div>
+                                        <i data-lucide="arrow-right" class="inline-block flex-shrink-0" style="width: 20px; height: 20px; color: var(--text-secondary);"></i>
+                                        <div style="flex: 1;">
+                                            <div style="font-size: 11px; color: var(--color-success); margin-bottom: 4px;">修改后</div>
+                                            ${courseTag}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${action.type === 'add-course' && courseTag ? `
+                                <div class="timeline-course-tag" style="margin-top: 12px;">${courseTag}</div>
+                            ` : ''}
+                            ${action.type === 'delete-course' && courseTag ? `
+                                <div class="timeline-course-tag" style="margin-top: 12px; opacity: 0.7;">${courseTag}</div>
+                            ` : ''}
                             ${generateChangesHtml(action)}
                             ${(action.type === 'paste-courses' || action.type === 'delete-day-courses') ? `
                                 <div class="timeline-expand-container" style="margin-top: 12px;">

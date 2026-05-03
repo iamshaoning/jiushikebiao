@@ -79,38 +79,70 @@ class TimelineService {
     }
 
     /**
-     * 生成课程标签
+     * 生成课程标签HTML（类似日历样式）
      */
     generateCourseTag(course) {
         if (!course) return '';
         
-        const studentNames = [];
-        if (course.studentIds && course.studentIds.length > 0) {
-            course.studentIds.forEach(id => {
-                const student = this.getStudentInfo(id);
-                studentNames.push(student.name);
-            });
-        }
+        const primaryColor = course.colors && course.colors[0] ? course.colors[0] : 'var(--color-secondary)';
+        const studentNames = course.studentNames || [];
         
-        const timeStr = this.formatTime(course.startTime);
-        const duration = course.duration || 60;
+        // 如果 studentNames 是字符串，转换为数组
+        const namesArray = Array.isArray(studentNames) ? studentNames : studentNames.split('、').filter(n => n);
         
-        return `${studentNames.join('、')} ${course.lessonType} ${timeStr}~${duration}分钟`;
+        // 生成学生名字标签
+        const studentTags = namesArray.map((name, index) => {
+            const color = course.colors && course.colors[index] ? course.colors[index] : primaryColor;
+            return `
+                <span class="px-2 py-0.5 rounded text-xs font-medium"
+                      style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">
+                    ${name}
+                </span>
+            `;
+        }).join('');
+        
+        const endTime = this.calculateEndTime(course.startTime, course.duration);
+        
+        return `
+            <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block max-w-full"
+                 style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); border-left: 3px solid ${primaryColor};">
+                <div class="tag-content p-2">
+                    <div class="flex flex-wrap gap-1 mb-1">
+                        ${studentTags}
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-medium" style="color: var(--text-secondary);">${course.lessonType}</span>
+                        <span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${endTime}</span>
+                    </div>
+                    ${course.note ? `<div class="text-[9px] truncate mt-1" style="color: var(--text-secondary);">${course.note}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * 计算结束时间
+     */
+    calculateEndTime(startTime, duration) {
+        if (!startTime) return '';
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const totalMinutes = hours * 60 + minutes + (duration || 60);
+        const endHours = Math.floor(totalMinutes / 60);
+        const endMinutes = totalMinutes % 60;
+        return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
     }
 
     /**
      * 创建添加课程记录
      */
     recordAddCourse(course, isPaste = false) {
-        const courseTag = this.generateCourseTag(course);
-        
         const action = {
             id: this.generateId(),
             type: 'add-course',
             timestamp: new Date().toISOString(),
             isPaste,
             course: { ...course },
-            description: `添加了${this.formatDate(course.date)}的「${courseTag}」`
+            description: `添加了${this.formatDate(course.date)}的课程`
         };
 
         this.addToTimeline(action);
@@ -145,9 +177,6 @@ class TimelineService {
      * 创建修改课程记录
      */
     recordUpdateCourse(oldCourse, newCourse, reason = '') {
-        const oldCourseTag = this.generateCourseTag(oldCourse);
-        const newCourseTag = this.generateCourseTag(newCourse);
-
         const changes = [];
         
         if (oldCourse.date !== newCourse.date) {
@@ -203,7 +232,7 @@ class TimelineService {
             newCourse: { ...newCourse },
             changes: changes,
             reason: reason,
-            description: `修改了${this.formatDate(newCourse.date)}的「${oldCourseTag}」为「${newCourseTag}」`
+            description: `修改了${this.formatDate(newCourse.date)}的课程`
         };
 
         this.addToTimeline(action);
@@ -214,14 +243,12 @@ class TimelineService {
      * 创建删除课程记录
      */
     recordDeleteCourse(course) {
-        const courseTag = this.generateCourseTag(course);
-
         const action = {
             id: this.generateId(),
             type: 'delete-course',
             timestamp: new Date().toISOString(),
             course: { ...course },
-            description: `删除了${this.formatDate(course.date)}的「${courseTag}」`
+            description: `删除了${this.formatDate(course.date)}的课程`
         };
 
         this.addToTimeline(action);
