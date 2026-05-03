@@ -63,99 +63,98 @@ const stateUtils = {
     
     updateColorLabelsInDOM: (updateOrg = true, updateGrade = true) => {
         try {
-            // 更新机构颜色标签（机构管理模态框中的标签）
+            // 更新所有机构颜色标签 - 遍历页面中所有可能包含机构颜色的元素
             if (updateOrg) {
-                const orgLabels = document.querySelectorAll('[data-item-name="机构"].color-picker-trigger');
-                if (window.GLOBAL_DEBUG) console.log('[颜色同步] 找到机构标签:', orgLabels.length);
-                
-                orgLabels.forEach(label => {
-                    const orgName = label.dataset.item;
-                    if (orgName) {
+                // 1. 机构管理模态框中的标签 (class包含"机构-name"的button)
+                document.querySelectorAll('button.机构-name').forEach(label => {
+                    const orgName = label.textContent?.trim();
+                    if (orgName && window.state.organizations.includes(orgName)) {
                         const color = window.utils.generateColor(orgName, 'organization');
                         label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         label.style.color = color;
                         label.dataset.color = color;
                     }
                 });
+                
+                // 2. 学生列表中的机构标签 (在flex布局中，带px-2类的span)
+                document.querySelectorAll('.students-list span.px-2').forEach(span => {
+                    const orgName = span.textContent?.trim();
+                    if (orgName && window.state.organizations.includes(orgName)) {
+                        const color = window.utils.generateColor(orgName, 'organization');
+                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        span.style.color = color;
+                    }
+                });
+                
+                // 3. 表格形式学生列表中的机构标签 (在td中的span)
+                document.querySelectorAll('table span.px-2').forEach(span => {
+                    const orgName = span.textContent?.trim();
+                    if (orgName && window.state.organizations.includes(orgName)) {
+                        const color = window.utils.generateColor(orgName, 'organization');
+                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        span.style.color = color;
+                    }
+                });
+                
+                // 4. 机构列表中的机构标签
+                document.querySelectorAll('#机构s-list button').forEach(btn => {
+                    const orgName = btn.textContent?.trim();
+                    if (orgName && window.state.organizations.includes(orgName)) {
+                        const color = window.utils.generateColor(orgName, 'organization');
+                        btn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        btn.style.color = color;
+                        btn.dataset.color = color;
+                    }
+                });
             }
             
-            // 更新年级颜色标签（年级管理模态框中的标签）
+            // 更新所有年级颜色标签
             if (updateGrade) {
-                const gradeLabels = document.querySelectorAll('[data-item-name="年级"].color-picker-trigger');
-                if (window.GLOBAL_DEBUG) console.log('[颜色同步] 找到年级标签:', gradeLabels.length);
-                
-                gradeLabels.forEach(label => {
-                    const gradeName = label.dataset.item;
-                    if (gradeName) {
+                // 1. 年级管理模态框中的标签
+                document.querySelectorAll('button.年级-name').forEach(label => {
+                    const gradeName = label.textContent?.trim();
+                    if (gradeName && window.state.grades.includes(gradeName)) {
                         const color = window.utils.generateColor(gradeName, 'grade');
                         label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         label.style.color = color;
                         label.dataset.color = color;
                     }
                 });
+                
+                // 2. 学生列表中的年级标签
+                document.querySelectorAll('.students-list span.px-2').forEach(span => {
+                    // 年级标签通常跟在机构标签后面
+                    const gradeName = span.textContent?.trim();
+                    if (gradeName && window.state.grades.includes(gradeName)) {
+                        const color = window.utils.generateColor(gradeName, 'grade');
+                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        span.style.color = color;
+                    }
+                });
+                
+                // 3. 表格形式学生列表中的年级标签
+                document.querySelectorAll('table span.px-2').forEach(span => {
+                    const gradeName = span.textContent?.trim();
+                    if (gradeName && window.state.grades.includes(gradeName)) {
+                        const color = window.utils.generateColor(gradeName, 'grade');
+                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        span.style.color = color;
+                    }
+                });
+                
+                // 4. 年级列表中的年级标签
+                document.querySelectorAll('#年级s-list button').forEach(btn => {
+                    const gradeName = btn.textContent?.trim();
+                    if (gradeName && window.state.grades.includes(gradeName)) {
+                        const color = window.utils.generateColor(gradeName, 'grade');
+                        btn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        btn.style.color = color;
+                        btn.dataset.color = color;
+                    }
+                });
             }
             
-            // 更新学生列表中的机构和年级标签
-            const studentRows = document.querySelectorAll('.students-list .flex.items-center.p-4');
-            if (window.GLOBAL_DEBUG) console.log('[颜色同步] 找到学生行:', studentRows.length);
-            
-            studentRows.forEach(row => {
-                // 更新机构标签颜色
-                const orgSpan = row.querySelector('span.px-2');
-                if (orgSpan) {
-                    const orgName = orgSpan.textContent?.trim();
-                    if (orgName && updateOrg) {
-                        const color = window.utils.generateColor(orgName, 'organization');
-                        orgSpan.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        orgSpan.style.color = color;
-                    }
-                    
-                    // 更新年级标签颜色（下一个兄弟节点）
-                    const gradeSpan = orgSpan?.nextElementSibling;
-                    if (gradeSpan && gradeSpan.tagName === 'SPAN' && gradeSpan.classList.contains('px-2') && updateGrade) {
-                        const gradeName = gradeSpan.textContent?.trim();
-                        if (gradeName) {
-                            const color = window.utils.generateColor(gradeName, 'grade');
-                            gradeSpan.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                            gradeSpan.style.color = color;
-                        }
-                    }
-                }
-            });
-            
-            // 更新机构列表中的颜色标签
-            const orgListItems = document.querySelectorAll('#机构s-list [data-机构]');
-            if (window.GLOBAL_DEBUG) console.log('[颜色同步] 找到机构列表项:', orgListItems.length);
-            
-            orgListItems.forEach(item => {
-                const orgBtn = item.querySelector('.color-picker-trigger');
-                if (orgBtn) {
-                    const orgName = orgBtn.dataset.item;
-                    if (orgName && updateOrg) {
-                        const color = window.utils.generateColor(orgName, 'organization');
-                        orgBtn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        orgBtn.style.color = color;
-                        orgBtn.dataset.color = color;
-                    }
-                }
-            });
-            
-            // 更新年级列表中的颜色标签
-            const gradeListItems = document.querySelectorAll('#年级s-list [data-年级]');
-            if (window.GLOBAL_DEBUG) console.log('[颜色同步] 找到年级列表项:', gradeListItems.length);
-            
-            gradeListItems.forEach(item => {
-                const gradeBtn = item.querySelector('.color-picker-trigger');
-                if (gradeBtn) {
-                    const gradeName = gradeBtn.dataset.item;
-                    if (gradeName && updateGrade) {
-                        const color = window.utils.generateColor(gradeName, 'grade');
-                        gradeBtn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        gradeBtn.style.color = color;
-                        gradeBtn.dataset.color = color;
-                    }
-                }
-            });
+            if (window.GLOBAL_DEBUG) console.log('[颜色同步] DOM颜色标签更新完成');
             
         } catch (error) {
             if (window.GLOBAL_DEBUG) console.error('更新DOM颜色标签失败:', error);
