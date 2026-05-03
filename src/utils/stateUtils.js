@@ -260,7 +260,13 @@ const stateUtils = {
                 return true;
             }
             
-            const localData = JSON.parse(localDataStr);
+            let localData;
+            try {
+                localData = JSON.parse(localDataStr);
+            } catch (parseError) {
+                if (window.GLOBAL_DEBUG) console.error('解析本地数据失败:', parseError);
+                return false;
+            }
             
             const { error } = await window.supabaseClient
                 .from('coursemanagerdata')
@@ -270,6 +276,8 @@ const stateUtils = {
                 courses: localData.courses,
                 organizations: localData.organizations,
                 grades: localData.grades,
+                organizationColors: localData.organizationColors || {},
+                gradeColors: localData.gradeColors || {},
                 lastupdated: localData.lastupdated
             }, { onConflict: 'userid' });
             
@@ -291,13 +299,11 @@ const stateUtils = {
     },
     
     initDebouncedSave: function() {
-        const debounce = window.utils?.debounce || ((fn, delay) => {
-            let timeoutId;
-            return function(...args) {
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(() => fn.apply(this, args), delay);
-            };
-        });
+        const debounce = window.coreUtils?.debounce;
+        if (typeof debounce !== 'function') {
+            console.error('coreUtils.debounce not found');
+            return;
+        }
         this.debouncedSaveData = debounce(this.saveData.bind(this), CONSTANTS.DEBOUNCE_SAVE_DELAY);
         this.debouncedSyncToServer = debounce(this.syncToServer.bind(this), CONSTANTS.DEBOUNCE_SYNC_DELAY);
     }

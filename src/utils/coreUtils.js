@@ -9,7 +9,8 @@ const coreUtils = {
     generateId: () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
     
     escapeHtml: (unsafe) => {
-        if (!unsafe) return '';
+        if (unsafe == null) return '';
+        if (typeof unsafe !== 'string') return '';
         return unsafe
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")

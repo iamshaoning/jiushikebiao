@@ -74,8 +74,6 @@ class StateService {
      * @param {boolean} useDefaults - 是否使用默认值
      */
     updateStateFromData(data, useDefaults = true) {
-        const oldCourses = [...this.state.courses];
-        
         const defaults = { organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
         this.state.students = data.students || [];
         this.state.courses = data.courses || [];
