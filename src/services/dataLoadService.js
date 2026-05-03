@@ -1,13 +1,11 @@
-import stateService from './stateService.js';
-
 class DataLoadService {
-    constructor() {
-        this.state = stateService.state;
-        this.utils = window.utils || {};
-        this.notificationService = window.notificationService || {
+    constructor(state, notificationService, serverStatusService, utils) {
+        this.state = state;
+        this.utils = utils || window.utils || {};
+        this.notificationService = notificationService || window.notificationService || {
             show: (msg, type) => console.log(`[通知] ${type}: ${msg}`)
         };
-        this.serverStatusService = window.serverStatusService || {
+        this.serverStatusService = serverStatusService || window.serverStatusService || {
             setSyncing: () => {},
             updateServerStatus: () => {}
         };
@@ -247,5 +245,4 @@ class DataLoadService {
     }
 }
 
-const dataLoadService = new DataLoadService();
-export default dataLoadService;
+export default DataLoadService;
