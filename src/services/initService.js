@@ -12,6 +12,7 @@ class InitService {
         this.loadSystemService = loadSystemService;
         this.elements = elements;
         this.authStateChangeTimer = null;
+        this.loginSnapshotCreated = false;
     }
 
     /**
@@ -45,8 +46,10 @@ class InitService {
                         const { data } = await this.utils.withTimeout(() => auth.getSession(), 2000, '获取会话超时');
                         const session = data.session;
                         if (session) {
-                            // 登录时创建快照（如果本地有数据）- 在任何数据同步之前
-                            await this.utils.createSnapshot('login');
+                            if (!this.loginSnapshotCreated) {
+                                await this.utils.createSnapshot('login');
+                                this.loginSnapshotCreated = true;
+                            }
 
                             // 用户已登录，更新UI并加载渲染系统
                             const user = session.user;
@@ -91,8 +94,10 @@ class InitService {
                 auth.onAuthStateChange((event, session) => {
                     try {
                         if (event === 'SIGNED_IN' && session) {
-                            // 登录时创建快照（如果本地有数据）- 在任何数据同步之前
-                            this.utils.createSnapshot('login');
+                            if (!this.loginSnapshotCreated) {
+                                this.utils.createSnapshot('login');
+                                this.loginSnapshotCreated = true;
+                            }
 
                             // 用户已登录，更新UI并加载渲染系统
                             this.authUIService.updateUIForAuth(session.user);
@@ -113,6 +118,8 @@ class InitService {
                                 this.authUIService.updateUIForUnauth();
                                 // 重置系统加载标志，以便下次登录时可以重新加载
                                 this.loadSystemService.systemLoaded = false;
+                                // 重置登录快照标志，以便下次登录时创建快照
+                                this.loginSnapshotCreated = false;
                             }, 500); // 防抖
                         }
                     } catch (error) {

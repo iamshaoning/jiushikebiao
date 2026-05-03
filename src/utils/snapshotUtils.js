@@ -27,6 +27,7 @@ const snapshotUtils = {
     
     createSnapshot: async (type = 'manual', showNotification = true) => {
         const localDataStr = localStorage.getItem('coursemanagerdata');
+        console.log(`[createSnapshot] type=${type}, localData exists: ${!!localDataStr}`);
         if (!localDataStr) {
             if (type === 'manual' && typeof window.notificationService !== 'undefined') {
                 window.notificationService.show('没有数据可创建快照', 'warning');
@@ -35,6 +36,7 @@ const snapshotUtils = {
         }
         
         const userId = await snapshotUtils.getCurrentUserId();
+        console.log(`[createSnapshot] userId=${userId}`);
         if (!userId) {
             if (type === 'manual' && typeof window.notificationService !== 'undefined') {
                 window.notificationService.show('请先登录后再创建快照', 'warning');
