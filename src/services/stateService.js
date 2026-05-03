@@ -51,8 +51,6 @@ class StateService {
      * @param {string|Array|null} scope - 刷新范围
      */
     setState(updater, scope = null) {
-        const oldCourses = [...this.state.courses];
-        
         updater(this.state);
         
         if (window.serverStatusService) {

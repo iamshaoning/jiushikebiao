@@ -94,6 +94,8 @@ class DataService {
                     courses: data.courses,
                     organizations: data.organizations,
                     grades: data.grades,
+                    organizationColors: data.organizationColors || {},
+                    gradeColors: data.gradeColors || {},
                     lastupdated: data.lastupdated
                 }, { onConflict: 'userid' });
 
@@ -185,6 +187,8 @@ class DataService {
             courses: state.courses,
             organizations: state.organizations,
             grades: state.grades,
+            organizationColors: state.organizationColors || {},
+            gradeColors: state.gradeColors || {},
             lastupdated: this.getCurrentTimestamp()
         };
         return this.saveLocalData(appData);

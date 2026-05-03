@@ -20,8 +20,6 @@ const CONSTANTS = {
 
 const stateUtils = {
     updateStateFromData: (data, useDefaults = true) => {
-        const oldCourses = [...window.state.courses];
-        
         const defaults = { organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
         window.state.students = data.students || [];
         window.state.courses = data.courses || [];
