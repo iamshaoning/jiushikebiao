@@ -3,9 +3,6 @@
  * 负责根据文本生成独立颜色、颜色分配管理等功能
  */
 
-const LOCAL_STORAGE_KEY = 'coursemanagerdata';
-const AUTH_TOKEN_KEY = 'sb-auth-token';
-
 const colorPalette = [
     '#000000', '#7FFFD4', '#B87333', '#FFB6C1',
     '#C0C0C0', '#0ABAB5', '#FFBF00', '#EE82EE',
@@ -23,7 +20,8 @@ const nextColorIndex = {
     grade: 0
 };
 
-let isSyncing = false;
+let syncTimeout = null;
+let pendingSyncTypes = new Set();
 
 export function generateColor(text, type = 'organization') {
     const validType = colorAssignments[type] ? type : 'organization';
@@ -115,7 +113,6 @@ export function setColor(text, color, type = 'organization') {
     colorAssignments[validType].set(text, color);
     if (window.GLOBAL_DEBUG) console.log(`[颜色] setColor() - 已将 '${text}' 颜色更新为: ${color}`);
     
-    // 立即同步到 state（不延迟）
     if (window.state) {
         if (validType === 'organization') {
             const newColors = { ...(window.state.organizationColors || {}) };
@@ -129,19 +126,7 @@ export function setColor(text, color, type = 'organization') {
             if (window.GLOBAL_DEBUG) console.log(`[颜色] setColor() - 立即同步 gradeColors:`, JSON.stringify(newColors));
         }
     }
-    
-    // 仍然调用 scheduleSyncToState 以保持一致性（但去除延迟）
-    pendingSyncTypes.add(validType);
-    if (syncTimeout) {
-        clearTimeout(syncTimeout);
-    }
-    syncTimeout = setTimeout(() => {
-        performSyncToState();
-    }, 0); // 改为 0 延迟
 }
-
-let syncTimeout = null;
-let pendingSyncTypes = new Set();
 
 function scheduleSyncToState(type) {
     if (window.GLOBAL_DEBUG) console.log(`[颜色] scheduleSyncToState('${type}')`);
@@ -153,7 +138,7 @@ function scheduleSyncToState(type) {
     
     syncTimeout = setTimeout(() => {
         performSyncToState();
-    }, 10);
+    }, 0);
 }
 
 function performSyncToState() {
