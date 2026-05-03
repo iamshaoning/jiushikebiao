@@ -20,6 +20,7 @@ class ModalService {
         this.nestedContent = null;
         this.eventListeners = [];
         this.setTimeoutId = null;
+        this._boundKeydownHandler = null;
     }
 
     /**
@@ -220,7 +221,8 @@ class ModalService {
             }
         };
 
-        document.addEventListener('keydown', this.handleKeydown.bind(this));
+        this._boundKeydownHandler = this.handleKeydown.bind(this);
+        document.addEventListener('keydown', this._boundKeydownHandler);
 
         if (options.onShow) {
             options.onShow();
@@ -252,7 +254,10 @@ class ModalService {
             this.container.dispatchEvent(hideEvent);
         }, 400);
 
-        document.removeEventListener('keydown', this.handleKeydown.bind(this));
+        if (this._boundKeydownHandler) {
+            document.removeEventListener('keydown', this._boundKeydownHandler);
+            this._boundKeydownHandler = null;
+        }
 
         this.eventListeners.forEach(({ element, type, listener }) => {
             if (element) {

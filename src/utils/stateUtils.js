@@ -215,25 +215,6 @@ const stateUtils = {
     debouncedSaveData: null,
     debouncedSyncToServer: null,
     
-    saveToLocal: () => {
-        try {
-            const now = new Date();
-            const isoDateTimeString = now.toISOString();
-            const appData = {
-                students: window.state.students,
-                courses: window.state.courses,
-                organizations: window.state.organizations,
-                grades: window.state.grades,
-                organizationColors: window.state.organizationColors || {},
-                gradeColors: window.state.gradeColors || {},
-                lastupdated: isoDateTimeString
-            };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
-        } catch (error) {
-            console.error('保存到本地失败:', error);
-        }
-    },
-    
     syncToServer: async (force = false) => {
         const auth = window.supabaseAuth;
         if (!window.supabaseClient || !auth) {
