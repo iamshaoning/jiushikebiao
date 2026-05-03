@@ -19,7 +19,9 @@ class DataLoadService {
     async loadData() {
         const defaults = {
             organizations: [],
-            grades: []
+            grades: [],
+            organizationColors: {},
+            gradeColors: {}
         };
 
         try {
