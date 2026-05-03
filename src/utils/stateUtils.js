@@ -24,6 +24,11 @@ const stateUtils = {
         window.state.courses = data.courses || [];
         window.state.organizations = data.organizations || (useDefaults ? defaults.organizations : []);
         window.state.grades = data.grades || (useDefaults ? defaults.grades : []);
+        
+        // 检测颜色变化
+        const oldOrgColors = { ...window.state.organizationColors };
+        const oldGradeColors = { ...window.state.gradeColors };
+        
         window.state.organizationColors = data.organizationColors || {};
         window.state.gradeColors = data.gradeColors || {};
         window.state.lastupdated = data.lastupdated;
@@ -42,6 +47,74 @@ const stateUtils = {
             }
         } catch (error) {
             if (window.GLOBAL_DEBUG) console.error('同步数据到Maps失败:', error);
+        }
+        
+        // 如果颜色发生变化，更新DOM中的颜色标签
+        const orgColorsChanged = JSON.stringify(oldOrgColors) !== JSON.stringify(window.state.organizationColors);
+        const gradeColorsChanged = JSON.stringify(oldGradeColors) !== JSON.stringify(window.state.gradeColors);
+        
+        if (orgColorsChanged || gradeColorsChanged) {
+            stateUtils.updateColorLabelsInDOM(orgColorsChanged, gradeColorsChanged);
+        }
+    },
+    
+    updateColorLabelsInDOM: (updateOrg = true, updateGrade = true) => {
+        try {
+            // 更新机构颜色标签
+            if (updateOrg) {
+                const orgLabels = document.querySelectorAll('.organization-name');
+                orgLabels.forEach(label => {
+                    const orgName = label.dataset.item;
+                    if (orgName) {
+                        const color = window.utils.generateColor(orgName, 'organization');
+                        label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        label.style.color = color;
+                        label.dataset.color = color;
+                    }
+                });
+            }
+            
+            // 更新年级颜色标签
+            if (updateGrade) {
+                const gradeLabels = document.querySelectorAll('.grade-name');
+                gradeLabels.forEach(label => {
+                    const gradeName = label.dataset.item;
+                    if (gradeName) {
+                        const color = window.utils.generateColor(gradeName, 'grade');
+                        label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        label.style.color = color;
+                        label.dataset.color = color;
+                    }
+                });
+            }
+            
+            // 更新学生列表中的机构和年级标签
+            const studentRows = document.querySelectorAll('.students-list .flex.items-center.p-4');
+            studentRows.forEach(row => {
+                // 更新机构标签颜色
+                const orgSpan = row.querySelector('span');
+                if (orgSpan && orgSpan.classList.contains('px-2')) {
+                    const orgName = orgSpan.textContent?.trim();
+                    if (orgName && updateOrg) {
+                        const color = window.utils.generateColor(orgName, 'organization');
+                        orgSpan.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                        orgSpan.style.color = color;
+                    }
+                    
+                    // 更新年级标签颜色（下一个兄弟节点）
+                    const gradeSpan = orgSpan?.nextElementSibling;
+                    if (gradeSpan && gradeSpan.tagName === 'SPAN' && updateGrade) {
+                        const gradeName = gradeSpan.textContent?.trim();
+                        if (gradeName) {
+                            const color = window.utils.generateColor(gradeName, 'grade');
+                            gradeSpan.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
+                            gradeSpan.style.color = color;
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            if (window.GLOBAL_DEBUG) console.error('更新DOM颜色标签失败:', error);
         }
     },
     
