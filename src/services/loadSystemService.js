@@ -16,6 +16,7 @@ class LoadSystemService {
         this.originalSaveData = null;
         this.originalLoadData = null;
         this.systemLoaded = false; // 标志位：系统是否已加载
+        this.loginSnapshotCreated = false; // 标志位：登录快照是否已创建
     }
 
     /**
@@ -150,6 +151,11 @@ class LoadSystemService {
         
         try {
             await this.utils.loadData();
+            // 在数据加载完成后创建登录快照（此时 localStorage 中是当前账号的数据）
+            if (!this.loginSnapshotCreated && typeof this.utils.createSnapshot === 'function') {
+                await this.utils.createSnapshot('login');
+                this.loginSnapshotCreated = true;
+            }
         } catch (error) {
             if (window.GLOBAL_DEBUG) console.error('加载数据失败:', error);
             // 即使加载失败，也确保刷新视图

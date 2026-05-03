@@ -46,16 +46,12 @@ class InitService {
                         const { data } = await this.utils.withTimeout(() => auth.getSession(), 2000, '获取会话超时');
                         const session = data.session;
                         if (session) {
-                            if (!this.loginSnapshotCreated) {
-                                await this.utils.createSnapshot('login');
-                                this.loginSnapshotCreated = true;
-                            }
-
                             // 用户已登录，更新UI并加载渲染系统
                             const user = session.user;
                             this.authUIService.updateUIForAuth(user);
                             
                             // 调用系统加载服务（loadSystemService 内部会处理重复调用）
+                            // 登录快照将在 loadData 完成后在 loadSystemService 中创建
                             this.loadSystemService.loadSystem();
 
                             // 存储登录时间，用于会话管理
@@ -94,15 +90,11 @@ class InitService {
                 auth.onAuthStateChange((event, session) => {
                     try {
                         if (event === 'SIGNED_IN' && session) {
-                            if (!this.loginSnapshotCreated) {
-                                this.utils.createSnapshot('login');
-                                this.loginSnapshotCreated = true;
-                            }
-
                             // 用户已登录，更新UI并加载渲染系统
                             this.authUIService.updateUIForAuth(session.user);
                             
                             // 调用系统加载服务（loadSystemService 内部会处理重复调用）
+                            // 登录快照将在 loadData 完成后在 loadSystemService 中创建
                             this.loadSystemService.loadSystem();
 
                             // 存储登录时间，用于会话管理
@@ -119,7 +111,7 @@ class InitService {
                                 // 重置系统加载标志，以便下次登录时可以重新加载
                                 this.loadSystemService.systemLoaded = false;
                                 // 重置登录快照标志，以便下次登录时创建快照
-                                this.loginSnapshotCreated = false;
+                                this.loadSystemService.loginSnapshotCreated = false;
                             }, 500); // 防抖
                         }
                     } catch (error) {
