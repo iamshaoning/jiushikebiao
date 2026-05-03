@@ -1510,7 +1510,7 @@ class ModalService {
                 const courseTag = window.timelineService.generateCourseTag(course);
                 return `
                     <div class="timeline-expanded-item" style="padding: 8px 12px; border-left: 2px solid var(--border-color); margin-left: 16px; color: var(--text-secondary);">
-                        「${courseTag}」
+                        ${courseTag}
                     </div>
                 `;
             }).join('');
@@ -1605,7 +1605,6 @@ class ModalService {
                             ${action.type === 'delete-course' && courseTag ? `
                                 <div class="timeline-course-tag" style="margin-top: 12px; opacity: 0.7;">${courseTag}</div>
                             ` : ''}
-                            ${generateChangesHtml(action)}
                             ${(action.type === 'paste-courses' || action.type === 'delete-day-courses') ? `
                                 <div class="timeline-expand-container" style="margin-top: 12px;">
                                     <button data-action="toggle-timeline-expand" data-id="${action.id}" class="timeline-expand-btn" style="display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--color-primary); cursor: pointer; background: none; border: none; padding: 6px 10px; border-radius: 6px; transition: background-color 0.2s; :hover { background-color: var(--bg-tertiary); }">

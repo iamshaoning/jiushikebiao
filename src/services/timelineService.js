@@ -105,7 +105,7 @@ class TimelineService {
         
         return `
             <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block max-w-full"
-                 style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); border-left: 3px solid ${primaryColor};">
+                 style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);">
                 <div class="tag-content p-2">
                     <div class="flex flex-wrap gap-1 mb-1">
                         ${studentTags}
