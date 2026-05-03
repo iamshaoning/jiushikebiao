@@ -137,8 +137,7 @@ const snapshotUtils = {
                 'manual': '手动快照'
             };
             
-            // 添加快照恢复记录
-            const timeline = JSON.parse(localStorage.getItem('coursemanagertimeline') || '[]');
+            // 使用timelineService添加记录
             const restoreRecord = {
                 id: Date.now().toString(36) + Math.random().toString(36).slice(2),
                 type: 'restore-snapshot',
@@ -148,13 +147,7 @@ const snapshotUtils = {
                 snapshotId: snapshotId,
                 description: `恢复了 ${typeLabels[snapshot.type]} (${formattedDate})`
             };
-            timeline.unshift(restoreRecord);
-            
-            // 保持最大记录数
-            if (timeline.length > 100) {
-                timeline.splice(100);
-            }
-            localStorage.setItem('coursemanagertimeline', JSON.stringify(timeline));
+            window.timelineService.addToTimeline(restoreRecord);
         }
         
         // 更新快照数据的时间戳，确保服务器接受新数据

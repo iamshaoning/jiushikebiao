@@ -68,41 +68,49 @@ class TimelineService {
     }
 
     /**
-     * 格式化日期显示
+     * 格式化日期显示（简短版本）
      */
     formatDate(dateStr) {
         if (!dateStr) return '';
         const date = new Date(dateStr);
-        const year = date.getFullYear();
         const month = date.getMonth() + 1;
         const day = date.getDate();
-        const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-        const weekDay = weekDays[date.getDay()];
-        return `${year}年${month}月${day}日 ${weekDay}`;
+        return `${month}月${day}日`;
+    }
+
+    /**
+     * 生成课程标签
+     */
+    generateCourseTag(course) {
+        if (!course) return '';
+        
+        const studentNames = [];
+        if (course.studentIds && course.studentIds.length > 0) {
+            course.studentIds.forEach(id => {
+                const student = this.getStudentInfo(id);
+                studentNames.push(student.name);
+            });
+        }
+        
+        const timeStr = this.formatTime(course.startTime);
+        const duration = course.duration || 60;
+        
+        return `${studentNames.join('、')} ${course.lessonType} ${timeStr}~${duration}分钟`;
     }
 
     /**
      * 创建添加课程记录
      */
     recordAddCourse(course, isPaste = false) {
-        const studentInfos = [];
-        const studentNames = [];
-        if (course.studentIds && course.studentIds.length > 0) {
-            course.studentIds.forEach(id => {
-                const student = this.getStudentInfo(id);
-                studentInfos.push(student);
-                studentNames.push(student.name);
-            });
-        }
-
+        const courseTag = this.generateCourseTag(course);
+        
         const action = {
             id: this.generateId(),
             type: 'add-course',
             timestamp: new Date().toISOString(),
             isPaste,
             course: { ...course },
-            studentNames: studentNames.join('、'),
-            description: `添加${isPaste ? '(粘贴)' : ''}了${this.formatDate(course.date)}${this.formatTime(course.startTime)}${studentNames.join('、')}的${course.lessonType}课程`
+            description: `添加了${this.formatDate(course.date)}的「${courseTag}」`
         };
 
         this.addToTimeline(action);
@@ -137,15 +145,8 @@ class TimelineService {
      * 创建修改课程记录
      */
     recordUpdateCourse(oldCourse, newCourse, reason = '') {
-        const studentInfos = [];
-        const studentNames = [];
-        if (newCourse.studentIds && newCourse.studentIds.length > 0) {
-            newCourse.studentIds.forEach(id => {
-                const student = this.getStudentInfo(id);
-                studentInfos.push(student);
-                studentNames.push(student.name);
-            });
-        }
+        const oldCourseTag = this.generateCourseTag(oldCourse);
+        const newCourseTag = this.generateCourseTag(newCourse);
 
         const changes = [];
         
@@ -200,10 +201,9 @@ class TimelineService {
             timestamp: new Date().toISOString(),
             oldCourse: { ...oldCourse },
             newCourse: { ...newCourse },
-            studentNames: studentNames.join('、'),
             changes: changes,
             reason: reason,
-            description: `修改了${this.formatDate(newCourse.date)}${this.formatTime(newCourse.startTime)}${studentNames.join('、')}的课程`
+            description: `修改了${this.formatDate(newCourse.date)}的「${oldCourseTag}」为「${newCourseTag}」`
         };
 
         this.addToTimeline(action);
@@ -214,23 +214,14 @@ class TimelineService {
      * 创建删除课程记录
      */
     recordDeleteCourse(course) {
-        const studentInfos = [];
-        const studentNames = [];
-        if (course.studentIds && course.studentIds.length > 0) {
-            course.studentIds.forEach(id => {
-                const student = this.getStudentInfo(id);
-                studentInfos.push(student);
-                studentNames.push(student.name);
-            });
-        }
+        const courseTag = this.generateCourseTag(course);
 
         const action = {
             id: this.generateId(),
             type: 'delete-course',
             timestamp: new Date().toISOString(),
             course: { ...course },
-            studentNames: studentNames.join('、'),
-            description: `删除了${this.formatDate(course.date)}${this.formatTime(course.startTime)}${studentNames.join('、')}的课程`
+            description: `删除了${this.formatDate(course.date)}的「${courseTag}」`
         };
 
         this.addToTimeline(action);

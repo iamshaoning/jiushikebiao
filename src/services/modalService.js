@@ -1507,16 +1507,10 @@ class ModalService {
             if (!action.courses || action.courses.length === 0) return '';
             
             return action.courses.map(course => {
-                const studentNames = [];
-                if (course.studentIds && course.studentIds.length > 0) {
-                    course.studentIds.forEach(id => {
-                        const student = window.timelineService.getStudentInfo(id);
-                        studentNames.push(student.name);
-                    });
-                }
+                const courseTag = window.timelineService.generateCourseTag(course);
                 return `
                     <div class="timeline-expanded-item" style="padding: 8px 12px; border-left: 2px solid var(--border-color); margin-left: 16px; color: var(--text-secondary);">
-                        ${window.timelineService.formatDate(course.date)} ${window.timelineService.formatTime(course.startTime)} ${studentNames.join('、')} ${course.lessonType}
+                        「${courseTag}」
                     </div>
                 `;
             }).join('');
