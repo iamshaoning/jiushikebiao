@@ -101,13 +101,14 @@ class DataLoadService {
                 const localDataStr = localStorage.getItem('coursemanagerdata');
                 const localData = localDataStr ? JSON.parse(localDataStr) : null;
 
+                // 注意：先不立即刷新视图，等服务器加载完成后统一处理
                 if (localData) {
                     this.utils.updateStateFromData(localData);
                 } else {
                     this.utils.updateStateFromData({});
                 }
-
-                this.utils.refreshAllViews(true);
+                // 延迟刷新，避免重复渲染
+                // this.utils.refreshAllViews(true);
 
                 try {
                     const { data: serverData, error } = await this.utils.withTimeout(() =>
@@ -190,8 +191,10 @@ class DataLoadService {
                                     this.utils.handleError(uploadError, '上传数据失败');
                                 }
                                 this.serverStatusService.updateServerStatus('online');
+                                this.utils.refreshAllViews(true);
                             } else {
                                 this.serverStatusService.updateServerStatus('online');
+                                this.utils.refreshAllViews(true);
                             }
                         } else {
                             this.utils.updateStateFromData(serverData, false);
