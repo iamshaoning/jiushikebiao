@@ -1,57 +1,58 @@
-/**
- * 数据加载服务模块
- * 负责从服务器加载数据、与本地数据同步、处理实时数据监听等功能
- */
+import stateService from './stateService.js';
 
 class DataLoadService {
-    constructor(state, notificationService, serverStatusService, utils) {
-        this.state = state;
-        this.notificationService = notificationService;
-        this.serverStatusService = serverStatusService;
-        this.utils = utils;
+    constructor() {
+        this.state = stateService.state;
+        this.utils = window.utils || {};
+        this.notificationService = window.notificationService || {
+            show: (msg, type) => console.log(`[通知] ${type}: ${msg}`)
+        };
+        this.serverStatusService = window.serverStatusService || {
+            setSyncing: () => {},
+            updateServerStatus: () => {}
+        };
+        this.currentDeviceId = this.getDeviceId();
     }
 
-    /**
-     * 从Supabase加载数据并同步
-     * @description 检查用户登录状态，从Supabase加载数据，并与本地数据同步
-     * @returns {Promise<void>} 无返回值
-     */
-    async loadData() {
-        const defaults = {
-            organizations: [],
-            grades: [],
-            organizationColors: {},
-            gradeColors: {}
-        };
+    getDeviceId() {
+        let deviceId = localStorage.getItem('device_id');
+        if (!deviceId) {
+            deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('device_id', deviceId);
+        }
+        return deviceId;
+    }
 
+    async loadData() {
         try {
             const auth = window.supabaseAuth;
-            let isLoggedIn = false;
-            let session = null;
-
-            if (auth) {
-                try {
-                    const result = await this.utils.withTimeout(() => auth.getSession(), 10000, '获取会话超时');
-                    if (result && typeof result === 'object') {
-                        if (result.data && typeof result.data === 'object') {
-                            session = result.data.session;
-                        } else if (result.session) {
-                            session = result.session;
-                        }
-                    }
-                    isLoggedIn = !!session;
-                } catch (error) {
-                    this.utils.handleError(error, '获取 session 失败');
-                }
+            if (!auth) {
+                console.error('[数据加载] Supabase auth 未初始化');
+                this.notificationService.show('系统未正确初始化', 'error');
+                return;
             }
 
-            const currentUserId = session?.user?.id;
+            let sessionData;
+            try {
+                sessionData = await auth.getSession();
+            } catch (sessionError) {
+                console.error('[数据加载] 获取 session 失败:', sessionError);
+                sessionData = { data: { session: null } };
+            }
 
-            const localDataStr = localStorage.getItem('coursemanagerdata');
-            const localData = localDataStr ? JSON.parse(localDataStr) : null;
+            const session = sessionData?.data?.session || sessionData?.session;
+            const isLoggedIn = !!session;
 
-            if (localData && currentUserId && localData.userid !== currentUserId) {
-                localStorage.removeItem('coursemanagerdata');
+            if (window.GLOBAL_DEBUG) console.log('[数据加载] 会话状态:', isLoggedIn ? '已登录' : '未登录');
+
+            const defaults = {
+                students: [],
+                courses: [],
+                organizations: [],
+                grades: []
+            };
+
+            if (!isLoggedIn) {
                 this.state.students = [];
                 this.state.courses = [];
                 this.state.organizations = defaults.organizations;
@@ -61,7 +62,10 @@ class DataLoadService {
             if (window.supabaseClient && isLoggedIn) {
                 const userId = session.user.id;
 
+                if (window.GLOBAL_DEBUG) console.log('[数据加载] 用户已登录，建立实时频道, userId:', userId);
+
                 if (!window.realtimeChannel) {
+                    if (window.GLOBAL_DEBUG) console.log('[实时监听] 准备建立实时频道...');
                     try {
                         window.realtimeChannel = window.supabaseClient
                             .channel('course-manager-channel')
@@ -71,19 +75,22 @@ class DataLoadService {
                                 table: 'coursemanagerdata',
                                 filter: `userid=eq.${userId}`
                             }, (payload) => {
+                                if (window.GLOBAL_DEBUG) console.log('[实时监听] ====== 收到实时事件 ======');
                                 try {
-                                    if (window.GLOBAL_DEBUG) console.log('[实时监听] 收到实时事件:', payload.eventType, payload);
+                                    if (window.GLOBAL_DEBUG) console.log('[实时监听] 事件类型:', payload.eventType);
                                     
                                     if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                                         const serverData = payload.new;
+                                        if (window.GLOBAL_DEBUG) console.log('[实时监听] 服务器完整数据:', JSON.stringify(serverData, null, 2));
+                                        
                                         const localDataStr = localStorage.getItem('coursemanagerdata');
                                         const localData = localDataStr ? JSON.parse(localDataStr) : null;
                                         const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
                                         const serverTimestamp = this.utils.getTimestamp(serverData.lastupdated);
 
                                         if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器时间戳: ${serverTimestamp}, 本地时间戳: ${localTimestamp}`);
-                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 organizationColors:`, serverData.organizationColors);
-                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 gradeColors:`, serverData.gradeColors);
+                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 organizationColors:`, JSON.stringify(serverData.organizationColors));
+                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 gradeColors:`, JSON.stringify(serverData.gradeColors));
 
                                         if (serverTimestamp > localTimestamp) {
                                             if (window.GLOBAL_DEBUG) console.log('[实时监听] 服务器数据更新，同步到本地');
@@ -96,26 +103,30 @@ class DataLoadService {
                                         }
                                     }
                                 } catch (error) {
-                                    this.utils.handleError(error, '处理实时数据变化失败');
+                                    console.error('[实时监听] 处理实时数据变化失败:', error);
+                                    this.utils.handleError?.(error, '处理实时数据变化失败');
                                 }
                             })
-                            .subscribe();
+                            .subscribe((status) => {
+                                if (window.GLOBAL_DEBUG) console.log('[实时监听] 订阅状态:', status);
+                            });
+                        if (window.GLOBAL_DEBUG) console.log('[实时监听] 实时频道已建立');
                     } catch (error) {
-                        this.utils.handleError(error, '建立实时数据连接失败');
+                        console.error('[实时监听] 建立实时数据连接失败:', error);
+                        this.utils.handleError?.(error, '建立实时数据连接失败');
                     }
+                } else {
+                    if (window.GLOBAL_DEBUG) console.log('[数据加载] 实时频道已存在，跳过建立');
                 }
 
                 const localDataStr = localStorage.getItem('coursemanagerdata');
                 const localData = localDataStr ? JSON.parse(localDataStr) : null;
 
-                // 注意：先不立即刷新视图，等服务器加载完成后统一处理
                 if (localData) {
                     this.utils.updateStateFromData(localData);
                 } else {
                     this.utils.updateStateFromData({});
                 }
-                // 延迟刷新，避免重复渲染
-                // this.utils.refreshAllViews(true);
 
                 try {
                     const { data: serverData, error } = await this.utils.withTimeout(() =>
@@ -127,7 +138,6 @@ class DataLoadService {
                     , 10000, '加载数据超时');
 
                     if (error) {
-                        // PGRST116 表示查询返回 0 行，这是新用户的正常情况
                         if (error.code === 'PGRST116' && error.details === 'The result contains 0 rows') {
                             const defaultData = {
                                 userid: userId,
@@ -145,136 +155,56 @@ class DataLoadService {
                                     window.supabaseClient
                                         .from('coursemanagerdata')
                                         .insert(defaultData)
-                                , 10000, '创建初始数据超时');
+                                , 5000, '创建初始数据超时');
                                 this.serverStatusService.updateServerStatus('online');
-                                
-                                // 创建初始数据后，更新本地状态并刷新视图
-                                this.utils.updateStateFromData(defaultData, false);
-                                localStorage.setItem('coursemanagerdata', JSON.stringify(defaultData));
-                                this.utils.refreshAllViews(true);
-                                this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
-                            } catch (insertError) {
-                                this.utils.handleError(insertError, '创建初始数据失败', true);
+                            } catch (error) {
+                                if (window.GLOBAL_DEBUG) console.error('[数据加载] 创建初始数据失败:', error);
+                                this.utils.handleError(error, '创建初始数据失败', true);
                                 this.serverStatusService.updateServerStatus('offline');
-                                this.notificationService.show('数据加载失败，请刷新页面重试', 'error');
                             }
-                            return;
+
+                            this.utils.updateStateFromData({});
+                            this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
+                        } else {
+                            throw error;
                         }
-                        
-                        // 其他错误
-                        this.utils.handleError(error, '从服务器加载数据失败');
-                        this.serverStatusService.updateServerStatus('offline');
-                        return;
-                    }
-
-                    const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
-
-                    if (serverData) {
+                    } else {
+                        const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
                         const serverTimestamp = this.utils.getTimestamp(serverData.lastupdated);
 
-                        if (localData) {
-                            if (serverTimestamp > localTimestamp) {
-                                this.utils.updateStateFromData(serverData, false);
-                                localStorage.setItem('coursemanagerdata', JSON.stringify(serverData));
-                                this.utils.refreshAllViews(true);
-                                this.serverStatusService.updateServerStatus('online');
-                            } else if (localTimestamp > serverTimestamp) {
-                                try {
-                                    await this.utils.withTimeout(() =>
-                                        window.supabaseClient
-                                            .from('coursemanagerdata')
-                                            .upsert({
-                                                userid: userId,
-                                                students: localData.students,
-                                                courses: localData.courses,
-                                                organizations: localData.organizations,
-                                                grades: localData.grades,
-                                                organizationColors: localData.organizationColors || {},
-                                                gradeColors: localData.gradeColors || {},
-                                                lastupdated: localData.lastupdated
-                                            })
-                                    , 5000, '上传数据超时');
-                                } catch (uploadError) {
-                                    this.utils.handleError(uploadError, '上传数据失败');
-                                }
-                                this.serverStatusService.updateServerStatus('online');
-                                this.utils.refreshAllViews(true);
-                            } else {
-                                this.serverStatusService.updateServerStatus('online');
-                                this.utils.refreshAllViews(true);
-                            }
-                        } else {
+                        if (serverTimestamp > localTimestamp) {
                             this.utils.updateStateFromData(serverData, false);
                             localStorage.setItem('coursemanagerdata', JSON.stringify(serverData));
+                            this.serverStatusService.updateServerStatus('online');
+                        } else if (localTimestamp > serverTimestamp) {
+                            try {
+                                await this.utils.withTimeout(() =>
+                                    window.supabaseClient
+                                        .from('coursemanagerdata')
+                                        .upsert({
+                                            userid: userId,
+                                            students: localData.students,
+                                            courses: localData.courses,
+                                            organizations: localData.organizations,
+                                            grades: localData.grades,
+                                            organizationColors: localData.organizationColors || {},
+                                            gradeColors: localData.gradeColors || {},
+                                            lastupdated: localData.lastupdated
+                                        })
+                                , 5000, '上传数据超时');
+                            } catch (uploadError) {
+                                this.utils.handleError(uploadError, '上传数据失败');
+                            }
+                            this.serverStatusService.updateServerStatus('online');
                             this.utils.refreshAllViews(true);
+                        } else {
                             this.serverStatusService.updateServerStatus('online');
+                            this.utils.refreshAllViews(true);
                         }
-                    } else if (localData) {
-                        const insertData = {
-                            userid: userId,
-                            students: localData.students,
-                            courses: localData.courses,
-                            organizations: localData.organizations,
-                            grades: localData.grades,
-                            organizationColors: localData.organizationColors || {},
-                            gradeColors: localData.gradeColors || {},
-                            lastupdated: localData.lastupdated
-                        };
-                        if (this.currentDeviceId) {
-                            insertData.device_id = this.currentDeviceId;
-                        }
-                        try {
-                            await this.utils.withTimeout(() =>
-                                window.supabaseClient
-                                    .from('coursemanagerdata')
-                                    .insert(insertData)
-                            , 5000, '上传数据超时');
-                            this.serverStatusService.updateServerStatus('online');
-                        } catch (uploadError) {
-                            this.utils.handleError(uploadError, '本地数据上传到服务器失败', true);
-                            this.serverStatusService.updateServerStatus('offline');
-                        }
-
-                        this.utils.updateStateFromData(localData);
-                        this.utils.refreshAllViews(true);
-                    } else {
-                        const now = new Date();
-                        const isoDateTimeString = now.toISOString();
-
-                        const defaultData = {
-                            userid: userId,
-                            students: [],
-                            courses: [],
-                            organizations: [],
-                            grades: [],
-                            organizationColors: {},
-                            gradeColors: {},
-                            lastupdated: isoDateTimeString
-                        };
-                        if (this.currentDeviceId) {
-                            defaultData.device_id = this.currentDeviceId;
-                        }
-
-                        try {
-                            await this.utils.withTimeout(() =>
-                                window.supabaseClient
-                                    .from('coursemanagerdata')
-                                    .insert(defaultData)
-                            , 5000, '创建初始数据超时');
-                            this.serverStatusService.updateServerStatus('online');
-                        } catch (error) {
-                            if (window.GLOBAL_DEBUG) console.error('创建初始数据失败:', error);
-                            this.utils.handleError(error, '创建初始数据失败', true);
-                            this.serverStatusService.updateServerStatus('offline');
-                        }
-
-                        this.utils.updateStateFromData({});
-                        this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
-                        this.utils.refreshAllViews(true);
                     }
                 } catch (error) {
-                    if (window.GLOBAL_DEBUG) console.error('从服务器加载数据失败:', error);
-                    this.utils.handleError(error, '从服务器加载数据失败', true);
+                    if (window.GLOBAL_DEBUG) console.error('[数据加载] 从服务器加载数据失败:', error);
+                    this.utils.handleError(error, '从服务器加载数据失败');
                     this.serverStatusService.updateServerStatus('offline');
 
                     const localDataStr = localStorage.getItem('coursemanagerdata');
@@ -310,21 +240,12 @@ class DataLoadService {
                 this.utils.refreshAllViews(true);
             }
         } catch (error) {
+            if (window.GLOBAL_DEBUG) console.error('[数据加载] 加载数据失败:', error);
             this.utils.handleError(error, '加载数据失败', true);
             this.utils.updateStateFromData({});
-            this.utils.refreshAllViews(true);
-        } finally {
-            this.utils.startAutoSnapshotTimer();
         }
-    }
-
-    /**
-     * 设置当前设备ID
-     * @param {string} deviceId - 设备ID
-     */
-    setDeviceId(deviceId) {
-        this.currentDeviceId = deviceId;
     }
 }
 
-export default DataLoadService;
+const dataLoadService = new DataLoadService();
+export default dataLoadService;
