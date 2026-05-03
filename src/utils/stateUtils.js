@@ -60,9 +60,9 @@ const stateUtils = {
     
     updateColorLabelsInDOM: (updateOrg = true, updateGrade = true) => {
         try {
-            // 更新机构颜色标签
+            // 更新机构颜色标签（机构管理模态框中的标签）
             if (updateOrg) {
-                const orgLabels = document.querySelectorAll('.organization-name');
+                const orgLabels = document.querySelectorAll('[data-item-name="机构"].color-picker-trigger');
                 orgLabels.forEach(label => {
                     const orgName = label.dataset.item;
                     if (orgName) {
@@ -74,9 +74,9 @@ const stateUtils = {
                 });
             }
             
-            // 更新年级颜色标签
+            // 更新年级颜色标签（年级管理模态框中的标签）
             if (updateGrade) {
-                const gradeLabels = document.querySelectorAll('.grade-name');
+                const gradeLabels = document.querySelectorAll('[data-item-name="年级"].color-picker-trigger');
                 gradeLabels.forEach(label => {
                     const gradeName = label.dataset.item;
                     if (gradeName) {
