@@ -1434,7 +1434,7 @@ class ModalService {
                 case 'paste-courses':
                     return 'plus-circle';
                 case 'update-course':
-                    return 'edit-3';
+                    return 'square-pen';
                 case 'delete-course':
                 case 'delete-day-courses':
                     return 'trash-2';
@@ -1506,14 +1506,16 @@ class ModalService {
         const generateExpandedCourses = (action) => {
             if (!action.courses || action.courses.length === 0) return '';
             
-            return action.courses.map(course => {
+            const items = action.courses.map(course => {
                 const courseTag = window.timelineService.generateCourseTag(course);
                 return `
-                    <div class="timeline-expanded-item" style="padding: 8px 12px; border-left: 2px solid var(--border-color); margin-left: 16px; color: var(--text-secondary);">
+                    <div class="timeline-expanded-item" style="color: var(--text-secondary);">
                         ${courseTag}
                     </div>
                 `;
             }).join('');
+            
+            return `<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-left: 16px;">${items}</div>`;
         };
 
         const generateChangesHtml = (action) => {
