@@ -154,7 +154,8 @@ export class ListRenderService {
             // 对于大型列表使用虚拟滚动
             // 销毁旧的虚拟列表
             if (this._virtualList) {
-                this._virtualList.container.innerHTML = '';
+                this._virtualList.destroy();
+                this._virtualList = null;
             }
             
             // 创建新的虚拟列表
@@ -168,7 +169,7 @@ export class ListRenderService {
             // 对于小型列表使用传统渲染
             // 销毁旧的虚拟列表
             if (this._virtualList) {
-                this._virtualList.container.innerHTML = '';
+                this._virtualList.destroy();
                 this._virtualList = null;
             }
             

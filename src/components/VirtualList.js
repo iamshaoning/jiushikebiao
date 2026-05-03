@@ -33,7 +33,8 @@ class VirtualList {
         this.content.style.position = 'relative';
         this.container.appendChild(this.content);
         
-        this.container.addEventListener('scroll', this.handleScroll.bind(this));
+        this._boundScrollHandler = this.handleScroll.bind(this);
+        this.container.addEventListener('scroll', this._boundScrollHandler);
         this.update();
     }
     
@@ -76,6 +77,16 @@ class VirtualList {
     setItems(items) {
         this.items = items;
         this.update();
+    }
+    
+    destroy() {
+        if (this._boundScrollHandler) {
+            this.container.removeEventListener('scroll', this._boundScrollHandler);
+            this._boundScrollHandler = null;
+        }
+        this.container.innerHTML = '';
+        this.items = [];
+        this.content = null;
     }
 }
 
