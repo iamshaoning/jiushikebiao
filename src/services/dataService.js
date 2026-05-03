@@ -111,8 +111,10 @@ class DataService {
         if (localStats.courses !== serverStats.courses) return true;
         if (localStats.organizations !== serverStats.organizations) return true;
         if (localStats.grades !== serverStats.grades) return true;
-        if (localData.organizationColors !== serverData.organizationColors) return true;
-        if (localData.gradeColors !== serverData.gradeColors) return true;
+        
+        // 比较颜色对象（使用JSON.stringify进行深度比较）
+        if (JSON.stringify(localData.organizationColors) !== JSON.stringify(serverData.organizationColors)) return true;
+        if (JSON.stringify(localData.gradeColors) !== JSON.stringify(serverData.gradeColors)) return true;
 
         if (localData.lastupdated !== serverData.lastupdated) return true;
 

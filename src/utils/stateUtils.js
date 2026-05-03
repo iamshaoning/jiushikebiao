@@ -1,7 +1,6 @@
 /**
  * 状态和数据管理模块
  * 提供状态更新、数据保存、同步到服务器等功能
- * 注意：已委托给 dataService 处理底层数据操作
  * 
  * @module stateUtils
  * @exports stateUtils
