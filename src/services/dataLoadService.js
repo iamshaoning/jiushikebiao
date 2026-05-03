@@ -72,6 +72,8 @@ class DataLoadService {
                                 filter: `userid=eq.${userId}`
                             }, (payload) => {
                                 try {
+                                    if (window.GLOBAL_DEBUG) console.log('[实时监听] 收到实时事件:', payload.eventType, payload);
+                                    
                                     if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                                         const serverData = payload.new;
                                         const localDataStr = localStorage.getItem('coursemanagerdata');
@@ -79,15 +81,18 @@ class DataLoadService {
                                         const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
                                         const serverTimestamp = this.utils.getTimestamp(serverData.lastupdated);
 
-                                        console.log(`[实时监听] 服务器时间戳: ${serverTimestamp}, 本地时间戳: ${localTimestamp}`);
+                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器时间戳: ${serverTimestamp}, 本地时间戳: ${localTimestamp}`);
+                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 organizationColors:`, serverData.organizationColors);
+                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 gradeColors:`, serverData.gradeColors);
 
                                         if (serverTimestamp > localTimestamp) {
-                                            console.log('[实时监听] 服务器数据更新，同步到本地');
+                                            if (window.GLOBAL_DEBUG) console.log('[实时监听] 服务器数据更新，同步到本地');
                                             this.utils.updateStateFromData(serverData, false);
                                             localStorage.setItem('coursemanagerdata', JSON.stringify(serverData));
+                                            if (window.GLOBAL_DEBUG) console.log('[实时监听] 调用 refreshAllViews()');
                                             this.utils.refreshAllViews(true);
                                         } else {
-                                            console.log('[实时监听] 本地数据更新，忽略服务器数据');
+                                            if (window.GLOBAL_DEBUG) console.log('[实时监听] 本地数据更新，忽略服务器数据');
                                         }
                                     }
                                 } catch (error) {
