@@ -36,17 +36,26 @@ class ThemeService {
 
         if (document.startViewTransition) {
             body.classList.add('theme-transition');
-            document.startViewTransition(() => {
-                if (mode === 'dark' || (mode === 'auto' && prefersDark)) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
+            try {
+                const transition = document.startViewTransition(() => {
+                    if (mode === 'dark' || (mode === 'auto' && prefersDark)) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
 
-                this.reRenderStatistics();
-            }).finished.then(() => {
+                    this.reRenderStatistics();
+                });
+                transition.finished
+                    .then(() => {
+                        body.classList.remove('theme-transition');
+                    })
+                    .catch(() => {
+                        body.classList.remove('theme-transition');
+                    });
+            } catch (e) {
                 body.classList.remove('theme-transition');
-            });
+            }
         } else {
             body.classList.add('theme-transitioning');
 
