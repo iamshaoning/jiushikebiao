@@ -408,7 +408,7 @@ class ModalService {
                     <form id="add-student-form">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">姓名</label>
-                            <input type="text" id="student-name" class="w-full px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                            <input type="text" id="student-name" class="w-full px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                         </div>
                         <div class="mb-4 flex space-x-4">
                             <div class="w-1/2">
@@ -442,9 +442,9 @@ class ModalService {
                                 <span style="color: var(--text-primary);">一对一课型</span>
                                 <div class="flex items-center">
                                     <span class="text-sm mr-2" style="color: var(--text-secondary);">每</span>
-                                    <input type="number" id="duration-one-on-one" min="1" value="120" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <input type="number" id="duration-one-on-one" min="1" value="120" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                                     <span class="text-sm mx-2" style="color: var(--text-secondary);">分钟</span>
-                                    <input type="number" id="fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <input type="number" id="fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                                     <span class="text-sm ml-2" style="color: var(--text-secondary);">元</span>
                                 </div>
                             </div>
@@ -536,7 +536,7 @@ class ModalService {
                         <input type="hidden" id="edit-student-id" value="${student.id}">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">姓名</label>
-                            <input type="text" id="edit-student-name" class="w-full px-3 py-2 rounded-md" value="${student.name}" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                            <input type="text" id="edit-student-name" class="w-full px-3 py-2 rounded-md" value="${student.name}" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                         </div>
                         <div class="mb-4 flex space-x-4">
                             <div class="w-1/2">
@@ -570,9 +570,9 @@ class ModalService {
                                 <span style="color: var(--text-primary);">一对一课型</span>
                                 <div class="flex items-center">
                                     <span class="text-sm mr-2" style="color: var(--text-secondary);">每</span>
-                                    <input type="number" id="edit-duration-one-on-one" min="1" value="${student.fees && student.fees['一对一_duration'] ? student.fees['一对一_duration'] : 120}" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <input type="number" id="edit-duration-one-on-one" min="1" value="${student.fees && student.fees['一对一_duration'] ? student.fees['一对一_duration'] : 120}" class="w-12 px-2 py-1 rounded-md appearance-none" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                                     <span class="text-sm mx-2" style="color: var(--text-secondary);">分钟</span>
-                                    <input type="number" id="edit-fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 rounded-md appearance-none" value="${student.fees ? (student.fees['一对一'] || 0) : 0}" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                                    <input type="number" id="edit-fee-one-on-one" min="0" step="0.01" class="w-12 px-2 py-1 rounded-md appearance-none" value="${student.fees ? (student.fees['一对一'] || 0) : 0}" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                                     <span class="text-sm ml-2" style="color: var(--text-secondary);">元</span>
                                 </div>
                             </div>
@@ -907,7 +907,7 @@ class ModalService {
                     </div>
                     <div class="mb-4">
                         <div class="flex items-center space-x-2 mb-2">
-                            <input type="text" id="new-${itemName}" class="flex-grow px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); background-color: var(--bg-primary); color: var(--text-primary);">
+                            <input type="text" id="new-${itemName}" class="flex-grow px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                             <button id="add-${itemName}" class="bg-primary text-white px-3 py-2 rounded-md" data-action="add-org-inline" data-item-name="${itemName}">添加</button>
                         </div>
                     </div>
@@ -1581,7 +1581,7 @@ class ModalService {
                             <i data-lucide="${getActionIcon(action.type)}" class="inline-block" style="width: 14px; height: 14px; color: ${accentColor};"></i>
                         </div>
                         <div class="timeline-line" style="position: absolute; left: 11px; top: 30px; bottom: 0; width: 2px; background-color: var(--border-color); ${index === timeline.length - 1 ? 'display: none;' : ''}"></div>
-                        <div class="timeline-content" style="background-color: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; ${action.undone ? 'opacity: 0.6;' : ''}">
+                        <div class="timeline-content" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; ${action.undone ? 'opacity: 0.6;' : ''}">
                             <div class="timeline-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
                                 <div class="timeline-description" style="font-weight: 600; color: var(--text-primary); ${action.undone ? 'text-decoration: line-through;' : ''}">${action.description}</div>
                                 <div class="timeline-time" style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; background-color: var(--bg-tertiary); padding: 4px 10px; border-radius: 12px;">${formatTimestamp(action.timestamp)}</div>
@@ -1665,10 +1665,20 @@ class ModalService {
                     lucide.createIcons();
                 }
 
+                // 恢复滚动位置
+                if (window._timelineScrollTop !== undefined) {
+                    const timelineContainer = document.getElementById('timeline-container');
+                    if (timelineContainer) {
+                        timelineContainer.scrollTop = window._timelineScrollTop;
+                    }
+                }
+
                 const bindTimelineEvents = () => {
                     document.querySelectorAll('[data-action="undo-timeline-action"]').forEach(btn => {
                         btn.addEventListener('click', async (e) => {
                             const id = e.currentTarget.getAttribute('data-id');
+                            const timelineContainer = document.getElementById('timeline-container');
+                            window._timelineScrollTop = timelineContainer ? timelineContainer.scrollTop : 0;
                             const success = window.timelineService.undoAction(id);
                             if (success) {
                                 window.notificationService.show('撤销成功', 'success');
@@ -1682,6 +1692,8 @@ class ModalService {
                     document.querySelectorAll('[data-action="redo-timeline-action"]').forEach(btn => {
                         btn.addEventListener('click', async (e) => {
                             const id = e.currentTarget.getAttribute('data-id');
+                            const timelineContainer = document.getElementById('timeline-container');
+                            window._timelineScrollTop = timelineContainer ? timelineContainer.scrollTop : 0;
                             const success = window.timelineService.redoAction(id);
                             if (success) {
                                 window.notificationService.show('重做成功', 'success');
@@ -1695,6 +1707,8 @@ class ModalService {
                     document.querySelectorAll('[data-action="toggle-timeline-expand"]').forEach(btn => {
                         btn.addEventListener('click', (e) => {
                             const id = e.currentTarget.getAttribute('data-id');
+                            const timelineContainer = document.getElementById('timeline-container');
+                            window._timelineScrollTop = timelineContainer ? timelineContainer.scrollTop : 0;
                             window.timelineService.toggleExpand(id);
                             this.showTimeline();
                         });
@@ -1720,3 +1734,4 @@ class ModalService {
 
 const modalService = new ModalService();
 export default modalService;
+
