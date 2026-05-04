@@ -1318,6 +1318,19 @@ button:not(:active), .btn:not(:active) {
     background: rgba(59, 130, 246, 0.2);
 }
 
+#timeline-btn {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--color-warning);
+}
+
+#timeline-btn i {
+    color: var(--color-warning);
+}
+
+#timeline-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+}
+
 .settings-dropdown-container {
     position: relative;
     display: flex;
