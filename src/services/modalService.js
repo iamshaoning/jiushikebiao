@@ -1421,18 +1421,19 @@ class ModalService {
     /**
      * 显示时间轴
      */
-    showTimeline() {
+    async showTimeline() {
         if (!window.timelineService) {
             return;
         }
 
-        const timeline = window.timelineService.getTimeline();
+        const timeline = await window.timelineService.getTimeline();
         
         const getActionIcon = (type) => {
             switch (type) {
                 case 'add-course':
-                case 'paste-courses':
                     return 'plus-circle';
+                case 'paste-courses':
+                    return 'clipboard';
                 case 'update-course':
                     return 'square-pen';
                 case 'delete-course':
@@ -1448,8 +1449,9 @@ class ModalService {
         const getActionIconColor = (type) => {
             switch (type) {
                 case 'add-course':
-                case 'paste-courses':
                     return 'success';
+                case 'paste-courses':
+                    return 'warning';
                 case 'update-course':
                     return 'primary';
                 case 'delete-course':
@@ -1643,10 +1645,13 @@ class ModalService {
             <div class="rounded-lg shadow-xl w-full max-w-2xl mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                            <i data-lucide="history" class="inline-block" style="width: 20px; height: 20px;"></i>
-                            操作历史
-                        </h3>
+                        <div>
+                            <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="history" class="inline-block" style="width: 20px; height: 20px;"></i>
+                                操作历史
+                            </h3>
+                            <p class="text-sm" style="color: var(--text-secondary); margin-top: 4px;">最多保存 ${window.timelineService.maxRecords}条记录</p>
+                        </div>
                         <button id="clear-timeline-btn" class="timeline-action-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer; transition: all 0.2s; background-color: rgba(239, 68, 68, 0.1); color: var(--color-danger); border: none;">
                             <i data-lucide="trash" class="inline-block" style="width: 16px; height: 16px;"></i>
                             清空历史
@@ -1679,7 +1684,7 @@ class ModalService {
                             const id = e.currentTarget.getAttribute('data-id');
                             const timelineContainer = document.getElementById('timeline-container');
                             window._timelineScrollTop = timelineContainer ? timelineContainer.scrollTop : 0;
-                            const success = window.timelineService.undoAction(id);
+                            const success = await window.timelineService.undoAction(id);
                             if (success) {
                                 window.notificationService.show('撤销成功', 'success');
                                 this.showTimeline();
@@ -1694,7 +1699,7 @@ class ModalService {
                             const id = e.currentTarget.getAttribute('data-id');
                             const timelineContainer = document.getElementById('timeline-container');
                             window._timelineScrollTop = timelineContainer ? timelineContainer.scrollTop : 0;
-                            const success = window.timelineService.redoAction(id);
+                            const success = await window.timelineService.redoAction(id);
                             if (success) {
                                 window.notificationService.show('重做成功', 'success');
                                 this.showTimeline();
@@ -1705,11 +1710,11 @@ class ModalService {
                     });
 
                     document.querySelectorAll('[data-action="toggle-timeline-expand"]').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
+                        btn.addEventListener('click', async (e) => {
                             const id = e.currentTarget.getAttribute('data-id');
                             const timelineContainer = document.getElementById('timeline-container');
                             window._timelineScrollTop = timelineContainer ? timelineContainer.scrollTop : 0;
-                            window.timelineService.toggleExpand(id);
+                            await window.timelineService.toggleExpand(id);
                             this.showTimeline();
                         });
                     });
@@ -1717,8 +1722,8 @@ class ModalService {
                     const clearBtn = document.getElementById('clear-timeline-btn');
                     if (clearBtn) {
                         clearBtn.addEventListener('click', () => {
-                            this.showConfirm('确定要清空所有操作历史吗？', () => {
-                                window.timelineService.clearTimeline();
+                            this.showConfirm('确定要清空所有操作历史吗？', async () => {
+                                await window.timelineService.clearTimeline();
                                 this.hide();
                                 window.notificationService.show('历史已清空', 'success');
                             }, 'delete');

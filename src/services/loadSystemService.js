@@ -98,7 +98,7 @@ class LoadSystemService {
                 window.realtimeChannel.unsubscribe();
                 window.realtimeChannel = null;
             } catch (error) {
-                if (window.GLOBAL_DEBUG) console.error('取消实时监听器订阅失败:', error);
+                console.error('取消实时监听器订阅失败:', error);
             }
         }
 
@@ -150,14 +150,13 @@ class LoadSystemService {
         this.serverStatusService.startMonitoring();
         
         try {
+            // 快照创建已在 dataLoadService.loadData() 内部处理
+            // 确保在数据同步前就创建快照
             await this.utils.loadData();
-            // 在数据加载完成后创建登录快照（此时 localStorage 中是当前账号的数据）
-            if (!this.loginSnapshotCreated && typeof this.utils.createSnapshot === 'function') {
-                await this.utils.createSnapshot('login');
-                this.loginSnapshotCreated = true;
-            }
+            // 设置标志位避免重复创建（实际的快照创建在 dataLoadService 内部）
+            this.loginSnapshotCreated = true;
         } catch (error) {
-            if (window.GLOBAL_DEBUG) console.error('加载数据失败:', error);
+            console.error('加载数据失败:', error);
             // 即使加载失败，也确保刷新视图
             this.utils.refreshAllViews(true);
         }

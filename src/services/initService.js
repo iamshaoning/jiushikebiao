@@ -150,7 +150,7 @@ class InitService {
                             }
                         });
                     } catch (error) {
-                        if (window.GLOBAL_DEBUG) console.error('定期检查会话状态失败:', error);
+                        console.error('定期检查会话状态失败:', error);
                     }
                 }, 30 * 1000); // 每30秒检查一次
 

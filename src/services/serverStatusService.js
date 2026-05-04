@@ -95,14 +95,12 @@ class ServerStatusService {
             );
 
             if (sessionError || !sessionData || !sessionData.session) {
-                if (sessionError && window.GLOBAL_DEBUG) console.error('服务器状态检测: 会话检测错误:', sessionError);
+                if (sessionError) console.error('服务器状态检测: 会话检测错误:', sessionError);
                 if (!sessionData || !sessionData.session) {
-                    if (window.GLOBAL_DEBUG) console.log('服务器状态检测: 确实没有会话，设置为未登录');
                     // 确实没有会话，设置为未登录
                     this.updateServerStatus('loggedout');
                     return 'loggedout';
                 } else {
-                    if (window.GLOBAL_DEBUG) console.log('服务器状态检测: 有会话数据但有错误，设置为离线');
                     // 有会话数据但有错误，可能是网络问题
                     this.updateServerStatus('offline');
                     return 'offline';
@@ -112,7 +110,6 @@ class ServerStatusService {
             // 有会话，进一步检测网络连接
             // 尝试一个简单的服务器请求来验证网络连接
             const userId = sessionData.session.user.id;
-            if (window.GLOBAL_DEBUG) console.log('服务器状态检测: 会话正常，开始检测网络连接');
             try {
                 // 添加重试机制，最多重试2次
                 const maxRetries = 2;
@@ -132,7 +129,6 @@ class ServerStatusService {
                         );
 
                         // 如果能成功执行上述请求，说明网络连接正常
-                        if (window.GLOBAL_DEBUG) console.log('服务器状态检测: 网络连接正常，设置为在线');
                         this.updateServerStatus('online');
                         return 'online';
                     } catch (error) {
@@ -149,18 +145,17 @@ class ServerStatusService {
             } catch (error) {
                 // 检查是否是表不存在的错误
                 if (error.message && error.message.includes('relation') && error.message.includes('does not exist')) {
-                    if (window.GLOBAL_DEBUG) console.log('服务器状态检测: 表不存在，可能是首次使用，设置为在线');
                     // 表不存在，可能是首次使用，设置为在线状态
                     this.updateServerStatus('online');
                     return 'online';
                 } else {
-                    if (window.GLOBAL_DEBUG) console.error('服务器状态检测: 网络检测错误:', error);
+                    console.error('服务器状态检测: 网络检测错误:', error);
                     // 其他错误，可能是网络问题
                     throw error;
                 }
             }
         } catch (error) {
-            if (window.GLOBAL_DEBUG) console.error('服务器状态检测: 服务器连接失败:', error);
+            console.error('服务器状态检测: 服务器连接失败:', error);
             this.updateServerStatus('offline');
             return 'offline';
         }

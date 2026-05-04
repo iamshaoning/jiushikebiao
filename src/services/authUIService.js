@@ -19,8 +19,6 @@ class AuthUIService {
      * 初始化认证UI
      */
     init() {
-        if (window.GLOBAL_DEBUG) console.log('开始初始化认证...');
-        
         this.bindEvents();
         this.setupSettingsDropdown();
         this.setupLogoutButton();
@@ -259,7 +257,7 @@ class AuthUIService {
 
                 setTimeout(() => {
                     this.authService.logout().catch((error) => {
-                        if (window.GLOBAL_DEBUG) console.error('登出失败:', error);
+                        console.error('登出失败:', error);
                     });
                 }, 500);
             })
@@ -537,7 +535,7 @@ class AuthUIService {
                                 this.notificationService.success('登出成功');
                             })
                             .catch((error) => {
-                                if (window.GLOBAL_DEBUG) console.error('登出失败:', error);
+                                console.error('登出失败:', error);
                                 this.notificationService.error('登出失败: ' + error.message);
                             });
                     } else {
@@ -578,7 +576,7 @@ class AuthUIService {
                         this.notificationService.success('登出成功');
                     })
                     .catch((error) => {
-                        if (window.GLOBAL_DEBUG) console.error('登出失败:', error);
+                        console.error('登出失败:', error);
                         this.notificationService.error('登出失败: ' + error.message);
                     });
             } else {
@@ -605,7 +603,7 @@ class AuthUIService {
                 window.realtimeChannel.unsubscribe();
                 window.realtimeChannel = null;
             } catch (error) {
-                if (window.GLOBAL_DEBUG) console.error('清理实时数据监听失败:', error);
+                console.error('清理实时数据监听失败:', error);
             }
         }
     }

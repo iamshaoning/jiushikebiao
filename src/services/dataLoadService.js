@@ -56,10 +56,38 @@ class DataLoadService {
 
             const currentUserId = session?.user?.id;
 
-            const localDataStr = localStorage.getItem('coursemanagerdata');
-            const localData = localDataStr ? JSON.parse(localDataStr) : null;
+            // ================================================
+            // 步骤 1：先读取并保存本地数据的原始状态（用于创建快照）
+            // ================================================
+            const originalLocalDataStr = localStorage.getItem('coursemanagerdata');
+            const originalLocalData = originalLocalDataStr ? JSON.parse(originalLocalDataStr) : null;
 
-            if (localData && currentUserId && localData.userid !== currentUserId) {
+            let shouldCreateLoginSnapshot = false;
+            let isOtherAccountData = false;
+
+            // 检查是否是其他账号的数据
+            if (originalLocalData && currentUserId && originalLocalData.userid !== currentUserId) {
+                isOtherAccountData = true;
+            }
+
+            // 检查是否需要创建登录快照（只有当前账号的数据才创建）
+            if (originalLocalData && isLoggedIn && currentUserId && !isOtherAccountData) {
+                if (!originalLocalData.userid || originalLocalData.userid === currentUserId) {
+                    shouldCreateLoginSnapshot = true;
+                }
+            }
+
+            // ================================================
+            // 步骤 2：立即创建快照！（此时还没有任何数据同步操作）
+            // ================================================
+            if (shouldCreateLoginSnapshot && window.snapshotUtils) {
+                await window.snapshotUtils.createSnapshot('login', false);
+            }
+
+            // ================================================
+            // 步骤 3：处理账号数据问题
+            // ================================================
+            if (isOtherAccountData) {
                 localStorage.removeItem('coursemanagerdata');
                 this.state.students = [];
                 this.state.courses = [];
@@ -67,6 +95,9 @@ class DataLoadService {
                 this.state.grades = defaults.grades;
             }
 
+            // ================================================
+            // 步骤 4：开始数据同步流程
+            // ================================================
             if (window.supabaseClient && isLoggedIn) {
                 const userId = session.user.id;
 
@@ -80,31 +111,19 @@ class DataLoadService {
                                 table: 'coursemanagerdata',
                                 filter: `userid=eq.${userId}`
                             }, (payload) => {
-                                if (window.GLOBAL_DEBUG) console.log('[实时监听] ====== 收到实时事件 ======');
                                 try {
-                                    if (window.GLOBAL_DEBUG) console.log('[实时监听] 事件类型:', payload.eventType);
-                                    
                                     if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                                         const serverData = payload.new;
-                                        if (window.GLOBAL_DEBUG) console.log('[实时监听] 服务器完整数据:', JSON.stringify(serverData, null, 2));
                                         
                                         const localDataStr = localStorage.getItem('coursemanagerdata');
                                         const localData = localDataStr ? JSON.parse(localDataStr) : null;
                                         const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
                                         const serverTimestamp = this.utils.getTimestamp(serverData.lastupdated);
-
-                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器时间戳: ${serverTimestamp}, 本地时间戳: ${localTimestamp}`);
-                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 organizationColors:`, JSON.stringify(serverData.organizationColors));
-                                        if (window.GLOBAL_DEBUG) console.log(`[实时监听] 服务器数据 gradeColors:`, JSON.stringify(serverData.gradeColors));
-
+                                        
                                         if (serverTimestamp > localTimestamp) {
-                                            if (window.GLOBAL_DEBUG) console.log('[实时监听] 服务器数据更新，同步到本地');
                                             this.utils.updateStateFromData(serverData, false);
                                             localStorage.setItem('coursemanagerdata', JSON.stringify(serverData));
-                                            if (window.GLOBAL_DEBUG) console.log('[实时监听] 调用 refreshAllViews()');
                                             this.utils.refreshAllViews(true);
-                                        } else {
-                                            if (window.GLOBAL_DEBUG) console.log('[实时监听] 本地数据更新，忽略服务器数据');
                                         }
                                     }
                                 } catch (error) {
@@ -113,18 +132,18 @@ class DataLoadService {
                                 }
                             })
                             .subscribe((status) => {
-                                if (window.GLOBAL_DEBUG) console.log('[实时监听] 订阅状态:', status);
                             });
                     } catch (error) {
                         this.utils.handleError(error, '建立实时数据连接失败');
                     }
                 }
 
-                const localDataStr = localStorage.getItem('coursemanagerdata');
-                const localData = localDataStr ? JSON.parse(localDataStr) : null;
+                // 加载本地数据到状态
+                const currentLocalDataStr = localStorage.getItem('coursemanagerdata');
+                const currentLocalData = currentLocalDataStr ? JSON.parse(currentLocalDataStr) : null;
 
-                if (localData) {
-                    this.utils.updateStateFromData(localData);
+                if (currentLocalData) {
+                    this.utils.updateStateFromData(currentLocalData);
                 } else {
                     this.utils.updateStateFromData({});
                 }
@@ -176,12 +195,12 @@ class DataLoadService {
                         return;
                     }
 
-                    const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
+                    const localTimestamp = this.utils.getTimestamp(currentLocalData?.lastupdated);
 
                     if (serverData) {
                         const serverTimestamp = this.utils.getTimestamp(serverData.lastupdated);
 
-                        if (localData) {
+                        if (currentLocalData) {
                             if (serverTimestamp > localTimestamp) {
                                 this.utils.updateStateFromData(serverData, false);
                                 localStorage.setItem('coursemanagerdata', JSON.stringify(serverData));
@@ -194,13 +213,13 @@ class DataLoadService {
                                             .from('coursemanagerdata')
                                             .upsert({
                                                 userid: userId,
-                                                students: localData.students,
-                                                courses: localData.courses,
-                                                organizations: localData.organizations,
-                                                grades: localData.grades,
-                                                organizationColors: localData.organizationColors || {},
-                                                gradeColors: localData.gradeColors || {},
-                                                lastupdated: localData.lastupdated
+                                                students: currentLocalData.students,
+                                                courses: currentLocalData.courses,
+                                                organizations: currentLocalData.organizations,
+                                                grades: currentLocalData.grades,
+                                                organizationColors: currentLocalData.organizationColors || {},
+                                                gradeColors: currentLocalData.gradeColors || {},
+                                                lastupdated: currentLocalData.lastupdated
                                             })
                                     , 5000, '上传数据超时');
                                 } catch (uploadError) {
@@ -218,16 +237,16 @@ class DataLoadService {
                             this.utils.refreshAllViews(true);
                             this.serverStatusService.updateServerStatus('online');
                         }
-                    } else if (localData) {
+                    } else if (currentLocalData) {
                         const insertData = {
                             userid: userId,
-                            students: localData.students,
-                            courses: localData.courses,
-                            organizations: localData.organizations,
-                            grades: localData.grades,
-                            organizationColors: localData.organizationColors || {},
-                            gradeColors: localData.gradeColors || {},
-                            lastupdated: localData.lastupdated
+                            students: currentLocalData.students,
+                            courses: currentLocalData.courses,
+                            organizations: currentLocalData.organizations,
+                            grades: currentLocalData.grades,
+                            organizationColors: currentLocalData.organizationColors || {},
+                            gradeColors: currentLocalData.gradeColors || {},
+                            lastupdated: currentLocalData.lastupdated
                         };
                         if (this.currentDeviceId) {
                             insertData.device_id = this.currentDeviceId;
@@ -244,7 +263,7 @@ class DataLoadService {
                             this.serverStatusService.updateServerStatus('offline');
                         }
 
-                        this.utils.updateStateFromData(localData);
+                        this.utils.updateStateFromData(currentLocalData);
                         this.utils.refreshAllViews(true);
                     } else {
                         const now = new Date();
@@ -272,7 +291,6 @@ class DataLoadService {
                             , 5000, '创建初始数据超时');
                             this.serverStatusService.updateServerStatus('online');
                         } catch (error) {
-                            if (window.GLOBAL_DEBUG) console.error('创建初始数据失败:', error);
                             this.utils.handleError(error, '创建初始数据失败', true);
                             this.serverStatusService.updateServerStatus('offline');
                         }
@@ -282,15 +300,15 @@ class DataLoadService {
                         this.utils.refreshAllViews(true);
                     }
                 } catch (error) {
-                    if (window.GLOBAL_DEBUG) console.error('从服务器加载数据失败:', error);
+                    console.error('从服务器加载数据失败:', error);
                     this.utils.handleError(error, '从服务器加载数据失败', true);
                     this.serverStatusService.updateServerStatus('offline');
 
-                    const localDataStr = localStorage.getItem('coursemanagerdata');
-                    const localData = localDataStr ? JSON.parse(localDataStr) : null;
+                    const fallbackLocalDataStr = localStorage.getItem('coursemanagerdata');
+                    const fallbackLocalData = fallbackLocalDataStr ? JSON.parse(fallbackLocalDataStr) : null;
 
-                    if (localData) {
-                        this.utils.updateStateFromData(localData);
+                    if (fallbackLocalData) {
+                        this.utils.updateStateFromData(fallbackLocalData);
                         this.notificationService.show('已使用本地缓存数据', 'info');
                     } else {
                         this.utils.updateStateFromData({});
@@ -306,17 +324,22 @@ class DataLoadService {
                     this.serverStatusService.updateServerStatus('offline');
                 }
 
-                const localDataStr = localStorage.getItem('coursemanagerdata');
-                const localData = localDataStr ? JSON.parse(localDataStr) : null;
+                const fallbackLocalDataStr = localStorage.getItem('coursemanagerdata');
+                const fallbackLocalData = fallbackLocalDataStr ? JSON.parse(fallbackLocalDataStr) : null;
 
-                if (localData) {
-                    this.utils.updateStateFromData(localData);
+                if (fallbackLocalData) {
+                    this.utils.updateStateFromData(fallbackLocalData);
                 } else {
                     this.utils.updateStateFromData({});
                     this.notificationService.show('无法连接到服务器，请检查网络连接', 'error');
                 }
 
                 this.utils.refreshAllViews(true);
+            }
+
+            // 在完成所有步骤后，重新加载用户的时间轴
+            if (window.timelineService && window.timelineService.reloadTimelineForUser) {
+                await window.timelineService.reloadTimelineForUser();
             }
         } catch (error) {
             this.utils.handleError(error, '加载数据失败', true);

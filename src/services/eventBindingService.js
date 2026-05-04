@@ -90,6 +90,12 @@ class EventBindingService {
                 this.modalService.showSnapshotManager();
             });
         }
+        const snapshotBtn = document.getElementById('snapshot-btn');
+        if (snapshotBtn) {
+            snapshotBtn.addEventListener('click', () => {
+                this.modalService.showSnapshotManager();
+            });
+        }
     }
 
     /**

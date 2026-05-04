@@ -15,9 +15,9 @@ const snapshotUtils = {
      */
     getCurrentUserId: async () => {
         try {
-            if (window.authService) {
-                const session = await window.authService.getSession();
-                return session?.user?.id || null;
+            if (window.supabaseAuth) {
+                const { data } = await window.supabaseAuth.getSession();
+                return data?.session?.user?.id || null;
             }
         } catch (error) {
             console.error('获取用户ID失败:', error);

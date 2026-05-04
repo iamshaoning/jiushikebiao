@@ -19,14 +19,10 @@ const CONSTANTS = {
 
 const stateUtils = {
     updateStateFromData: (data, useDefaults = true) => {
-        if (window.GLOBAL_DEBUG) console.log(`[状态] updateStateFromData() - 开始`);
         const defaults = { organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
         
         const oldOrgColors = JSON.stringify(window.state.organizationColors || {});
         const oldGradeColors = JSON.stringify(window.state.gradeColors || {});
-        
-        if (window.GLOBAL_DEBUG) console.log(`[状态] updateStateFromData() - 更新前: organizationColors=${oldOrgColors}, gradeColors=${oldGradeColors}`);
-        if (window.GLOBAL_DEBUG) console.log(`[状态] updateStateFromData() - 接收到的数据: organizationColors=${JSON.stringify(data.organizationColors)}, gradeColors=${JSON.stringify(data.gradeColors)}`);
         
         window.state.students = data.students || [];
         window.state.courses = data.courses || [];
@@ -37,15 +33,12 @@ const stateUtils = {
         window.state.gradeColors = data.gradeColors || {};
         window.state.lastupdated = data.lastupdated;
         
-        if (window.GLOBAL_DEBUG) console.log(`[状态] updateStateFromData() - 更新后: organizationColors=${JSON.stringify(window.state.organizationColors)}, gradeColors=${JSON.stringify(window.state.gradeColors)}`);
-        
         try {
             if (window.utils && typeof window.utils.initColorsFromState === 'function') {
-                if (window.GLOBAL_DEBUG) console.log(`[状态] updateStateFromData() - 调用 initColorsFromState()`);
                 window.utils.initColorsFromState();
             }
         } catch (error) {
-            if (window.GLOBAL_DEBUG) console.error('[状态] 初始化颜色失败:', error);
+            console.error('[状态] 初始化颜色失败:', error);
         }
         
         try {
@@ -53,7 +46,7 @@ const stateUtils = {
                 window.syncDataToMaps();
             }
         } catch (error) {
-            if (window.GLOBAL_DEBUG) console.error('[状态] 同步数据到Maps失败:', error);
+            console.error('[状态] 同步数据到Maps失败:', error);
         }
         
         const newOrgColors = JSON.stringify(window.state.organizationColors);
@@ -61,23 +54,15 @@ const stateUtils = {
         const orgColorsChanged = oldOrgColors !== newOrgColors;
         const gradeColorsChanged = oldGradeColors !== newGradeColors;
         
-        if (window.GLOBAL_DEBUG) console.log(`[状态] updateStateFromData() - 颜色变化检测: orgColorsChanged=${orgColorsChanged}, gradeColorsChanged=${gradeColorsChanged}`);
-        
         if (orgColorsChanged || gradeColorsChanged) {
-            if (window.GLOBAL_DEBUG) console.log('[状态] 检测到颜色变化，调用 updateColorLabelsInDOM()');
             stateUtils.updateColorLabelsInDOM(orgColorsChanged, gradeColorsChanged);
         }
     },
     
     updateColorLabelsInDOM: (updateOrg = true, updateGrade = true) => {
-        if (window.GLOBAL_DEBUG) console.log(`[DOM] updateColorLabelsInDOM(updateOrg=${updateOrg}, updateGrade=${updateGrade}) - 开始`);
-        
         try {
             if (updateOrg) {
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新机构标签`);
-                
                 const orgButtons = document.querySelectorAll('button.机构-name');
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 找到 button.机构-name 数量: ${orgButtons.length}`);
                 orgButtons.forEach(label => {
                     const orgName = label.textContent?.trim();
                     if (orgName && window.state.organizations.includes(orgName)) {
@@ -85,36 +70,30 @@ const stateUtils = {
                         label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         label.style.color = color;
                         label.dataset.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新机构按钮 '${orgName}': ${color}`);
                     }
                 });
                 
                 const studentListSpans = document.querySelectorAll('.students-list span.px-2');
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 找到 .students-list span.px-2 数量: ${studentListSpans.length}`);
                 studentListSpans.forEach(span => {
                     const orgName = span.textContent?.trim();
                     if (orgName && window.state.organizations.includes(orgName)) {
                         const color = window.utils.generateColor(orgName, 'organization');
                         span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         span.style.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新学生列表机构标签 '${orgName}': ${color}`);
                     }
                 });
                 
                 const tableSpans = document.querySelectorAll('table span.px-2');
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 找到 table span.px-2 数量: ${tableSpans.length}`);
                 tableSpans.forEach(span => {
                     const orgName = span.textContent?.trim();
                     if (orgName && window.state.organizations.includes(orgName)) {
                         const color = window.utils.generateColor(orgName, 'organization');
                         span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         span.style.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新表格机构标签 '${orgName}': ${color}`);
                     }
                 });
                 
                 const orgListButtons = document.querySelectorAll('#机构s-list button');
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 找到 #机构s-list button 数量: ${orgListButtons.length}`);
                 orgListButtons.forEach(btn => {
                     const orgName = btn.textContent?.trim();
                     if (orgName && window.state.organizations.includes(orgName)) {
@@ -122,16 +101,12 @@ const stateUtils = {
                         btn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         btn.style.color = color;
                         btn.dataset.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新机构列表按钮 '${orgName}': ${color}`);
                     }
                 });
             }
             
             if (updateGrade) {
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新年级标签`);
-                
                 const gradeButtons = document.querySelectorAll('button.年级-name');
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 找到 button.年级-name 数量: ${gradeButtons.length}`);
                 gradeButtons.forEach(label => {
                     const gradeName = label.textContent?.trim();
                     if (gradeName && window.state.grades.includes(gradeName)) {
@@ -139,7 +114,6 @@ const stateUtils = {
                         label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         label.style.color = color;
                         label.dataset.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新年级按钮 '${gradeName}': ${color}`);
                     }
                 });
                 
@@ -150,7 +124,6 @@ const stateUtils = {
                         const color = window.utils.generateColor(gradeName, 'grade');
                         span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         span.style.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新学生列表年级标签 '${gradeName}': ${color}`);
                     }
                 });
                 
@@ -161,12 +134,10 @@ const stateUtils = {
                         const color = window.utils.generateColor(gradeName, 'grade');
                         span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         span.style.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新表格年级标签 '${gradeName}': ${color}`);
                     }
                 });
                 
                 const gradeListButtons = document.querySelectorAll('#年级s-list button');
-                if (window.GLOBAL_DEBUG) console.log(`[DOM] 找到 #年级s-list button 数量: ${gradeListButtons.length}`);
                 gradeListButtons.forEach(btn => {
                     const gradeName = btn.textContent?.trim();
                     if (gradeName && window.state.grades.includes(gradeName)) {
@@ -174,15 +145,12 @@ const stateUtils = {
                         btn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
                         btn.style.color = color;
                         btn.dataset.color = color;
-                        if (window.GLOBAL_DEBUG) console.log(`[DOM] 更新年级列表按钮 '${gradeName}': ${color}`);
                     }
                 });
             }
             
-            if (window.GLOBAL_DEBUG) console.log('[DOM] DOM颜色标签更新完成');
-            
         } catch (error) {
-            if (window.GLOBAL_DEBUG) console.error('[DOM] 更新DOM颜色标签失败:', error);
+            console.error('[DOM] 更新DOM颜色标签失败:', error);
         }
     },
     
@@ -225,13 +193,10 @@ const stateUtils = {
                 lastupdated: isoDateTimeString
             };
             
-            if (window.GLOBAL_DEBUG) console.log('[存储] saveData() - 准备保存数据', appData);
-            
             currentState.lastupdated = appData.lastupdated;
             
             try {
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
-                if (window.GLOBAL_DEBUG) console.log('[存储] 本地存储保存成功');
             } catch (error) {
                 console.error('[存储] 本地存储保存失败:', error);
             }
@@ -281,8 +246,6 @@ const stateUtils = {
                                     lastupdated: appData.lastupdated
                                 };
                                 
-                                if (window.GLOBAL_DEBUG) console.log('[存储] 准备同步到服务器', upsertData);
-                                
                                 const upsertPromise = window.supabaseClient
                                     .from('coursemanagerdata')
                                     .upsert(upsertData, { onConflict: 'userid' });
@@ -305,7 +268,6 @@ const stateUtils = {
                                         localData.userid = userId;
                                         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
                                     }
-                                    if (window.GLOBAL_DEBUG) console.log('[存储] 服务器同步成功');
                                     window.serverStatusService.updateServerStatus('online');
                                 }
                             } catch (syncError) {
@@ -317,7 +279,6 @@ const stateUtils = {
                                 window.serverStatusService.updateServerStatus('offline');
                             }
                         } else {
-                            if (window.GLOBAL_DEBUG) console.log('[存储] session不存在或userId无效，跳过服务器同步');
                             window.serverStatusService.updateServerStatus('loggedout');
                         }
                     } catch (error) {
@@ -353,7 +314,7 @@ const stateUtils = {
                 };
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
             } catch (localError) {
-                if (window.GLOBAL_DEBUG) console.error('[存储] 本地存储也失败:', localError);
+                console.error('[存储] 本地存储也失败:', localError);
             }
         }
     },
@@ -389,7 +350,7 @@ const stateUtils = {
             try {
                 localData = JSON.parse(localDataStr);
             } catch (parseError) {
-                if (window.GLOBAL_DEBUG) console.error('[同步] 解析本地数据失败:', parseError);
+                console.error('[同步] 解析本地数据失败:', parseError);
                 return false;
             }
             

@@ -1305,6 +1305,19 @@ button:not(:active), .btn:not(:active) {
     color: var(--text-primary);
 }
 
+#snapshot-btn {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--color-primary);
+}
+
+#snapshot-btn i {
+    color: var(--color-primary);
+}
+
+#snapshot-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
 .settings-dropdown-container {
     position: relative;
     display: flex;

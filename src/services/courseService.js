@@ -5,7 +5,6 @@
 
 import dataService from './dataService.js';
 import coreUtils from '../utils/coreUtils.js';
-import timelineService from './timelineService.js';
 
 class CourseService {
     constructor() {

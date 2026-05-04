@@ -730,7 +730,7 @@ class EventHandlerService {
             try {
                 handler(payload, e);
             } catch (error) {
-                if (window.GLOBAL_DEBUG) console.error(`处理事件 ${action} 失败:`, error);
+                console.error(`处理事件 ${action} 失败:`, error);
                 notificationService.show('操作失败', 'error');
             }
         }

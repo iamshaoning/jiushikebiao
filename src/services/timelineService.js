@@ -5,25 +5,74 @@
 class TimelineService {
     constructor() {
         this.timelineKey = 'coursemanagertimeline';
-        this.maxRecords = 100;
+        this.maxRecords = 20; // 限制最多保存20条记录
         this.timeline = [];
+        this.currentUserId = null;
     }
 
     /**
-     * 初始化服务
+     * 直接获取用户ID（不依赖authService，避免初始化顺序问题）
      */
-    init() {
-        this.loadTimeline();
+    async getUserIdDirectly() {
+        try {
+            if (window.supabaseAuth) {
+                const { data } = await window.supabaseAuth.getSession();
+                return data?.session?.user?.id || null;
+            }
+        } catch (error) {
+            console.error('获取用户ID失败:', error);
+        }
+        return null;
     }
 
     /**
-     * 从本地存储加载时间轴
+     * 初始化服务 - 必须在登录后调用
+     */
+    async init() {
+        this.currentUserId = await this.getUserIdDirectly();
+        if (this.currentUserId) {
+            this.loadTimeline();
+        }
+    }
+
+    /**
+     * 重新加载当前用户的时间轴
+     */
+    async reloadTimelineForUser() {
+        this.currentUserId = await this.getUserIdDirectly();
+        if (this.currentUserId) {
+            this.loadTimeline();
+        } else {
+            this.timeline = [];
+        }
+    }
+
+    /**
+     * 从本地存储加载当前用户的时间轴
      */
     loadTimeline() {
         try {
+            if (!this.currentUserId) {
+                this.timeline = [];
+                return;
+            }
+
             const dataStr = localStorage.getItem(this.timelineKey);
             if (dataStr) {
-                this.timeline = JSON.parse(dataStr);
+                const storedData = JSON.parse(dataStr);
+                
+                // 检查是否是按用户分组的格式
+                if (storedData && !Array.isArray(storedData)) {
+                    // 只加载当前用户的数据
+                    this.timeline = storedData[this.currentUserId] || [];
+                } else {
+                    // 旧格式或不是分组格式，清除并重新开始
+                    this.timeline = [];
+                    // 保存空的分组格式
+                    this.saveTimeline();
+                }
+            } else {
+                this.timeline = [];
             }
         } catch (error) {
             console.error('加载时间轴失败:', error);
@@ -32,11 +81,32 @@ class TimelineService {
     }
 
     /**
-     * 保存时间轴到本地存储
+     * 保存时间轴到本地存储（按用户ID分组存储）
      */
-    saveTimeline() {
+    async saveTimeline() {
         try {
-            localStorage.setItem(this.timelineKey, JSON.stringify(this.timeline));
+            if (!this.currentUserId) {
+                this.currentUserId = await this.getUserIdDirectly();
+            }
+            
+            if (!this.currentUserId) {
+                return; // 没有用户ID，不保存
+            }
+
+            const dataStr = localStorage.getItem(this.timelineKey);
+            let allTimelines = {};
+            
+            if (dataStr) {
+                const parsedData = JSON.parse(dataStr);
+                if (parsedData && !Array.isArray(parsedData)) {
+                    allTimelines = parsedData;
+                }
+                // 如果是旧格式数组数据，直接忽略，使用新格式
+            }
+            
+            // 只更新当前用户的数据
+            allTimelines[this.currentUserId] = this.timeline;
+            localStorage.setItem(this.timelineKey, JSON.stringify(allTimelines));
         } catch (error) {
             console.error('保存时间轴失败:', error);
         }
@@ -46,7 +116,7 @@ class TimelineService {
      * 生成唯一ID
      */
     generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).slice(2);
+        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
     }
 
     /**
@@ -133,9 +203,25 @@ class TimelineService {
     }
 
     /**
+     * 确保用户已初始化
+     */
+    async ensureUserInitialized() {
+        if (!this.currentUserId) {
+            this.currentUserId = await this.getUserIdDirectly();
+            if (this.currentUserId) {
+                this.loadTimeline();
+            }
+        }
+        return !!this.currentUserId;
+    }
+
+    /**
      * 创建添加课程记录
      */
-    recordAddCourse(course, isPaste = false) {
+    async recordAddCourse(course, isPaste = false) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+        
         const action = {
             id: this.generateId(),
             type: 'add-course',
@@ -145,19 +231,16 @@ class TimelineService {
             description: `添加了${this.formatDate(course.date)}的课程`
         };
 
-        this.addToTimeline(action);
+        await this.addToTimeline(action);
         return action;
     }
 
     /**
      * 批量记录粘贴添加的课程
      */
-    recordPasteCourses(courses) {
-        if (!courses || courses.length === 0) return;
-
-        const courseDates = new Set();
-        courses.forEach(c => courseDates.add(c.date));
-        const uniqueDates = Array.from(courseDates);
+    async recordPasteCourses(courses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !courses || courses.length === 0) return;
         
         const action = {
             id: this.generateId(),
@@ -165,18 +248,20 @@ class TimelineService {
             timestamp: new Date().toISOString(),
             courses: courses.map(c => ({ ...c })),
             expanded: false,
-            description: `粘贴添加了${uniqueDates.length}天共${courses.length}节课程`,
-            uniqueDates: uniqueDates
+            description: `粘贴了${this.formatDate(courses[0].date)}共${courses.length}节课程`
         };
 
-        this.addToTimeline(action);
+        await this.addToTimeline(action);
         return action;
     }
 
     /**
      * 创建修改课程记录
      */
-    recordUpdateCourse(oldCourse, newCourse, reason = '') {
+    async recordUpdateCourse(oldCourse, newCourse, reason = '') {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+        
         const changes = [];
         
         if (oldCourse.date !== newCourse.date) {
@@ -235,14 +320,17 @@ class TimelineService {
             description: `修改了${this.formatDate(newCourse.date)}的课程`
         };
 
-        this.addToTimeline(action);
+        await this.addToTimeline(action);
         return action;
     }
 
     /**
      * 创建删除课程记录
      */
-    recordDeleteCourse(course) {
+    async recordDeleteCourse(course) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+        
         const action = {
             id: this.generateId(),
             type: 'delete-course',
@@ -251,15 +339,16 @@ class TimelineService {
             description: `删除了${this.formatDate(course.date)}的课程`
         };
 
-        this.addToTimeline(action);
+        await this.addToTimeline(action);
         return action;
     }
 
     /**
      * 批量记录删除一天的课程
      */
-    recordDeleteDayCourses(date, courses) {
-        if (!courses || courses.length === 0) return;
+    async recordDeleteDayCourses(date, courses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !courses || courses.length === 0) return;
 
         const action = {
             id: this.generateId(),
@@ -271,27 +360,33 @@ class TimelineService {
             description: `删除了${this.formatDate(date)}共${courses.length}节课程`
         };
 
-        this.addToTimeline(action);
+        await this.addToTimeline(action);
         return action;
     }
 
     /**
      * 添加记录到时间轴
      */
-    addToTimeline(action) {
+    async addToTimeline(action) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+        
         this.timeline.unshift(action);
         
         if (this.timeline.length > this.maxRecords) {
             this.timeline = this.timeline.slice(0, this.maxRecords);
         }
         
-        this.saveTimeline();
+        await this.saveTimeline();
     }
 
     /**
      * 撤销操作
      */
-    undoAction(actionId) {
+    async undoAction(actionId) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return false;
+        
         const index = this.timeline.findIndex(a => a.id === actionId);
         if (index === -1) return false;
 
@@ -316,7 +411,7 @@ class TimelineService {
 
         if (success) {
             action.undone = true;
-            this.saveTimeline();
+            await this.saveTimeline();
         }
 
         return success;
@@ -389,7 +484,10 @@ class TimelineService {
     /**
      * 重做已撤销的操作
      */
-    redoAction(actionId) {
+    async redoAction(actionId) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return false;
+        
         const index = this.timeline.findIndex(a => a.id === actionId);
         if (index === -1 || !this.timeline[index].undone) return false;
 
@@ -414,7 +512,7 @@ class TimelineService {
 
         if (success) {
             action.undone = false;
-            this.saveTimeline();
+            await this.saveTimeline();
         }
 
         return success;
@@ -488,26 +586,34 @@ class TimelineService {
     /**
      * 获取时间轴记录
      */
-    getTimeline() {
+    async getTimeline() {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return [];
         return [...this.timeline];
     }
 
     /**
      * 清空时间轴
      */
-    clearTimeline() {
+    async clearTimeline() {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+        
         this.timeline = [];
-        this.saveTimeline();
+        await this.saveTimeline();
     }
 
     /**
      * 切换聚合显示
      */
-    toggleExpand(actionId) {
+    async toggleExpand(actionId) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+        
         const action = this.timeline.find(a => a.id === actionId);
         if (action && (action.type === 'paste-courses' || action.type === 'delete-day-courses')) {
             action.expanded = !action.expanded;
-            this.saveTimeline();
+            await this.saveTimeline();
         }
     }
 }

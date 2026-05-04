@@ -143,7 +143,7 @@ const clipboardUtils = {
                     window.notificationService?.show('没有可粘贴的课程', 'warning');
                 }
             } catch (error) {
-                if (window.GLOBAL_DEBUG) console.error('数据异常，操作失败:', error);
+                console.error('数据异常，操作失败:', error);
                 window.notificationService?.show('数据异常，操作失败', 'error');
             }
         } else {
