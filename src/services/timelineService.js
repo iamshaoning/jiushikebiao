@@ -39,6 +39,14 @@ class TimelineService {
      * 重新加载当前用户的时间轴
      */
     async reloadTimelineForUser() {
+        // 检查是否处于试用模式，如果是则清空时间轴
+        const isTrialMode = window.serverStatusService?.isTrialMode || false;
+        if (isTrialMode) {
+            this.currentUserId = null;
+            this.timeline = [];
+            return;
+        }
+        
         this.currentUserId = await this.getUserIdDirectly();
         if (this.currentUserId) {
             this.loadTimeline();
@@ -206,6 +214,14 @@ class TimelineService {
      * 确保用户已初始化
      */
     async ensureUserInitialized() {
+        // 检查是否处于试用模式，如果是则不初始化时间轴
+        const isTrialMode = window.serverStatusService?.isTrialMode || false;
+        if (isTrialMode) {
+            this.currentUserId = null;
+            this.timeline = [];
+            return false;
+        }
+        
         if (!this.currentUserId) {
             this.currentUserId = await this.getUserIdDirectly();
             if (this.currentUserId) {

@@ -110,6 +110,13 @@ class LoadSystemService {
         this.state.gradeColors = {};
 
         localStorage.removeItem('coursemanagerdata');
+        
+        // 重置时间轴服务状态，避免显示其他账号的历史操作记录
+        // 注意：不删除 localStorage 中的时间轴数据，只重置内存中的状态
+        if (window.timelineService) {
+            window.timelineService.currentUserId = null;
+            window.timelineService.timeline = [];
+        }
 
         this.notificationService.show('您现在处于试用模式，数据不会被保存', 'info');
 
