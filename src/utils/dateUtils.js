@@ -7,6 +7,7 @@
  */
 const dateUtils = {
     timeToMins: (timeStr, duration = 0) => {
+        if (!timeStr) return 0;
         const [h, m] = timeStr.split(':').map(Number);
         return h * 60 + m + Number(duration);
     },

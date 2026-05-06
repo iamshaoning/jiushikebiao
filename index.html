@@ -29,8 +29,8 @@
         // 核心服务模块
         import dataService from './src/services/dataService.js';
         import authService from './src/services/authService.js';
-        import courseService from './src/services/courseService.js';
-        import studentService from './src/services/studentService.js';
+        // import courseService from './src/services/courseService.js';
+        // import studentService from './src/services/studentService.js';
         import serverStatusService from './src/services/serverStatusService.js';
         import notificationService from './src/services/notificationService.js';
         import modalService from './src/services/modalService.js';
@@ -83,8 +83,8 @@
         // 1. 核心服务
         window.dataService = dataService;
         window.authService = authService;
-        window.courseService = courseService;
-        window.studentService = studentService;
+        // window.courseService = courseService;
+        // window.studentService = studentService;
         window.serverStatusService = serverStatusService;
         window.notificationService = notificationService;
         window.modalService = modalService;
@@ -491,7 +491,7 @@
                 <h1 class="text-9xl font-bold mb-6" style="color: var(--color-primary);">404</h1>
                 <h2 class="text-2xl font-semibold mb-4" style="color: var(--text-primary);">页面未找到</h2>
                 <p class="text-lg mb-8" style="color: var(--text-secondary);">抱歉，您访问的页面不存在。</p>
-                <button onclick="window.location.hash='/'; setTimeout(() => window.routerService?.handleRouteChange(), 10);" style="background-color: var(--color-primary);" class="text-white px-8 py-3 rounded-lg text-lg transition-colors hover:opacity-90">
+                <button onclick="window.location.hash='/'; setTimeout(() => window.router?.handleRouteChange(), 10);" style="background-color: var(--color-primary);" class="text-white px-8 py-3 rounded-lg text-lg transition-colors hover:opacity-90">
                     返回首页
                 </button>
             </div>
@@ -713,7 +713,7 @@
         
         // 状态和状态更新函数
         window.state = state;
-        window.setState = setState;
+        // setState 已在第一个 script module 中通过 window.setState = stateService.setState 设置
         
         /**
          * 工具函数集合

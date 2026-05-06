@@ -74,19 +74,26 @@ class DatePickerService {
     }
 
     toggleTimePicker(containerId) {
-        const closeListener = (event) => {
+        // 如果已存在旧的 closeListener，先移除它
+        if (this._timePickerCloseListener) {
+            document.removeEventListener('click', this._timePickerCloseListener);
+        }
+
+        // 创建新的 closeListener 并保存引用
+        this._timePickerCloseListener = (event) => {
             const startContainer = document.getElementById('start-time-container');
             const startTimeInput = document.querySelector('[data-action="toggle-time-picker"][data-target="start-time-container"]');
 
             if (startContainer && !startContainer.contains(event.target) && (!startTimeInput || !startTimeInput.contains(event.target))) {
                 startContainer.classList.add('hidden');
-                document.removeEventListener('click', closeListener);
+                document.removeEventListener('click', this._timePickerCloseListener);
+                this._timePickerCloseListener = null;
             }
         };
         this.togglePicker(
             containerId,
             ['start-time-container', 'course-date-container', 'duration-dropdown'],
-            closeListener
+            this._timePickerCloseListener
         );
     }
 
@@ -188,13 +195,19 @@ class DatePickerService {
                 
                 dateGrid.innerHTML = '';
 
-                // 使用事件委托，在 dateGrid 父容器上统一监听 click 事件
-                dateGrid.addEventListener('click', (e) => {
+                // 移除旧的 click 事件监听器（如果存在）
+                if (this._dateGridClickHandler) {
+                    dateGrid.removeEventListener('click', this._dateGridClickHandler);
+                }
+
+                // 创建新的处理器并保存引用
+                this._dateGridClickHandler = (e) => {
                     const dayElement = e.target.closest('button[data-date]');
                     if (dayElement) {
                         this.selectDate(dayElement.dataset.inputId, dayElement.dataset.date);
                     }
-                });
+                };
+                dateGrid.addEventListener('click', this._dateGridClickHandler);
 
                 const prevMonth = month === 0 ? 11 : month - 1;
                 const prevYear = month === 0 ? year - 1 : year;
@@ -266,6 +279,20 @@ class DatePickerService {
                     dateGrid.appendChild(dayElement);
                 }
             }
+        }
+    }
+
+    destroy() {
+        if (this._dateGridClickHandler) {
+            const dateGrid = document.getElementById('date-grid');
+            if (dateGrid) {
+                dateGrid.removeEventListener('click', this._dateGridClickHandler);
+            }
+            this._dateGridClickHandler = null;
+        }
+        if (this._timePickerCloseListener) {
+            document.removeEventListener('click', this._timePickerCloseListener);
+            this._timePickerCloseListener = null;
         }
     }
 }

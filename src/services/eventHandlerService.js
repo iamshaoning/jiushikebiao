@@ -273,17 +273,18 @@ class EventHandlerService {
                 btnGroup.style.transform = 'translate(-50%, 100%)';
                 btnGroup.style.zIndex = '10';
 
+                const escapedDateStr = window.utils.escapeHtml(currentDateStr);
                 btnGroup.innerHTML = `
-                    <div data-action="add-course" data-date="${currentDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-primary);">
+                    <div data-action="add-course" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-primary);">
                         <i data-lucide="plus" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
                     </div>
-                    <div data-action="copy-date" data-date="${currentDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-success);">
+                    <div data-action="copy-date" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-success);">
                         <i data-lucide="copy" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
                     </div>
-                    <div data-action="paste-to-date" data-date="${currentDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-warning);">
+                    <div data-action="paste-to-date" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-warning);">
                         <i data-lucide="clipboard" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
                     </div>
-                    <div data-action="delete-date-courses" data-date="${currentDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-danger);">
+                    <div data-action="delete-date-courses" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-danger);">
                         <i data-lucide="trash-2" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
                     </div>
                 `;
@@ -436,10 +437,12 @@ class EventHandlerService {
                 };
                 
                 // 移除添加按钮的原有事件
-                addBtn.removeEventListener('click', addBtn._originalClickHandler);
+                if (addBtn._originalClickHandler) {
+                    addBtn.removeEventListener('click', addBtn._originalClickHandler);
+                }
                 
                 // 添加保存按钮的事件
-                addBtn.onclick = (e) => {
+                addBtn.onclick = async (e) => {
                     // 阻止事件冒泡，避免触发add-org-inline事件
                     e.preventDefault();
                     e.stopPropagation();
@@ -485,7 +488,7 @@ class EventHandlerService {
 
                         // 更新UI - 注意：具体的颜色更新和UI更新已经在 currentManagementModalConfig.editItem 中处理了
 
-                window.utils.saveData();
+                await window.utils.saveData();
                 notificationService.show(`${itemName}修改成功`, 'success');
 
                         // 刷新视图 - 更新学生列表和日历

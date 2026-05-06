@@ -14,50 +14,6 @@ export class ListRenderService {
         this._lastSearchTerm = '';
         this._virtualList = null;
         
-        // 内部渲染方法
-        this._renderStudentItem = (student) => {
-            // 确保所有字段都有默认值
-            const name = student.name || '未命名';
-            const organization = student.organization || '未分配';
-            const fees = student.fees || { '一对一': 0 };
-            const id = student.id || '';
-            
-            // 生成一对一课时费显示HTML，格式为"多少元/多少分钟"，不显示小数
-            const oneOnOneFee = fees['一对一'] || 0;
-            const oneOnOneDuration = fees['一对一_duration'] || 120;
-            const feeDisplay = `<div class="text-sm" style="color: var(--text-secondary);">${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟</div>`;
-            const orgColor = this.utils.generateColor(organization, 'organization');
-            const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');
-            
-            return `
-                <div class="flex items-center p-4 border-b transition-colors" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
-                    <div class="w-1/4">
-                        <div class="font-medium" style="color: var(--text-primary);">${this.utils.escapeHtml(name)}</div>
-                    </div>
-                    <div class="w-1/4">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${orgColor} 20%, transparent); color: ${orgColor};">
-                            ${this.utils.escapeHtml(organization)}
-                        </span>
-                    </div>
-                    <div class="w-1/4">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${gradeColor} 20%, transparent); color: ${gradeColor};">
-                            ${this.utils.escapeHtml(student.grade || '未设置')}
-                        </span>
-                    </div>
-                    <div class="w-1/4 text-center">
-                        ${feeDisplay}
-                    </div>
-                    <div class="w-1/4 flex items-center justify-center">
-                        <button class="edit-student w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-student" data-id="${this.utils.escapeHtml(id)}">
-                            <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
-                        </button>
-                        <button class="delete-student w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-student" data-id="${this.utils.escapeHtml(id)}">
-                            <i data-lucide="trash-2" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-danger);"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        };
     }
 
     /**

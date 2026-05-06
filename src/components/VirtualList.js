@@ -39,8 +39,12 @@ class VirtualList {
     }
     
     handleScroll(e) {
-        this.state.scrollTop = e.target.scrollTop;
-        this.update();
+        if (this._rafId) return;
+        this._rafId = requestAnimationFrame(() => {
+            this._rafId = null;
+            this.state.scrollTop = e.target.scrollTop;
+            this.update();
+        });
     }
     
     calculateVisibleItems() {
@@ -80,6 +84,10 @@ class VirtualList {
     }
     
     destroy() {
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+            this._rafId = null;
+        }
         if (this._boundScrollHandler) {
             this.container.removeEventListener('scroll', this._boundScrollHandler);
             this._boundScrollHandler = null;

@@ -125,39 +125,7 @@ class InitService {
 
                 // 定期检查会话状态，确保会话有效（仅在非试用模式下启动）
                 this._sessionCheckInterval = setInterval(() => {
-                    // 页面不可见时暂停检查
-                    if (document.hidden) return;
-                    // 如果是试用模式，跳过会话检查
-                    if (this.serverStatusService && this.serverStatusService.isTrialMode) {
-                        return;
-                    }
-
-                    try {
-                        auth.getSession().then(({ data: { session } }) => {
-                            if (!session) {
-                                // 清理会话相关数据
-                                localStorage.removeItem('sb-login-time');
-                                this.authUIService.updateUIForUnauth();
-                            } else {
-                                // 检查登录时间，超过24小时自动登出
-                                const loginTime = localStorage.getItem('sb-login-time');
-                                if (loginTime) {
-                                    const now = Date.now();
-                                    const loginTimestamp = parseInt(loginTime);
-                                    const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
-                                    if (hoursSinceLogin > 24) {
-                                        auth.signOut().then(() => {
-                                            localStorage.removeItem('sb-login-time');
-                                            this.authUIService.updateUIForUnauth();
-                                            this.notificationService.show('登录时间已超过24小时，请重新登录', 'info');
-                                        });
-                                    }
-                                }
-                            }
-                        });
-                    } catch (error) {
-                        console.error('定期检查会话状态失败:', error);
-                    }
+                    this._checkSession(auth);
                 }, 60 * 1000); // 每60秒检查一次
 
                 // 页面可见性变化监听
@@ -170,33 +138,7 @@ class InitService {
                     } else {
                         if (!this._sessionCheckInterval && !(this.serverStatusService && this.serverStatusService.isTrialMode)) {
                             this._sessionCheckInterval = setInterval(() => {
-                                if (document.hidden) return;
-                                if (this.serverStatusService && this.serverStatusService.isTrialMode) return;
-
-                                try {
-                                    auth.getSession().then(({ data: { session } }) => {
-                                        if (!session) {
-                                            localStorage.removeItem('sb-login-time');
-                                            this.authUIService.updateUIForUnauth();
-                                        } else {
-                                            const loginTime = localStorage.getItem('sb-login-time');
-                                            if (loginTime) {
-                                                const now = Date.now();
-                                                const loginTimestamp = parseInt(loginTime);
-                                                const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
-                                                if (hoursSinceLogin > 24) {
-                                                    auth.signOut().then(() => {
-                                                        localStorage.removeItem('sb-login-time');
-                                                        this.authUIService.updateUIForUnauth();
-                                                        this.notificationService.show('登录时间已超过24小时，请重新登录', 'info');
-                                                    });
-                                                }
-                                            }
-                                        }
-                                    });
-                                } catch (error) {
-                                    console.error('定期检查会话状态失败:', error);
-                                }
+                                this._checkSession(auth);
                             }, 60 * 1000);
                         }
                     }
@@ -204,7 +146,7 @@ class InitService {
                 document.addEventListener('visibilitychange', this._visibilityHandler);
 
                 // 启动服务器状态监测
-                this.utils.startServerStatusMonitor();
+                this.serverStatusService.startMonitoring();
             } else {
                 // Supabase 不可用，显示登录框
                 this.serverStatusService.updateServerStatus('offline');
@@ -214,6 +156,46 @@ class InitService {
             this.utils.handleError(error, '初始化应用失败', true);
             // 即使初始化失败，也要显示登录框
             this.authUIService.updateUIForUnauth();
+        }
+    }
+
+    /**
+     * 检查会话状态（提取的公共方法）
+     * @param {Object} auth - Supabase auth 实例
+     */
+    _checkSession(auth) {
+        // 页面不可见时暂停检查
+        if (document.hidden) return;
+        // 如果是试用模式，跳过会话检查
+        if (this.serverStatusService && this.serverStatusService.isTrialMode) {
+            return;
+        }
+
+        try {
+            auth.getSession().then(({ data: { session } }) => {
+                if (!session) {
+                    // 清理会话相关数据
+                    localStorage.removeItem('sb-login-time');
+                    this.authUIService.updateUIForUnauth();
+                } else {
+                    // 检查登录时间，超过24小时自动登出
+                    const loginTime = localStorage.getItem('sb-login-time');
+                    if (loginTime) {
+                        const now = Date.now();
+                        const loginTimestamp = parseInt(loginTime);
+                        const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
+                        if (hoursSinceLogin > 24) {
+                            auth.signOut().then(() => {
+                                localStorage.removeItem('sb-login-time');
+                                this.authUIService.updateUIForUnauth();
+                                this.notificationService.show('登录时间已超过24小时，请重新登录', 'info');
+                            });
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('定期检查会话状态失败:', error);
         }
     }
 

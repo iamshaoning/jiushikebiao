@@ -143,11 +143,11 @@ export class StatisticsRenderService {
 
         // 更新统计卡片
         utils.safeSet(this.elements.totalHours, 'textContent', stats.totalCourses);
-        this.elements.totalHours.style.color = 'var(--color-primary)';
+        if (this.elements.totalHours) this.elements.totalHours.style.color = 'var(--color-primary)';
         utils.safeSet(this.elements.totalFee, 'textContent', `¥${stats.totalFee.toFixed(2)}`);
-        this.elements.totalFee.style.color = 'var(--color-success)';
+        if (this.elements.totalFee) this.elements.totalFee.style.color = 'var(--color-success)';
         utils.safeSet(this.elements.totalStudents, 'textContent', stats.uniqueStudents.size);
-        this.elements.totalStudents.style.color = 'var(--color-purple)';
+        if (this.elements.totalStudents) this.elements.totalStudents.style.color = 'var(--color-purple)';
 
         // 渲染图表
         this.chartService.chart('organization-chart', stats.byOrganization, '机构课量分布', utils);
@@ -257,12 +257,12 @@ export class StatisticsRenderService {
                         <tr style="background-color: var(--bg-secondary);">
                             <td class="px-4 py-3 text-left">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(org, 'organization')} 20%, transparent); color: ${utils.generateColor(org, 'organization')}">
-                                    ${org}
+                                    ${utils.escapeHtml(org)}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-left">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(grade, 'grade')} 20%, transparent); color: ${utils.generateColor(grade, 'grade')}">
-                                    ${grade}
+                                    ${utils.escapeHtml(grade)}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${stats.students.size}人</td>
@@ -335,12 +335,12 @@ export class StatisticsRenderService {
                             <tr style="background-color: var(--bg-secondary);">
                                 <td class="px-4 py-3 text-left">
                                     <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(org, 'organization')} 20%, transparent); color: ${utils.generateColor(org, 'organization')}">
-                                        ${org}
+                                        ${utils.escapeHtml(org)}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-left">
                                     <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color: color-mix(in srgb, ${utils.generateColor(grade, 'grade')} 20%, transparent); color: ${utils.generateColor(grade, 'grade')}">
-                                        ${grade}
+                                        ${utils.escapeHtml(grade)}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-left" style="color: var(--text-primary);">${studentCount}人</td>

@@ -161,26 +161,31 @@ class TimelineService {
      */
     generateCourseTag(course) {
         if (!course) return '';
-        
+
+        const escapeHtml = (str) => {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        };
+
         const primaryColor = course.colors && course.colors[0] ? course.colors[0] : 'var(--color-secondary)';
         const studentNames = course.studentNames || [];
-        
+
         // 如果 studentNames 是字符串，转换为数组
         const namesArray = Array.isArray(studentNames) ? studentNames : studentNames.split('、').filter(n => n);
-        
+
         // 生成学生名字标签
         const studentTags = namesArray.map((name, index) => {
             const color = course.colors && course.colors[index] ? course.colors[index] : primaryColor;
             return `
                 <span class="px-2 py-0.5 rounded text-xs font-medium"
                       style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">
-                    ${name}
+                    ${escapeHtml(name)}
                 </span>
             `;
         }).join('');
-        
+
         const endTime = this.calculateEndTime(course.startTime, course.duration);
-        
+
         return `
             <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block w-full"
                  style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);">
@@ -189,10 +194,10 @@ class TimelineService {
                         ${studentTags}
                     </div>
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-medium" style="color: var(--text-secondary);">${course.lessonType}</span>
+                        <span class="text-[10px] font-medium" style="color: var(--text-secondary);">${escapeHtml(course.lessonType)}</span>
                         <span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${endTime}</span>
                     </div>
-                    ${course.note ? `<div class="text-[9px] truncate mt-1" style="color: var(--text-secondary);">${course.note}</div>` : ''}
+                    ${course.note ? `<div class="text-[9px] truncate mt-1" style="color: var(--text-secondary);">${escapeHtml(course.note)}</div>` : ''}
                 </div>
             </div>
         `;

@@ -68,7 +68,7 @@ const clipboardUtils = {
                     if (!isDuplicate) {
                         const newCourse = {
                             ...course,
-                            id: utils.generateId(),
+                            id: window.utils.generateId(),
                             date: dateStr,
                             createdAt: new Date().toISOString()
                         };
@@ -76,10 +76,10 @@ const clipboardUtils = {
                         let hasConflict = false;
                         
                         for (const existingCourse of targetDateCourses) {
-                            const newStartMins = utils.timeToMins(newCourse.startTime);
+                            const newStartMins = window.utils.timeToMins(newCourse.startTime);
                             const newEndMins = newStartMins + Number(newCourse.duration || 120);
-                            
-                            const existingStartMins = utils.timeToMins(existingCourse.startTime);
+
+                            const existingStartMins = window.utils.timeToMins(existingCourse.startTime);
                             const existingEndMins = existingStartMins + Number(existingCourse.duration || 120);
                             
                             if (Math.max(newStartMins, existingStartMins) < Math.min(newEndMins, existingEndMins)) {
@@ -90,10 +90,10 @@ const clipboardUtils = {
                         
                         if (!hasConflict) {
                             for (const addedCourse of coursesToAdd) {
-                                const newStartMins = utils.timeToMins(newCourse.startTime);
+                                const newStartMins = window.utils.timeToMins(newCourse.startTime);
                                 const newEndMins = newStartMins + Number(newCourse.duration || 120);
-                                
-                                const addedStartMins = utils.timeToMins(addedCourse.startTime);
+
+                                const addedStartMins = window.utils.timeToMins(addedCourse.startTime);
                                 const addedEndMins = addedStartMins + Number(addedCourse.duration || 120);
                                 
                                 if (Math.max(newStartMins, addedStartMins) < Math.min(newEndMins, addedEndMins)) {

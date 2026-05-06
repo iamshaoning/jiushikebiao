@@ -3,15 +3,6 @@
  * 负责显示各种模态框
  */
 
-function isLightColor(hexColor) {
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    return brightness > 155;
-}
-
 class ModalService {
     constructor() {
         this.container = null;
@@ -205,12 +196,12 @@ class ModalService {
         this.eventListeners.push({ element: this.content, type: 'click', listener: actionListener });
 
         let mouseDownPos = null;
-        this.container.onmousedown = (e) => {
+        const mouseDownHandler = (e) => {
             if (e.target === this.container) {
                 mouseDownPos = { x: e.clientX, y: e.clientY };
             }
         };
-        this.container.onmouseup = (e) => {
+        const mouseUpHandler = (e) => {
             if (mouseDownPos && e.target === this.container) {
                 const dx = Math.abs(e.clientX - mouseDownPos.x);
                 const dy = Math.abs(e.clientY - mouseDownPos.y);
@@ -220,6 +211,10 @@ class ModalService {
                 mouseDownPos = null;
             }
         };
+        this.container.addEventListener('mousedown', mouseDownHandler);
+        this.container.addEventListener('mouseup', mouseUpHandler);
+        this.eventListeners.push({ element: this.container, type: 'mousedown', listener: mouseDownHandler });
+        this.eventListeners.push({ element: this.container, type: 'mouseup', listener: mouseUpHandler });
 
         this._boundKeydownHandler = this.handleKeydown.bind(this);
         document.addEventListener('keydown', this._boundKeydownHandler);
@@ -272,6 +267,12 @@ class ModalService {
     }
 
     showNested(content, options = {}) {
+        // 取消之前未完成的 hideNested
+        if (this._nestedHideTimer) {
+            clearTimeout(this._nestedHideTimer);
+            this._nestedHideTimer = null;
+        }
+
         if (!this.nestedContainer || !this.nestedContent) {
             this.init();
         }
@@ -317,7 +318,8 @@ class ModalService {
         this.nestedContent.classList.add('scale-90', 'opacity-0', 'translate-y-4');
         this.nestedContainer.style.opacity = '0';
 
-        setTimeout(() => {
+        this._nestedHideTimer = setTimeout(() => {
+            this._nestedHideTimer = null;
             this.nestedContainer.style.display = 'none';
             const scrollY = parseInt(document.body.style.top) * -1;
             document.body.style.position = '';
@@ -385,11 +387,19 @@ class ModalService {
                 if (window.lucide) {
                     lucide.createIcons();
                 }
-                document.getElementById('cancel-confirm').addEventListener('click', () => this.hide());
-                document.getElementById('accept-confirm').addEventListener('click', () => {
+                const cancelHandler = () => this.hide();
+                const acceptHandler = () => {
                     onConfirm();
                     this.hide();
-                });
+                };
+                const cancelBtn = document.getElementById('cancel-confirm');
+                const acceptBtn = document.getElementById('accept-confirm');
+                cancelBtn.addEventListener('click', cancelHandler);
+                acceptBtn.addEventListener('click', acceptHandler);
+                this.eventListeners.push(
+                    { element: cancelBtn, type: 'click', listener: cancelHandler },
+                    { element: acceptBtn, type: 'click', listener: acceptHandler }
+                );
             }
         });
     }
@@ -490,7 +500,7 @@ class ModalService {
                         }
 
                         const newStudent = {
-                            id: 'student_' + Date.now(),
+                            id: window.utils.generateId(),
                             name,
                             organization,
                             grade,
@@ -721,7 +731,7 @@ class ModalService {
                         const colors = selectedStudents.map(s => s.dataset.color || 'var(--color-secondary)');
                         
                         const newCourse = {
-                            id: 'course_' + Date.now(),
+                            id: window.utils.generateId(),
                             date: courseDate,
                             lessonType,
                             studentIds,
@@ -841,7 +851,6 @@ class ModalService {
                         const updatedColors = selectedStudents.map(s => s.dataset.color || 'var(--color-secondary)');
                         
                         const updatedCourse = {
-                            ...course,
                             id: courseId,
                             date: courseDate,
                             lessonType,
@@ -923,10 +932,10 @@ class ModalService {
                                 <div class="flex items-center justify-between p-2 rounded" style="background-color: var(--bg-secondary);" data-${itemName}="${item}">
                                     <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bgColor} 20%, transparent); color: ${bgColor};" data-item="${item}" data-item-name="${itemName}" data-color="${bgColor}">${window.utils.escapeHtml(item)}</button>
                                     <div class="flex items-center">
-                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${item}">
+                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${window.utils.escapeHtml(item)}">
                                             <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
                                         </button>
-                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${item}">
+                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${window.utils.escapeHtml(item)}">
                                             <i data-lucide="trash-2" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-danger);"></i>
                                         </button>
                                     </div>

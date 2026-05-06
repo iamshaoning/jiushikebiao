@@ -185,6 +185,7 @@ class AuthUIService {
         const email = this.elements.authEmail ? this.elements.authEmail.value : '';
         const password = this.elements.authPassword ? this.elements.authPassword.value : '';
 
+        // 开发测试用：快速进入试用模式（用户名 test，密码留空）
         if (email === 'test' && password === '') {
             this.disableButtonsAndTabs();
             this.setLoginButtonLoading(true);
@@ -451,10 +452,7 @@ class AuthUIService {
         const authModal = this.elements.authModal;
         if (authModal && authModal.style.display !== 'flex') {
             this.resetAuthUI();
-            const authContainer = this.elements.authContainer;
-            if (authContainer) {
-                this.utils.showModal(authModal, authContainer);
-            }
+            this.showAuthModal();
         }
     }
 

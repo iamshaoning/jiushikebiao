@@ -25,7 +25,7 @@ class RouterService {
     }
     
     init() {
-        window.addEventListener('popstate', () => {
+        window.addEventListener('hashchange', () => {
             this.handleRouteChange();
         });
         

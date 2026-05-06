@@ -15,6 +15,22 @@ class ExportService {
     }
 
     /**
+     * HTML 转义函数，防止 XSS 攻击
+     * @param {*} text - 需要转义的文本
+     * @returns {string} 转义后的安全 HTML 字符串
+     */
+    escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const str = String(text);
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    /**
      * 导出旧课程数据为HTML
      * @param {Array} oldCourses - 旧课程数据
      * @param {Object} state - 状态对象
@@ -72,7 +88,7 @@ class ExportService {
 
                 const note = course.note || '';
 
-                htmlContent += `<tr><td>${date}</td><td>${time}</td><td>${students}</td><td>${lessonType}</td><td>${fee}</td><td>${organization}</td><td>${grade}</td><td>${note}</td></tr>`;
+                htmlContent += `<tr><td>${this.escapeHtml(date)}</td><td>${this.escapeHtml(time)}</td><td>${this.escapeHtml(students)}</td><td>${this.escapeHtml(lessonType)}</td><td>${this.escapeHtml(fee)}</td><td>${this.escapeHtml(organization)}</td><td>${this.escapeHtml(grade)}</td><td>${this.escapeHtml(note)}</td></tr>`;
             });
 
             htmlContent += `</tbody></table></div>`;
@@ -149,22 +165,22 @@ class ExportService {
         const getOrgBadge = (name) => {
             if (!name) return '';
             const color = validUtils?.generateColor ? validUtils.generateColor(name, 'organization') : '#3b82f6';
-            return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${name}</span>`;
+            return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${this.escapeHtml(name)}</span>`;
         };
         const getGradeBadge = (name) => {
             if (!name) return '';
             const color = validUtils?.generateColor ? validUtils.generateColor(name, 'grade') : '#8b5cf6';
-            return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${name}</span>`;
+            return `<span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500;background:${color}20;color:${color};border:1px solid ${color}40">${this.escapeHtml(name)}</span>`;
         };
         const systemUrl = typeof window !== 'undefined' ? (window.location.origin || '课程管理系统') : '课程管理系统';
 
-        let htmlContent = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:40px;background-color:#f5f7fa}table{width:100%;border-collapse:collapse}th{background:#f8fafc;padding:14px 20px;text-align:left;font-weight:600;color:#475569;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0}td{padding:14px 20px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#334155}tr:hover{background:#fafafa}.container{max-width:1200px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.08);overflow:hidden}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:24px 32px}.header h1{margin:0;font-size:24px;font-weight:600}.header p{margin:8px 0 0;opacity:0.9;font-size:14px}.stats{display:flex;gap:24px;padding:20px 32px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.stat-item{text-align:center;flex:1}.stat-value{font-size:28px;font-weight:700;color:#1e293b}.stat-label{font-size:13px;color:#64748b;margin-top:4px}.section{padding:20px 32px}.section h2{color:#374151;margin-bottom:15px;font-size:18px;border-bottom:2px solid #e2e8f0;padding-bottom:8px}.section h3{color:#4b5563;margin-top:20px;margin-bottom:10px;font-size:16px}.empty{text-align:center;padding:40px;color:#6b7280;font-style:italic}.footer{padding:20px 32px;text-align:center;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0}.footer a{color:#667eea;text-decoration:none}.footer a:hover{text-decoration:underline}</style></head><body><div class="container"><div class="header"><h1>${title}</h1><p>生成时间：${new Date().toLocaleString('zh-CN')}${organization ? ' | 机构：' + organization : ''}</p></div><div class="stats"><div class="stat-item"><div class="stat-value">${totalCourseCount}</div><div class="stat-label">总课节数</div></div><div class="stat-item"><div class="stat-value">¥${totalFee.toFixed(2)}</div><div class="stat-label">总课时费</div></div><div class="stat-item"><div class="stat-value">${totalStudents}</div><div class="stat-label">学生人数</div></div></div>`;
+        let htmlContent = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${this.escapeHtml(title)}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:40px;background-color:#f5f7fa}table{width:100%;border-collapse:collapse}th{background:#f8fafc;padding:14px 20px;text-align:left;font-weight:600;color:#475569;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:2px solid #e2e8f0}td{padding:14px 20px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#334155}tr:hover{background:#fafafa}.container{max-width:1200px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,0.08);overflow:hidden}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:24px 32px}.header h1{margin:0;font-size:24px;font-weight:600}.header p{margin:8px 0 0;opacity:0.9;font-size:14px}.stats{display:flex;gap:24px;padding:20px 32px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.stat-item{text-align:center;flex:1}.stat-value{font-size:28px;font-weight:700;color:#1e293b}.stat-label{font-size:13px;color:#64748b;margin-top:4px}.section{padding:20px 32px}.section h2{color:#374151;margin-bottom:15px;font-size:18px;border-bottom:2px solid #e2e8f0;padding-bottom:8px}.section h3{color:#4b5563;margin-top:20px;margin-bottom:10px;font-size:16px}.empty{text-align:center;padding:40px;color:#6b7280;font-style:italic}.footer{padding:20px 32px;text-align:center;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0}.footer a{color:#667eea;text-decoration:none}.footer a:hover{text-decoration:underline}</style></head><body><div class="container"><div class="header"><h1>${this.escapeHtml(title)}</h1><p>生成时间：${new Date().toLocaleString('zh-CN')}${organization ? ' | 机构：' + this.escapeHtml(organization) : ''}</p></div><div class="stats"><div class="stat-item"><div class="stat-value">${totalCourseCount}</div><div class="stat-label">总课节数</div></div><div class="stat-item"><div class="stat-value">¥${totalFee.toFixed(2)}</div><div class="stat-label">总课时费</div></div><div class="stat-item"><div class="stat-value">${totalStudents}</div><div class="stat-label">学生人数</div></div></div>`;
 
         htmlContent += `<div class="section"><h2>机构详细数据</h2>`;
         if (organizationData.length > 0) {
             htmlContent += `<table><thead><tr><th>机构</th><th>课节数</th><th>课时费</th><th>学生数</th><th>占比</th></tr></thead><tbody>`;
             organizationData.forEach(row => {
-                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${row.时间 || ''} 节</td><td>¥${row.学生姓名 || '0'}</td><td>${row.所属机构 || ''} 人</td><td>${row.年级 || ''}</td></tr>`;
+                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${this.escapeHtml(row.时间 || '')} 节</td><td>¥${this.escapeHtml(row.学生姓名 || '0')}</td><td>${this.escapeHtml(row.所属机构 || '')} 人</td><td>${this.escapeHtml(row.年级 || '')}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         } else {
@@ -175,14 +191,14 @@ class ExportService {
         if (oneOnOneData.length > 0) {
             htmlContent += `<h3>一对一分布数据</h3><table><thead><tr><th>机构</th><th>年级</th><th>学生数</th><th>课节数</th><th>课时费</th></tr></thead><tbody>`;
             oneOnOneData.forEach(row => {
-                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${row.学生姓名 || ''} 人</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
+                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${this.escapeHtml(row.学生姓名 || '')} 人</td><td>${this.escapeHtml(row.所属机构 || '')} 节</td><td>¥${this.escapeHtml(row.年级 || '0')}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         }
         if (groupData.length > 0) {
             htmlContent += `<h3>多人课分布数据</h3><table><thead><tr><th>机构</th><th>年级</th><th>上课人数</th><th>课节数</th><th>课时费</th></tr></thead><tbody>`;
             groupData.forEach(row => {
-                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${row.学生姓名 || ''} 人</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
+                htmlContent += `<tr><td>${getOrgBadge(row.日期 || '')}</td><td>${getGradeBadge(row.时间 || '')}</td><td>${this.escapeHtml(row.学生姓名 || '')} 人</td><td>${this.escapeHtml(row.所属机构 || '')} 节</td><td>¥${this.escapeHtml(row.年级 || '0')}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         }
@@ -191,14 +207,14 @@ class ExportService {
         if (studentData.length > 0) {
             htmlContent += `<table><thead><tr><th>学生姓名</th><th>所属机构</th><th>年级</th><th>上课节数</th><th>课时费</th></tr></thead><tbody>`;
             studentData.forEach(row => {
-                htmlContent += `<tr><td>${row.日期 || ''}</td><td>${getOrgBadge(row.时间 || '')}</td><td>${getGradeBadge(row.学生姓名 || '')}</td><td>${row.所属机构 || ''} 节</td><td>¥${row.年级 || '0'}</td></tr>`;
+                htmlContent += `<tr><td>${this.escapeHtml(row.日期 || '')}</td><td>${getOrgBadge(row.时间 || '')}</td><td>${getGradeBadge(row.学生姓名 || '')}</td><td>${this.escapeHtml(row.所属机构 || '')} 节</td><td>¥${this.escapeHtml(row.年级 || '0')}</td></tr>`;
             });
             htmlContent += `</tbody></table>`;
         } else {
             htmlContent += `<div class="empty">暂无学生课量数据</div>`;
         }
 
-        htmlContent += `</div><div class="footer">报告生成于 <a href="${systemUrl}" target="_blank">课程管理系统</a></div></div></body></html>`;
+        htmlContent += `</div><div class="footer">报告生成于 <a href="${this.escapeHtml(systemUrl)}" target="_blank">课程管理系统</a></div></div></body></html>`;
 
         return htmlContent;
     }

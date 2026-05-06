@@ -53,105 +53,6 @@ const stateUtils = {
         const newGradeColors = JSON.stringify(window.state.gradeColors);
         const orgColorsChanged = oldOrgColors !== newOrgColors;
         const gradeColorsChanged = oldGradeColors !== newGradeColors;
-        
-        if (orgColorsChanged || gradeColorsChanged) {
-            stateUtils.updateColorLabelsInDOM(orgColorsChanged, gradeColorsChanged);
-        }
-    },
-    
-    updateColorLabelsInDOM: (updateOrg = true, updateGrade = true) => {
-        try {
-            if (updateOrg) {
-                const orgButtons = document.querySelectorAll('button.机构-name');
-                orgButtons.forEach(label => {
-                    const orgName = label.textContent?.trim();
-                    if (orgName && window.state.organizations.includes(orgName)) {
-                        const color = window.utils.generateColor(orgName, 'organization');
-                        label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        label.style.color = color;
-                        label.dataset.color = color;
-                    }
-                });
-                
-                const studentListSpans = document.querySelectorAll('.students-list span.px-2');
-                studentListSpans.forEach(span => {
-                    const orgName = span.textContent?.trim();
-                    if (orgName && window.state.organizations.includes(orgName)) {
-                        const color = window.utils.generateColor(orgName, 'organization');
-                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        span.style.color = color;
-                    }
-                });
-                
-                const tableSpans = document.querySelectorAll('table span.px-2');
-                tableSpans.forEach(span => {
-                    const orgName = span.textContent?.trim();
-                    if (orgName && window.state.organizations.includes(orgName)) {
-                        const color = window.utils.generateColor(orgName, 'organization');
-                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        span.style.color = color;
-                    }
-                });
-                
-                const orgListButtons = document.querySelectorAll('#机构s-list button');
-                orgListButtons.forEach(btn => {
-                    const orgName = btn.textContent?.trim();
-                    if (orgName && window.state.organizations.includes(orgName)) {
-                        const color = window.utils.generateColor(orgName, 'organization');
-                        btn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        btn.style.color = color;
-                        btn.dataset.color = color;
-                    }
-                });
-            }
-            
-            if (updateGrade) {
-                const gradeButtons = document.querySelectorAll('button.年级-name');
-                gradeButtons.forEach(label => {
-                    const gradeName = label.textContent?.trim();
-                    if (gradeName && window.state.grades.includes(gradeName)) {
-                        const color = window.utils.generateColor(gradeName, 'grade');
-                        label.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        label.style.color = color;
-                        label.dataset.color = color;
-                    }
-                });
-                
-                const studentListSpans = document.querySelectorAll('.students-list span.px-2');
-                studentListSpans.forEach(span => {
-                    const gradeName = span.textContent?.trim();
-                    if (gradeName && window.state.grades.includes(gradeName)) {
-                        const color = window.utils.generateColor(gradeName, 'grade');
-                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        span.style.color = color;
-                    }
-                });
-                
-                const tableSpans = document.querySelectorAll('table span.px-2');
-                tableSpans.forEach(span => {
-                    const gradeName = span.textContent?.trim();
-                    if (gradeName && window.state.grades.includes(gradeName)) {
-                        const color = window.utils.generateColor(gradeName, 'grade');
-                        span.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        span.style.color = color;
-                    }
-                });
-                
-                const gradeListButtons = document.querySelectorAll('#年级s-list button');
-                gradeListButtons.forEach(btn => {
-                    const gradeName = btn.textContent?.trim();
-                    if (gradeName && window.state.grades.includes(gradeName)) {
-                        const color = window.utils.generateColor(gradeName, 'grade');
-                        btn.style.backgroundColor = `color-mix(in srgb, ${color} 20%, transparent)`;
-                        btn.style.color = color;
-                        btn.dataset.color = color;
-                    }
-                });
-            }
-            
-        } catch (error) {
-            console.error('[DOM] 更新DOM颜色标签失败:', error);
-        }
     },
     
     getStatisticsParams: function() {
@@ -330,7 +231,11 @@ const stateUtils = {
         }
         
         try {
-            const { data: sessionData } = await auth.getSession();
+            const sessionResult = await auth.getSession();
+            if (!sessionResult || !sessionResult.data) {
+                return false;
+            }
+            const { data: sessionData } = sessionResult;
             const session = sessionData.session;
             
             if (!session) {

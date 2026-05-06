@@ -67,14 +67,15 @@ export class CalendarRenderService {
             btnGroup.style.bottom = '4px';
             btnGroup.style.zIndex = '10';
 
+            const escapedCourseId = this.utils.escapeHtml(courseId);
             btnGroup.innerHTML = `
-                <div data-action="edit-course" data-id="${courseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-primary);">
+                <div data-action="edit-course" data-id="${escapedCourseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-primary);">
                     <i data-lucide="square-pen" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
                 </div>
-                <div data-action="copy-course" data-id="${courseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-success);">
+                <div data-action="copy-course" data-id="${escapedCourseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-success);">
                     <i data-lucide="copy" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
                 </div>
-                <div data-action="delete-course" data-id="${courseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-danger);">
+                <div data-action="delete-course" data-id="${escapedCourseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-danger);">
                     <i data-lucide="trash-2" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
                 </div>
             `;

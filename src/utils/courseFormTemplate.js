@@ -25,7 +25,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                                     <i data-lucide="calendar-check" style="width: 16px; height: 16px;"></i>
                                 </button>
                             </div>
-                            ${utils.createDatePickerTemplate('course-date-container', 'course-date')}
+                            ${window.utils.createDatePickerTemplate('course-date-container', 'course-date')}
                         </div>
                     </div>
                     
@@ -62,7 +62,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                                         <i data-lucide="clock" class="inline-block" style="width: 16px; height: 16px;"></i>
                                     </button>
                                 </div>
-                                ${utils.createTimePickerTemplate('start-time-container', 'course-start-time')}
+                                ${window.utils.createTimePickerTemplate('start-time-container', 'course-start-time')}
                             </div>
                         </div>
                         <div>

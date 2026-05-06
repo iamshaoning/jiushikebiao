@@ -174,13 +174,20 @@ class CustomSelectService {
     }
 
     /**
-     * 清理事件监听器
+     * 销毁服务，清理所有事件监听器
      */
-    cleanup() {
+    destroy() {
         if (this.closeListener) {
             document.removeEventListener('click', this.closeListener);
             this.closeListener = null;
         }
+    }
+
+    /**
+     * 清理事件监听器（兼容旧版本）
+     */
+    cleanup() {
+        this.destroy();
     }
 }
 

@@ -60,7 +60,19 @@ class DataLoadService {
             // 步骤 1：先读取并保存本地数据的原始状态（用于创建快照）
             // ================================================
             const originalLocalDataStr = localStorage.getItem('coursemanagerdata');
-            const originalLocalData = originalLocalDataStr ? JSON.parse(originalLocalDataStr) : null;
+            let originalLocalData = null;
+            if (originalLocalDataStr) {
+                try {
+                    originalLocalData = JSON.parse(originalLocalDataStr);
+                } catch (parseError) {
+                    console.error('本地数据解析失败:', parseError);
+                    if (window.notificationService) {
+                        window.notificationService.show('本地数据格式异常，已重新初始化', 'warning');
+                    }
+                    // 保留损坏的数据作为备份
+                    localStorage.setItem('coursemanagerdata_backup', originalLocalDataStr);
+                }
+            }
 
             let shouldCreateLoginSnapshot = false;
             let isOtherAccountData = false;
@@ -115,8 +127,14 @@ class DataLoadService {
                                     if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
                                         const serverData = payload.new;
                                         
-                                        const localDataStr = localStorage.getItem('coursemanagerdata');
-                                        const localData = localDataStr ? JSON.parse(localDataStr) : null;
+                                        let localData = null;
+                                        try {
+                                            const localDataStr = localStorage.getItem('coursemanagerdata');
+                                            localData = localDataStr ? JSON.parse(localDataStr) : null;
+                                        } catch (parseError) {
+                                            console.error('[实时监听] 解析本地数据失败:', parseError);
+                                            localData = null;
+                                        }
                                         const localTimestamp = this.utils.getTimestamp(localData?.lastupdated);
                                         const serverTimestamp = this.utils.getTimestamp(serverData.lastupdated);
                                         
