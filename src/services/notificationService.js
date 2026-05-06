@@ -79,7 +79,7 @@ class NotificationService {
 
         // 初始化 Lucide 图标
         if (window.lucide) {
-            lucide.createIcons();
+            lucide.createIcons({ nodes: [notificationEl] });
         }
 
         // 触发重排，使过渡效果生效

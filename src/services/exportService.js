@@ -2,6 +2,9 @@
  * 导出服务模块
  * 负责处理数据导出相关功能，包括导出旧课程数据、导出统计数据等
  */
+
+const MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
 class ExportService {
     constructor() {
         this.notificationService = null;
@@ -30,11 +33,10 @@ class ExportService {
 
         let htmlContent = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>旧课程数据导出</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:#333;background-color:#f5f5f5;padding:20px}.container{max-width:1200px;margin:0 auto;background-color:white;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1);padding:30px}h1{color:#1a56db;margin-bottom:30px;font-size:24px;text-align:center}.section{margin-bottom:40px;page-break-after:always}h2{color:#374151;margin-bottom:15px;font-size:18px;border-bottom:2px solid #e5e7eb;padding-bottom:8px}h3{color:#4b5563;margin-top:20px;margin-bottom:10px;font-size:16px}table{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed}th,td{padding:12px;text-align:left;border-bottom:1px solid #e5e7eb}th{background-color:#f9fafb;font-weight:600;color:#374151}.summary-label{font-weight:600;margin-right:10px}.summary-value{color:#1a56db}.summary-section{margin-bottom:20px;padding:15px;background-color:#f9fafb;border-radius:6px}.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;margin-top:10px}.summary-item{display:flex;justify-content:space-between}</style></head><body><div class="container"><h1>旧课程数据导出</h1><div class="summary-section"><div class="summary-item"><span class="summary-label">导出时间</span><span class="summary-value">${new Date().toLocaleString('zh-CN')}</span></div><div class="summary-item"><span class="summary-label">总课程数</span><span class="summary-value">${oldCourses.length}</span></div><div class="summary-item"><span class="summary-label">涉及月份</span><span class="summary-value">${Object.keys(coursesByMonth).length} 个</span></div></div>`;
 
-        const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
         Object.keys(coursesByMonth).sort().forEach(key => {
             const [year, month] = key.split('-').map(Number);
             const monthCourses = coursesByMonth[key];
-            const monthName = monthNames[month - 1];
+            const monthName = MONTH_NAMES[month - 1];
 
             htmlContent += `<div class="section"><h2>${year}年${monthName}课程数据</h2><div class="summary-section"><div class="summary-item"><span class="summary-label">课程数量</span><span class="summary-value">${monthCourses.length}</span></div></div><h3>详细课程列表</h3><table><thead><tr><th>日期</th><th>时间</th><th>学生姓名</th><th>课型</th><th>课时费</th><th>所属机构</th><th>年级</th><th>备注</th></tr></thead><tbody>`;
 
@@ -101,8 +103,7 @@ class ExportService {
      * @returns {string} HTML内容
      */
     generateHTMLContent(data, filename, year, month, organization, utils = null) {
-        const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-        const monthName = monthNames[month];
+        const monthName = MONTH_NAMES[month];
         const title = `${year}年${monthName}课时费统计`;
 
         let organizationData = [];
@@ -277,7 +278,7 @@ class ExportService {
                     return;
                 }
 
-                const studentFee = isGroupLesson ? perStudentFee : this.getCourseFee(course, student, index);
+                const studentFee = isGroupLesson ? perStudentFee : (window.utils?.getCourseFee ? window.utils.getCourseFee(course, student, index) : (course.fees && course.fees[index] !== undefined ? course.fees[index] : (student?.fees?.['一对一'] || 0)));
 
                 exportData.push({
                     日期: course.date,
@@ -467,8 +468,7 @@ class ExportService {
         });
 
         if (exportData.length > 0) {
-            const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-            const monthName = monthNames[month];
+            const monthName = MONTH_NAMES[month];
             const htmlFilename = `${year}年${monthName}课时费统计.html`;
             this.exportHTML(exportData, htmlFilename, year, month, organization);
             
@@ -482,19 +482,6 @@ class ExportService {
         }
     }
 
-    /**
-     * 获取课程费用
-     * @param {Object} course - 课程对象
-     * @param {Object} student - 学生对象
-     * @param {number} index - 学生索引
-     * @returns {number} 费用
-     */
-    getCourseFee(course, student, index) {
-        if (course.fees && course.fees[index] !== undefined) {
-            return course.fees[index];
-        }
-        return student?.fees?.['一对一'] || 0;
-    }
 }
 
 const exportService = new ExportService();

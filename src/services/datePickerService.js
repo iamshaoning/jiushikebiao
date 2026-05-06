@@ -8,14 +8,15 @@ class DatePickerService {
     }
 
     createCloseListener(containerId, triggerSelector) {
-        return (event) => {
+        const listener = (event) => {
             const container = document.getElementById(containerId);
             const trigger = document.querySelector(triggerSelector);
             if (container && !container.contains(event.target) && (!trigger || !trigger.contains(event.target))) {
                 container.classList.add('hidden');
-                document.removeEventListener('click', this.closeListener);
+                document.removeEventListener('click', listener);
             }
         };
+        return listener;
     }
 
     togglePicker(containerId, otherContainers, closeListener, renderCallback) {
@@ -186,7 +187,15 @@ class DatePickerService {
                 const today = new Date();
                 
                 dateGrid.innerHTML = '';
-                
+
+                // 使用事件委托，在 dateGrid 父容器上统一监听 click 事件
+                dateGrid.addEventListener('click', (e) => {
+                    const dayElement = e.target.closest('button[data-date]');
+                    if (dayElement) {
+                        this.selectDate(dayElement.dataset.inputId, dayElement.dataset.date);
+                    }
+                });
+
                 const prevMonth = month === 0 ? 11 : month - 1;
                 const prevYear = month === 0 ? year - 1 : year;
                 const daysInPrevMonth = new Date(prevYear, prevMonth + 1, 0).getDate();
@@ -209,9 +218,6 @@ class DatePickerService {
                     dayElement.textContent = day;
                     dayElement.dataset.date = dateStr;
                     dayElement.dataset.inputId = inputId;
-                    dayElement.addEventListener('click', () => {
-                        this.selectDate(inputId, dateStr);
-                    });
                     dateGrid.appendChild(dayElement);
                 }
                 
@@ -233,9 +239,6 @@ class DatePickerService {
                     dayElement.textContent = day;
                     dayElement.dataset.date = dateStr;
                     dayElement.dataset.inputId = inputId;
-                    dayElement.addEventListener('click', () => {
-                        this.selectDate(inputId, dateStr);
-                    });
                     dateGrid.appendChild(dayElement);
                 }
                 
@@ -260,9 +263,6 @@ class DatePickerService {
                     dayElement.textContent = day;
                     dayElement.dataset.date = dateStr;
                     dayElement.dataset.inputId = inputId;
-                    dayElement.addEventListener('click', () => {
-                        this.selectDate(inputId, dateStr);
-                    });
                     dateGrid.appendChild(dayElement);
                 }
             }

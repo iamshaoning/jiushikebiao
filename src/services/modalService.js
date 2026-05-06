@@ -238,7 +238,6 @@ class ModalService {
     hide() {
         if (!this.container || !this.content) return;
 
-        console.log('hide - 清理 currentManagementModalConfig');
         window.currentManagementModalConfig = null;
 
         this.content.classList.remove('scale-100', 'opacity-100', 'translate-y-0');
@@ -419,7 +418,7 @@ class ModalService {
                                         <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
                                     </div>
                                     <div class="custom-select-options" id="student-organization-options">
-                                        ${window.state.organizations.map((org, index) => `<div class="custom-option ${index === 0 ? 'selected' : ''}" data-value="${org}">${org}</div>`).join('')}
+                                        ${window.state.organizations.map((org, index) => `<div class="custom-option ${index === 0 ? 'selected' : ''}" data-value="${window.utils.escapeHtml(org)}">${window.utils.escapeHtml(org)}</div>`).join('')}
                                     </div>
                                 </div>
                             </div>
@@ -431,7 +430,7 @@ class ModalService {
                                         <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
                                     </div>
                                     <div class="custom-select-options" id="student-grade-options">
-                                        ${window.state.grades.map((grade, index) => `<div class="custom-option ${index === 0 ? 'selected' : ''}" data-value="${grade}">${grade}</div>`).join('')}
+                                        ${window.state.grades.map((grade, index) => `<div class="custom-option ${index === 0 ? 'selected' : ''}" data-value="${window.utils.escapeHtml(grade)}">${window.utils.escapeHtml(grade)}</div>`).join('')}
                                     </div>
                                 </div>
                             </div>
@@ -536,7 +535,7 @@ class ModalService {
                         <input type="hidden" id="edit-student-id" value="${student.id}">
                         <div class="mb-4">
                             <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">姓名</label>
-                            <input type="text" id="edit-student-name" class="w-full px-3 py-2 rounded-md" value="${student.name}" style="border: 1px solid var(--border-color); color: var(--text-primary);">
+                            <input type="text" id="edit-student-name" class="w-full px-3 py-2 rounded-md" value="" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                         </div>
                         <div class="mb-4 flex space-x-4">
                             <div class="w-1/2">
@@ -593,6 +592,10 @@ class ModalService {
             onShow: () => {
                 if (window.lucide) {
                     lucide.createIcons();
+                }
+                const editStudentNameEl = document.getElementById('edit-student-name');
+                if (editStudentNameEl) {
+                    editStudentNameEl.value = student.name;
                 }
                 const editStudentForm = document.getElementById('edit-student-form');
                 if (editStudentForm) {
@@ -939,8 +942,6 @@ class ModalService {
             </div>
         `;
 
-        console.log('showManagementModal - 被调用, title:', config.title, 'items:', config.items.length, config.items);
-        
         window.currentManagementModalConfig = config;
         
         this.show(content, {

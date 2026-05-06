@@ -89,7 +89,10 @@ export function getUsedColors(type) {
 
 export function isColorUsed(color, type) {
     const validType = colorAssignments[type] ? type : 'organization';
-    return colorAssignments[validType].has(color);
+    for (const usedColor of colorAssignments[validType].values()) {
+        if (usedColor === color) return true;
+    }
+    return false;
 }
 
 export function setColor(text, color, type = 'organization') {
@@ -125,79 +128,50 @@ function scheduleSyncToState(type) {
     }, 0);
 }
 
+function syncColorsToState(type, stateKey) {
+    const newColors = {};
+    let hasChanges = false;
+    const currentColors = window.state[stateKey] || {};
+
+    colorAssignments[type].forEach((color, text) => {
+        newColors[text] = color;
+        if (currentColors[text] !== color) {
+            hasChanges = true;
+        }
+    });
+
+    const currentKeys = Object.keys(currentColors);
+    if (currentKeys.length !== colorAssignments[type].size) {
+        hasChanges = true;
+    } else {
+        for (const key of currentKeys) {
+            if (!(key in newColors)) {
+                hasChanges = true;
+                break;
+            }
+        }
+    }
+
+    if (hasChanges) {
+        window.state[stateKey] = newColors;
+    }
+}
+
 function performSyncToState() {
     if (!window.state) {
         pendingSyncTypes.clear();
         return;
     }
-    
+
     if (pendingSyncTypes.has('organization')) {
-        syncOrganizationColors();
+        syncColorsToState('organization', 'organizationColors');
     }
-    
+
     if (pendingSyncTypes.has('grade')) {
-        syncGradeColors();
+        syncColorsToState('grade', 'gradeColors');
     }
-    
+
     pendingSyncTypes.clear();
-}
-
-function syncOrganizationColors() {
-    const newColors = {};
-    let hasChanges = false;
-    const currentColors = window.state.organizationColors || {};
-    
-    colorAssignments.organization.forEach((color, text) => {
-        newColors[text] = color;
-        if (currentColors[text] !== color) {
-            hasChanges = true;
-        }
-    });
-    
-    const currentKeys = Object.keys(currentColors);
-    if (currentKeys.length !== colorAssignments.organization.size) {
-        hasChanges = true;
-    } else {
-        for (const key of currentKeys) {
-            if (!(key in newColors)) {
-                hasChanges = true;
-                break;
-            }
-        }
-    }
-    
-    if (hasChanges) {
-        window.state.organizationColors = newColors;
-    }
-}
-
-function syncGradeColors() {
-    const newColors = {};
-    let hasChanges = false;
-    const currentColors = window.state.gradeColors || {};
-    
-    colorAssignments.grade.forEach((color, text) => {
-        newColors[text] = color;
-        if (currentColors[text] !== color) {
-            hasChanges = true;
-        }
-    });
-    
-    const currentKeys = Object.keys(currentColors);
-    if (currentKeys.length !== colorAssignments.grade.size) {
-        hasChanges = true;
-    } else {
-        for (const key of currentKeys) {
-            if (!(key in newColors)) {
-                hasChanges = true;
-                break;
-            }
-        }
-    }
-    
-    if (hasChanges) {
-        window.state.gradeColors = newColors;
-    }
 }
 
 export function initColorsFromState() {

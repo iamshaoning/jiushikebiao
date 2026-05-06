@@ -174,8 +174,6 @@ class AuthUIService {
             authModal.style.opacity = '0';
             setTimeout(() => {
                 authModal.style.display = 'none';
-                authContainer.classList.remove('scale-95', 'opacity-0');
-                authContainer.classList.add('scale-95', 'opacity-0');
             }, 300);
         }, 200);
     }
@@ -370,20 +368,9 @@ class AuthUIService {
     }
 
     /**
-     * 更新已登录用户的UI
+     * 隐藏认证模态框的动画效果（公共方法）
      */
-    updateUIForAuth(user) {
-        if (this.elements.userInfo) {
-            this.elements.userInfo.textContent = `${user.email} `;
-        }
-        if (this.elements.settingsUserName) {
-            this.elements.settingsUserName.textContent = user.email;
-        }
-
-        if (this.elements.logoutBtn) {
-            this.elements.logoutBtn.classList.remove('hidden');
-        }
-
+    _hideAuthModalAnimated() {
         if (this.elements.authModal) {
             this.elements.authContainer.classList.remove('scale-100', 'opacity-100');
             this.elements.authContainer.classList.add('scale-90', 'opacity-0');
@@ -401,6 +388,24 @@ class AuthUIService {
     }
 
     /**
+     * 更新已登录用户的UI
+     */
+    updateUIForAuth(user) {
+        if (this.elements.userInfo) {
+            this.elements.userInfo.textContent = `${user.email} `;
+        }
+        if (this.elements.settingsUserName) {
+            this.elements.settingsUserName.textContent = user.email;
+        }
+
+        if (this.elements.logoutBtn) {
+            this.elements.logoutBtn.classList.remove('hidden');
+        }
+
+        this._hideAuthModalAnimated();
+    }
+
+    /**
      * 更新试用用户UI
      */
     updateUIForTrialUser() {
@@ -415,20 +420,7 @@ class AuthUIService {
             this.elements.logoutBtn.classList.remove('hidden');
         }
 
-        if (this.elements.authModal) {
-            this.elements.authContainer.classList.remove('scale-100', 'opacity-100');
-            this.elements.authContainer.classList.add('scale-90', 'opacity-0');
-
-            setTimeout(() => {
-                this.elements.authModal.style.opacity = '0';
-                setTimeout(() => {
-                    this.elements.authModal.style.display = 'none';
-                    this.elements.authModal.style.pointerEvents = 'none';
-                    this.elements.authContainer.classList.remove('scale-90', 'opacity-0');
-                    this.elements.authContainer.classList.add('scale-95', 'opacity-0');
-                }, 800);
-            }, 400);
-        }
+        this._hideAuthModalAnimated();
     }
 
     /**
@@ -471,20 +463,6 @@ class AuthUIService {
      */
     setupSettingsDropdown() {
         if (this.elements.settingsBtn && this.elements.settingsDropdown) {
-            document.addEventListener('click', (event) => {
-                if (!this.elements.settingsBtn.contains(event.target) && !this.elements.settingsDropdown.contains(event.target)) {
-                    const dropdown = this.elements.settingsDropdown;
-                    if (dropdown.classList.contains('show')) {
-                        dropdown.classList.remove('show');
-                        const handleTransitionEnd = () => {
-                            dropdown.style.visibility = 'hidden';
-                            dropdown.removeEventListener('transitionend', handleTransitionEnd);
-                        };
-                        dropdown.addEventListener('transitionend', handleTransitionEnd);
-                    }
-                }
-            });
-
             this.elements.settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const dropdown = this.elements.settingsDropdown;
@@ -518,39 +496,7 @@ class AuthUIService {
     setupLogoutButton() {
         if (this.elements.logoutBtn) {
             this.elements.logoutBtn.addEventListener('click', () => {
-                this.modalService.showConfirm('确定要登出吗？', () => {
-                    if (window.supabaseAuth) {
-                        this.authService.logout()
-                            .then(() => {
-                                this.cleanupRealtimeChannel();
-                                this.serverStatusService.stopMonitoring();
-
-                                if (this.elements.nav && this.elements.main) {
-                                    this.elements.nav.style.display = 'none';
-                                    this.elements.main.style.display = 'none';
-                                }
-
-                                document.body.style.opacity = '1';
-                                this.updateUIForUnauth();
-                                this.notificationService.success('登出成功');
-                            })
-                            .catch((error) => {
-                                console.error('登出失败:', error);
-                                this.notificationService.error('登出失败: ' + error.message);
-                            });
-                    } else {
-                        this.serverStatusService.stopMonitoring();
-
-                        if (this.elements.nav && this.elements.main) {
-                            this.elements.nav.style.display = 'none';
-                            this.elements.main.style.display = 'none';
-                        }
-
-                        document.body.style.opacity = '1';
-                        this.updateUIForUnauth();
-                        this.notificationService.success('登出成功');
-                    }
-                }, 'confirm');
+                this.logout();
             });
         }
     }

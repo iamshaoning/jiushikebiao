@@ -42,15 +42,30 @@ const snapshotUtils = {
             return;
         }
         
+        let data;
+        try {
+            data = JSON.parse(localDataStr);
+        } catch (e) {
+            if (type === 'manual' && typeof window.notificationService !== 'undefined') {
+                window.notificationService.show('数据格式错误，无法创建快照', 'error');
+            }
+            return;
+        }
+
         const snapshot = {
             id: window.utils?.generateId ? window.utils.generateId() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
             timestamp: new Date().toISOString(),
             userId: userId,
-            data: JSON.parse(localDataStr),
+            data: data,
             type: type
         };
-        
-        let snapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+
+        let snapshots;
+        try {
+            snapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        } catch (e) {
+            snapshots = [];
+        }
         
         const loginSnapshots = snapshots.filter(s => s.type === 'login');
         const autoSnapshots = snapshots.filter(s => s.type === 'auto');
@@ -90,7 +105,12 @@ const snapshotUtils = {
     },
     
     getSnapshots: async () => {
-        const allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        let allSnapshots;
+        try {
+            allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        } catch (e) {
+            allSnapshots = [];
+        }
         const userId = await snapshotUtils.getCurrentUserId();
         
         if (!userId) {
@@ -101,7 +121,12 @@ const snapshotUtils = {
     },
     
     restoreSnapshot: async (snapshotId) => {
-        const allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        let allSnapshots;
+        try {
+            allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        } catch (e) {
+            allSnapshots = [];
+        }
         const userId = await snapshotUtils.getCurrentUserId();
         
         if (!userId) {
@@ -204,7 +229,12 @@ const snapshotUtils = {
     },
     
     deleteSnapshot: async (snapshotId, showNotification = true) => {
-        const allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        let allSnapshots;
+        try {
+            allSnapshots = JSON.parse(localStorage.getItem('coursemanagerSnapshots') || '[]');
+        } catch (e) {
+            allSnapshots = [];
+        }
         const userId = await snapshotUtils.getCurrentUserId();
         
         if (!userId) {

@@ -46,10 +46,28 @@ class ServerStatusService {
         // 立即检测一次
         this.monitorServerStatus();
 
-        // 每5秒检测一次
+        // 每15秒检测一次
         this.statusInterval = setInterval(() => {
             this.monitorServerStatus();
-        }, 5000);
+        }, 15000);
+
+        // 页面可见性变化监听
+        this._visibilityHandler = () => {
+            if (document.hidden) {
+                if (this.statusInterval) {
+                    clearInterval(this.statusInterval);
+                    this.statusInterval = null;
+                }
+            } else if (!this.isTrialMode) {
+                if (!this.statusInterval) {
+                    this.monitorServerStatus();
+                    this.statusInterval = setInterval(() => {
+                        this.monitorServerStatus();
+                    }, 15000);
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', this._visibilityHandler);
     }
 
     /**
@@ -59,6 +77,10 @@ class ServerStatusService {
         if (this.statusInterval) {
             clearInterval(this.statusInterval);
             this.statusInterval = null;
+        }
+        if (this._visibilityHandler) {
+            document.removeEventListener('visibilitychange', this._visibilityHandler);
+            this._visibilityHandler = null;
         }
     }
 
@@ -94,17 +116,14 @@ class ServerStatusService {
                 '会话检测超时'
             );
 
-            if (sessionError || !sessionData || !sessionData.session) {
-                if (sessionError) console.error('服务器状态检测: 会话检测错误:', sessionError);
-                if (!sessionData || !sessionData.session) {
-                    // 确实没有会话，设置为未登录
-                    this.updateServerStatus('loggedout');
-                    return 'loggedout';
-                } else {
-                    // 有会话数据但有错误，可能是网络问题
-                    this.updateServerStatus('offline');
-                    return 'offline';
-                }
+            if (sessionError) {
+                console.error('服务器状态检测: 会话检测错误:', sessionError);
+                this.updateServerStatus('offline');
+                return 'offline';
+            }
+            if (!sessionData || !sessionData.session) {
+                this.updateServerStatus('loggedout');
+                return 'loggedout';
             }
 
             // 有会话，进一步检测网络连接

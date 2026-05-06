@@ -8,6 +8,8 @@ class ViewRefreshService {
         this.state = state;
         this.render = render;
         this.elements = elements;
+        this._debounceTimer = null;
+        this._debounceDelay = 100;
     }
 
     /**
@@ -15,6 +17,21 @@ class ViewRefreshService {
      * @param {string|Array|Object|null|boolean} scope - 作用域：'students', 'courses', 'organizations', 'grades', 'calendar', 'statistics', 或数组/null/true表示全部，或对象表示更细粒度的更新
      */
     refreshAllViews(scope = null) {
+        // 如果是 calendar-cell 类型的细粒度更新，直接执行不需要防抖
+        if (typeof scope === 'object' && scope !== null && scope.type === 'calendar-cell') {
+            this._doRefresh(scope);
+            return;
+        }
+
+        if (this._debounceTimer) {
+            clearTimeout(this._debounceTimer);
+        }
+        this._debounceTimer = setTimeout(() => {
+            this._doRefresh(scope);
+        }, this._debounceDelay);
+    }
+
+    _doRefresh(scope) {
         if (typeof scope === 'object' && scope !== null && scope.type) {
             switch (scope.type) {
                 case 'calendar-cell':

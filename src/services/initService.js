@@ -60,7 +60,9 @@ class InitService {
                         } else {
                             // 会话为 null，可能是会话还未初始化，进行重试
                             if (retries > 0) {
-                                setTimeout(() => checkAuthStatus(retries - 1), 300);
+                                return new Promise(resolve => {
+                                    setTimeout(() => resolve(checkAuthStatus(retries - 1)), 300);
+                                });
                             } else {
                                 // 重试次数用完，确认用户未登录
                                 // 清理会话相关数据
@@ -71,7 +73,9 @@ class InitService {
                     } catch (error) {
                         this.utils.handleError(error, '获取会话失败');
                         if (retries > 0) {
-                            setTimeout(() => checkAuthStatus(retries - 1), 300);
+                            return new Promise(resolve => {
+                                setTimeout(() => resolve(checkAuthStatus(retries - 1)), 300);
+                            });
                         } else {
                             // 清理会话相关数据
                             localStorage.removeItem('sb-login-time');
@@ -119,13 +123,15 @@ class InitService {
                     }
                 });
 
-                // 定期检查会话状态，确保会话有效
-                setInterval(() => {
+                // 定期检查会话状态，确保会话有效（仅在非试用模式下启动）
+                this._sessionCheckInterval = setInterval(() => {
+                    // 页面不可见时暂停检查
+                    if (document.hidden) return;
                     // 如果是试用模式，跳过会话检查
                     if (this.serverStatusService && this.serverStatusService.isTrialMode) {
                         return;
                     }
-                    
+
                     try {
                         auth.getSession().then(({ data: { session } }) => {
                             if (!session) {
@@ -152,7 +158,50 @@ class InitService {
                     } catch (error) {
                         console.error('定期检查会话状态失败:', error);
                     }
-                }, 30 * 1000); // 每30秒检查一次
+                }, 60 * 1000); // 每60秒检查一次
+
+                // 页面可见性变化监听
+                this._visibilityHandler = () => {
+                    if (document.hidden) {
+                        if (this._sessionCheckInterval) {
+                            clearInterval(this._sessionCheckInterval);
+                            this._sessionCheckInterval = null;
+                        }
+                    } else {
+                        if (!this._sessionCheckInterval && !(this.serverStatusService && this.serverStatusService.isTrialMode)) {
+                            this._sessionCheckInterval = setInterval(() => {
+                                if (document.hidden) return;
+                                if (this.serverStatusService && this.serverStatusService.isTrialMode) return;
+
+                                try {
+                                    auth.getSession().then(({ data: { session } }) => {
+                                        if (!session) {
+                                            localStorage.removeItem('sb-login-time');
+                                            this.authUIService.updateUIForUnauth();
+                                        } else {
+                                            const loginTime = localStorage.getItem('sb-login-time');
+                                            if (loginTime) {
+                                                const now = Date.now();
+                                                const loginTimestamp = parseInt(loginTime);
+                                                const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
+                                                if (hoursSinceLogin > 24) {
+                                                    auth.signOut().then(() => {
+                                                        localStorage.removeItem('sb-login-time');
+                                                        this.authUIService.updateUIForUnauth();
+                                                        this.notificationService.show('登录时间已超过24小时，请重新登录', 'info');
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    });
+                                } catch (error) {
+                                    console.error('定期检查会话状态失败:', error);
+                                }
+                            }, 60 * 1000);
+                        }
+                    }
+                };
+                document.addEventListener('visibilitychange', this._visibilityHandler);
 
                 // 启动服务器状态监测
                 this.utils.startServerStatusMonitor();
