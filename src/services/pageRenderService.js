@@ -1,8 +1,9 @@
 /**
- * 页面渲染服务模块
- * 负责页面切换、导航状态更新、页面动画效果
+ * 页面渲染服务
+ *
+ * @description 页面切换、导航状态更新、页面动画效果
+ * @module pageRenderService
  */
-
 class PageRenderService {
     constructor(elements) {
         this.elements = elements;

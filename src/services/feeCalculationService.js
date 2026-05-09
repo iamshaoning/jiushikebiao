@@ -1,8 +1,9 @@
 /**
- * 费用计算服务模块
- * 负责计算课程费用等功能
+ * 费用计算服务
+ *
+ * @description 根据课型和学生信息计算课程费用
+ * @module feeCalculationService
  */
-
 export class FeeCalculationService {
     constructor(state) {
         this.state = state;

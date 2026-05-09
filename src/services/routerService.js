@@ -1,11 +1,11 @@
 /**
- * 路由管理服务
- * 处理页面路由注册和导航，支持hash路由
- * 
- * @class RouterService
- * @exports RouterService
- * @exports routerService
+ * 路由服务
+ *
+ * @description 基于 Hash 的 SPA 路由，支持 / /students /statistics 三个页面，含 404 处理
+ * @module routerService
  */
+import { registry } from '../core/registry.js';
+
 class RouterService {
     constructor() {
         this.routes = {};

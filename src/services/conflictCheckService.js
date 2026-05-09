@@ -1,8 +1,9 @@
 /**
- * 课程冲突检查服务模块
- * 负责检查课程时间是否冲突
+ * 课程冲突检查服务
+ *
+ * @description 检查课程时间是否冲突，支持多学生多时段检测
+ * @module conflictCheckService
  */
-
 export class ConflictCheckService {
     constructor(state) {
         this.state = state;

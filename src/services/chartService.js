@@ -1,7 +1,10 @@
 /**
- * 图表服务模块
- * 负责图表的渲染和管理
+ * 图表服务
+ *
+ * @description 基于 Chart.js 封装，提供饼图/环形图渲染，用于统计页面数据可视化
+ * @module chartService
  */
+import { registry } from '../core/registry.js';
 
 export class ChartService {
     constructor() {
@@ -36,15 +39,11 @@ export class ChartService {
 
         const labels = Object.keys(data);
         const values = labels.map(label => data[label].courses);
-        const colors = labels.map(label => utils.generateColor(label));
-
-        // 直接使用颜色变量，会根据主题自动调整
-        // 获取实际颜色值用于Chart.js
-        const computedStyle = getComputedStyle(document.documentElement);
-        const textColor = computedStyle.getPropertyValue('--text-primary').trim() || '#333333';
 
         // 如果没有数据，显示空图表
         if (labels.length === 0) {
+            const computedStyle = getComputedStyle(document.documentElement);
+            const textColor = computedStyle.getPropertyValue('--text-primary').trim() || '#333333';
             this.chartInstances[canvasId] = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -72,6 +71,10 @@ export class ChartService {
             });
             return;
         }
+
+        const colors = labels.map(label => utils.generateColor(label));
+        const computedStyle = getComputedStyle(document.documentElement);
+        const textColor = computedStyle.getPropertyValue('--text-primary').trim() || '#333333';
 
         // 渲染新图表并保存实例引用
         this.chartInstances[canvasId] = new Chart(ctx, {

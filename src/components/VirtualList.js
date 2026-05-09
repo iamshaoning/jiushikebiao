@@ -1,14 +1,8 @@
 /**
- * 虚拟滚动组件
- * 实现高效的虚拟列表渲染，只渲染可见区域的元素
- * 
- * @class VirtualList
- * @param {Object} options - 配置选项
- * @param {HTMLElement} options.container - 容器元素
- * @param {Array} options.items - 数据项数组
- * @param {number} options.itemHeight - 每个项的高度
- * @param {Function} options.renderItem - 渲染函数
- * @exports VirtualList
+ * 虚拟滚动列表组件
+ *
+ * @description 高性能虚拟滚动实现，仅渲染可视区域内的 DOM 节点，支持 100+ 项列表
+ * @module VirtualList
  */
 class VirtualList {
     constructor(options) {

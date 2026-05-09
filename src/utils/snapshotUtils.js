@@ -1,13 +1,12 @@
 /**
- * 快照管理模块
- * 提供数据快照的创建、恢复、删除等功能
- * 支持手动、自动、登录等多种快照类型
+ * 快照工具
  *
+ * @description 数据快照的创建/恢复/删除，支持 login/auto/manual 三种类型，含自动快照定时器
  * @module snapshotUtils
- * @exports snapshotUtils
  */
+import { registry } from '../core/registry.js';
+
 const snapshotUtils = {
-    previousServerStatus: null,
     
     /**
      * 获取当前用户ID
@@ -15,8 +14,8 @@ const snapshotUtils = {
      */
     getCurrentUserId: async () => {
         try {
-            if (window.supabaseAuth) {
-                const { data } = await window.supabaseAuth.getSession();
+            if (registry.get('supabaseAuth')) {
+                const { data } = await registry.get('supabaseAuth').getSession();
                 return data?.session?.user?.id || null;
             }
         } catch (error) {
@@ -28,16 +27,16 @@ const snapshotUtils = {
     createSnapshot: async (type = 'manual', showNotification = true) => {
         const localDataStr = localStorage.getItem('coursemanagerdata');
         if (!localDataStr) {
-            if (type === 'manual' && typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('没有数据可创建快照', 'warning');
+            if (type === 'manual' && typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('没有数据可创建快照', 'warning');
             }
             return;
         }
         
         const userId = await snapshotUtils.getCurrentUserId();
         if (!userId) {
-            if (type === 'manual' && typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('请先登录后再创建快照', 'warning');
+            if (type === 'manual' && typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('请先登录后再创建快照', 'warning');
             }
             return;
         }
@@ -46,14 +45,14 @@ const snapshotUtils = {
         try {
             data = JSON.parse(localDataStr);
         } catch (e) {
-            if (type === 'manual' && typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('数据格式错误，无法创建快照', 'error');
+            if (type === 'manual' && typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('数据格式错误，无法创建快照', 'error');
             }
             return;
         }
 
         const snapshot = {
-            id: window.utils?.generateId ? window.utils.generateId() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
+            id: registry.get('utils')?.generateId ? registry.get('utils').generateId() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
             timestamp: new Date().toISOString(),
             userId: userId,
             data: data,
@@ -91,16 +90,16 @@ const snapshotUtils = {
         snapshots = [...loginSnapshots, ...autoSnapshots, ...manualSnapshots];
         localStorage.setItem('coursemanagerSnapshots', JSON.stringify(snapshots));
         
-        if (showNotification !== false && type === 'manual' && typeof window.notificationService !== 'undefined') {
-            window.notificationService.show('快照创建成功', 'success');
+        if (showNotification !== false && type === 'manual' && typeof registry.get('notificationService') !== 'undefined') {
+            registry.get('notificationService').show('快照创建成功', 'success');
         }
     },
     
     startAutoSnapshotTimer: () => {
-        if (!window.autoSnapshotInterval) {
-            window.autoSnapshotInterval = setInterval(() => {
+        if (!registry.get('autoSnapshotInterval')) {
+            registry.set('autoSnapshotInterval', setInterval(() => {
                 snapshotUtils.createSnapshot('auto');
-            }, 15 * 60 * 1000);
+            }, 15 * 60 * 1000));
         }
     },
     
@@ -130,8 +129,8 @@ const snapshotUtils = {
         const userId = await snapshotUtils.getCurrentUserId();
         
         if (!userId) {
-            if (typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('请先登录', 'error');
+            if (typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('请先登录', 'error');
             }
             return;
         }
@@ -139,14 +138,14 @@ const snapshotUtils = {
         const snapshot = allSnapshots.find(s => s.id === snapshotId && s.userId === userId);
         
         if (!snapshot) {
-            if (typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('快照不存在或无权访问', 'error');
+            if (typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('快照不存在或无权访问', 'error');
             }
             return;
         }
         
         // 记录快照恢复操作到时间轴
-        if (typeof window.timelineService !== 'undefined') {
+        if (typeof registry.get('timelineService') !== 'undefined') {
             const snapshotDate = new Date(snapshot.timestamp);
             const formattedDate = snapshotDate.toLocaleString('zh-CN', {
                 year: 'numeric',
@@ -172,7 +171,7 @@ const snapshotUtils = {
                 snapshotId: snapshotId,
                 description: `恢复了 ${typeLabels[snapshot.type]} (${formattedDate})`
             };
-            window.timelineService.addToTimeline(restoreRecord);
+            registry.get('timelineService').addToTimeline(restoreRecord);
         }
         
         // 更新快照数据的时间戳，确保服务器接受新数据
@@ -183,20 +182,20 @@ const snapshotUtils = {
         
         localStorage.setItem('coursemanagerdata', JSON.stringify(restoredData));
         
-        if (typeof window.utils?.updateStateFromData === 'function') {
-            window.utils.updateStateFromData(restoredData, false);
+        if (typeof registry.get('utils')?.updateStateFromData === 'function') {
+            registry.get('utils').updateStateFromData(restoredData, false);
         }
         
-        if (typeof window.utils?.refreshAllViews === 'function') {
-            window.utils.refreshAllViews(true);
+        if (typeof registry.get('utils')?.refreshAllViews === 'function') {
+            registry.get('utils').refreshAllViews(true);
         }
         
-        if (typeof window.notificationService !== 'undefined') {
-            window.notificationService.show('快照恢复成功', 'success');
+        if (typeof registry.get('notificationService') !== 'undefined') {
+            registry.get('notificationService').show('快照恢复成功', 'success');
         }
         
         // 恢复快照后立即上传数据到服务器，带重试机制
-        if (typeof window.utils?.syncToServer === 'function') {
+        if (typeof registry.get('utils')?.syncToServer === 'function') {
             await snapshotUtils.syncAfterRestore();
         }
     },
@@ -207,10 +206,10 @@ const snapshotUtils = {
         
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                const success = await window.utils.syncToServer(true);
+                const success = await registry.get('utils').syncToServer(true);
                 if (success) {
-                    if (typeof window.notificationService !== 'undefined') {
-                        window.notificationService.show('数据已同步到服务器', 'success');
+                    if (typeof registry.get('notificationService') !== 'undefined') {
+                        registry.get('notificationService').show('数据已同步到服务器', 'success');
                     }
                     return;
                 }
@@ -223,8 +222,8 @@ const snapshotUtils = {
             }
         }
         
-        if (typeof window.notificationService !== 'undefined') {
-            window.notificationService.show('数据同步失败，请检查网络连接', 'error');
+        if (typeof registry.get('notificationService') !== 'undefined') {
+            registry.get('notificationService').show('数据同步失败，请检查网络连接', 'error');
         }
     },
     
@@ -238,8 +237,8 @@ const snapshotUtils = {
         const userId = await snapshotUtils.getCurrentUserId();
         
         if (!userId) {
-            if (showNotification !== false && typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('请先登录', 'error');
+            if (showNotification !== false && typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('请先登录', 'error');
             }
             return;
         }
@@ -247,8 +246,8 @@ const snapshotUtils = {
         const snapshotIndex = allSnapshots.findIndex(s => s.id === snapshotId && s.userId === userId);
         
         if (snapshotIndex === -1) {
-            if (showNotification !== false && typeof window.notificationService !== 'undefined') {
-                window.notificationService.show('快照不存在或无权访问', 'error');
+            if (showNotification !== false && typeof registry.get('notificationService') !== 'undefined') {
+                registry.get('notificationService').show('快照不存在或无权访问', 'error');
             }
             return;
         }
@@ -257,8 +256,8 @@ const snapshotUtils = {
         updatedSnapshots.splice(snapshotIndex, 1);
         localStorage.setItem('coursemanagerSnapshots', JSON.stringify(updatedSnapshots));
         
-        if (showNotification !== false && typeof window.notificationService !== 'undefined') {
-            window.notificationService.show('快照删除成功', 'success');
+        if (showNotification !== false && typeof registry.get('notificationService') !== 'undefined') {
+            registry.get('notificationService').show('快照删除成功', 'success');
         }
     }
 };

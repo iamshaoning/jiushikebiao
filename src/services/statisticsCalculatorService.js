@@ -1,8 +1,9 @@
 /**
- * 统计计算服务模块
- * 负责统计数据的计算逻辑
+ * 统计计算服务
+ *
+ * @description 统计数据的计算逻辑：课时统计、费用聚合、学生课量统计
+ * @module statisticsCalculatorService
  */
-
 export class StatisticsCalculatorService {
     constructor(state) {
         this.state = state;

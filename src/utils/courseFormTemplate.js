@@ -1,6 +1,11 @@
 /**
- * 课程表单模板生成器
+ * 课程表单模板
+ *
+ * @description 生成课程添加/编辑表单的 HTML 模板字符串
+ * @module courseFormTemplate
  */
+import { registry } from '../core/registry.js';
+
 export function getCourseFormTemplate(isEdit, data = {}) {
     const title = isEdit ? '编辑课程' : '添加课程';
     const idInput = isEdit ? `<input type="hidden" id="edit-course-id" value="${data.id}">` : '';
@@ -25,7 +30,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                                     <i data-lucide="calendar-check" style="width: 16px; height: 16px;"></i>
                                 </button>
                             </div>
-                            ${window.utils.createDatePickerTemplate('course-date-container', 'course-date')}
+                            ${registry.get('utils').createDatePickerTemplate('course-date-container', 'course-date')}
                         </div>
                     </div>
                     
@@ -62,7 +67,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                                         <i data-lucide="clock" class="inline-block" style="width: 16px; height: 16px;"></i>
                                     </button>
                                 </div>
-                                ${window.utils.createTimePickerTemplate('start-time-container', 'course-start-time')}
+                                ${registry.get('utils').createTimePickerTemplate('start-time-container', 'course-start-time')}
                             </div>
                         </div>
                         <div>
@@ -103,9 +108,4 @@ export function getCourseFormTemplate(isEdit, data = {}) {
             </div>
         </div>
     `;
-}
-
-// 添加到全局
-if (window && window.utils) {
-    window.utils.getCourseFormTemplate = getCourseFormTemplate;
 }

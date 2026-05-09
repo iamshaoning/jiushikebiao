@@ -1,7 +1,10 @@
 /**
- * 通知服务模块
- * 负责显示通知消息
+ * 通知服务
+ *
+ * @description Toast 风格消息提示，支持 success/error/warning/info 四种类型和自动消失
+ * @module notificationService
  */
+import { registry } from '../core/registry.js';
 
 class NotificationService {
     constructor() {
@@ -63,13 +66,14 @@ class NotificationService {
         notificationEl.style.backgroundColor = 'var(--bg-primary)';
 
         // 构建通知内容
+        const safeMessage = String(message).replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const content = `
             <div class="flex items-center">
                 <div class="flex-shrink-0" style="color: ${config.color};">
                     <i data-lucide="${config.icon}" class="text-xl inline-block" style="width: 20px; height: 20px;"></i>
                 </div>
                 <div class="ml-3">
-                    <p class="text-sm font-medium" style="color: var(--text-primary);">${message}</p>
+                    <p class="text-sm font-medium" style="color: var(--text-primary);">${safeMessage}</p>
                 </div>
             </div>
         `;
@@ -78,8 +82,8 @@ class NotificationService {
         this.container.appendChild(notificationEl);
 
         // 初始化 Lucide 图标
-        if (window.lucide) {
-            lucide.createIcons({ nodes: [notificationEl] });
+        if (registry.get('lucide')) {
+            registry.get('lucide').createIcons({ nodes: [notificationEl] });
         }
 
         // 触发重排，使过渡效果生效

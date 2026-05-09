@@ -1,7 +1,11 @@
 /**
- * 日期选择器服务模块
- * 负责处理日期选择器相关功能，包括创建日期选择器、时间选择器、日期选择等
+ * 日期选择器服务
+ *
+ * @description 创建和管理日期/时间选择器 UI 组件，处理日切换、时/分选择交互
+ * @module datePickerService
  */
+import { registry } from '../core/registry.js';
+
 class DatePickerService {
     constructor(utils) {
         this.utils = utils;
@@ -49,28 +53,11 @@ class DatePickerService {
     }
 
     createDatePickerTemplate(id, inputId) {
-        return `
-            <div class="date-picker" id="${id}-picker">
-                <div class="date-picker-header">
-                    <button type="button" class="date-picker-nav" data-action="prev-month">&lt;</button>
-                    <span class="date-picker-title" id="${id}-title"></span>
-                    <button type="button" class="date-picker-nav" data-action="next-month">&gt;</button>
-                </div>
-                <div class="date-picker-weekdays">
-                    <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
-                </div>
-                <div class="date-picker-days" id="${id}-days"></div>
-            </div>
-        `;
+        return `<div id="${id}" class="absolute z-50 mt-1 w-full border rounded-md shadow-lg hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);"><div class="p-3"><div class="flex justify-between items-center mb-3"><button type="button" class="px-2 py-1 text-sm" data-action="change-date-month" data-target="${inputId}" data-delta="-1" style="color: var(--text-primary);"><i data-lucide="chevron-left" class="inline-block" style="width: 16px; height: 16px;"></i></button><h3 id="current-date-month" class="text-sm font-medium" style="color: var(--text-primary);"></h3><button type="button" class="px-2 py-1 text-sm" data-action="change-date-month" data-target="${inputId}" data-delta="1" style="color: var(--text-primary);"><i data-lucide="chevron-right" class="inline-block" style="width: 16px; height: 16px;"></i></button></div><div class="grid grid-cols-7 gap-1 mb-2">${['日','一','二','三','四','五','六'].map(d => `<div class="text-center text-xs" style="color: var(--text-secondary);">${d}</div>`).join('')}</div><div id="date-grid" class="grid grid-cols-7 gap-1"></div></div></div>`;
     }
 
     createTimePickerTemplate(id, inputId) {
-        return `
-            <div class="time-picker" id="${id}-picker">
-                <div class="time-picker-hours" id="${id}-hours"></div>
-                <div class="time-picker-minutes" id="${id}-minutes"></div>
-            </div>
-        `;
+        return `<div id="${id}" class="absolute z-50 mt-1 w-full border rounded-md shadow-lg hidden" style="background-color: var(--bg-secondary); border-color: var(--border-color);"><div class="p-3"><div class="flex"><div class="flex-1 border-r" style="border-color: var(--border-color);"><div class="overflow-hidden max-h-40 overflow-y-auto scrollbar-hide">${Array.from({length:24},(_,i) => `<button type="button" class="w-full py-2 text-center text-sm" data-action="select-time-hour" data-input-id="${inputId}" data-hour="${String(i).padStart(2,'0')}" style="color: var(--text-primary);">${String(i).padStart(2,'0')}</button>`).join('')}</div></div><div class="flex-1"><div class="overflow-hidden max-h-40 overflow-y-auto scrollbar-hide">${Array.from({length:12},(_,i) => `<button type="button" class="w-full py-1.5 text-center text-sm" data-action="select-time-minute" data-input-id="${inputId}" data-minute="${String(i*5).padStart(2,'0')}" style="color: var(--text-primary);">${String(i*5).padStart(2,'0')}</button>`).join('')}</div></div></div></div></div>`;
     }
 
     toggleTimePicker(containerId) {
@@ -136,8 +123,8 @@ class DatePickerService {
             
             const currentPage = window.location.hash.slice(1) || '/';
             if (currentPage === '/') {
-                if (typeof window.render?.calendar === 'function') {
-                    window.render.calendar();
+                if (typeof registry.get('render')?.calendar === 'function') {
+                    registry.get('render').calendar();
                     setTimeout(updateCalendarSelection, 100);
                 }
             }
@@ -171,7 +158,7 @@ class DatePickerService {
         
         currentDate.setDate(1);
         currentDate.setMonth(currentDate.getMonth() + delta);
-        this.utils.renderDatePicker('course-date-container', inputId, currentDate);
+        this.renderDatePicker('course-date-container', inputId, currentDate);
     }
 
     renderDatePicker(containerId, inputId, date = new Date()) {

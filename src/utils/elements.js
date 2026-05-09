@@ -1,12 +1,8 @@
 /**
- * DOM元素引用缓存模块
- * 集中管理所有常用DOM元素的引用，避免重复查询
- * 
+ * DOM 元素引用缓存
+ *
+ * @description 集中管理所有常用 DOM 元素的引用，避免重复查询
  * @module elements
- * @property {Object} elements - DOM元素引用对象
- * @function initElements - 初始化所有元素引用
- * @exports elements
- * @exports initElements
  */
 const elements = {
     nav: null,
@@ -27,10 +23,10 @@ const elements = {
     main: null,
     studentsList: null,
     calendarGrid: null,
-    currentMonth: null,
     calendarYearOptions: null,
     calendarMonthOptions: null,
     calendarYearTrigger: null,
+    calendarMonthTrigger: null,
     calendarMonthWrapper: null,
     calendarYearWrapper: null,
     userInfo: null,
@@ -85,10 +81,6 @@ const elements = {
     editStudentName: null,
     editStudentId: null,
     editStudentSave: null,
-    editLessonTypeOneOnOne: null,
-    editLessonTypeGroup: null,
-    editFeeOneOnOne: null,
-    editFeeGroup: null,
     addStudentForm: null,
     addStudentSave: null,
     durationDropdown: null,
@@ -97,9 +89,6 @@ const elements = {
     studentDataContainer: null,
     cancelConfirm: null,
     acceptConfirm: null,
-    exportAndDelete: null,
-    deleteDirectly: null,
-    cancelDelete: null,
     studentSort: null
 };
 
@@ -122,10 +111,10 @@ function initElements() {
     elements.main = document.querySelector('main');
     elements.studentsList = document.getElementById('students-list');
     elements.calendarGrid = document.getElementById('calendar-grid');
-    elements.currentMonth = document.getElementById('current-month');
     elements.calendarYearOptions = document.getElementById('calendar-year-options');
     elements.calendarMonthOptions = document.getElementById('calendar-month-options');
     elements.calendarYearTrigger = document.querySelector('#calendar-year-wrapper .custom-select-trigger span');
+    elements.calendarMonthTrigger = document.querySelector('#calendar-month-wrapper .custom-select-trigger span');
     elements.calendarMonthWrapper = document.getElementById('calendar-month-wrapper');
     elements.calendarYearWrapper = document.getElementById('calendar-year-wrapper');
     elements.userInfo = document.getElementById('user-info');
@@ -180,10 +169,6 @@ function initElements() {
     elements.editStudentName = document.getElementById('edit-student-name');
     elements.editStudentId = document.getElementById('edit-student-id');
     elements.editStudentSave = document.getElementById('edit-student-save');
-    elements.editLessonTypeOneOnOne = document.getElementById('edit-lesson-type-one-on-one');
-    elements.editLessonTypeGroup = document.getElementById('edit-lesson-type-group');
-    elements.editFeeOneOnOne = document.getElementById('edit-fee-one-on-one');
-    elements.editFeeGroup = document.getElementById('edit-fee-group');
     elements.addStudentForm = document.getElementById('add-student-form');
     elements.addStudentSave = document.getElementById('add-student-save');
     elements.durationDropdown = document.getElementById('duration-dropdown');
@@ -192,9 +177,6 @@ function initElements() {
     elements.studentDataContainer = document.getElementById('student-data-container');
     elements.cancelConfirm = document.getElementById('cancel-confirm');
     elements.acceptConfirm = document.getElementById('accept-confirm');
-    elements.exportAndDelete = document.getElementById('export-and-delete');
-    elements.deleteDirectly = document.getElementById('delete-directly');
-    elements.cancelDelete = document.getElementById('cancel-delete');
     elements.studentSort = document.getElementById('student-sort');
 
     return elements;

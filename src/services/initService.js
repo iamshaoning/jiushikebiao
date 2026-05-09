@@ -1,7 +1,11 @@
 /**
- * 初始化服务模块
- * 负责应用的初始化流程、认证状态检查、会话管理、自动登出逻辑
+ * 初始化服务
+ *
+ * @description 应用启动入口编排：会话检查、试用模式判断、登录过期检测、系统框架显示
+ * @module initService
  */
+import { registry } from '../core/registry.js';
+
 class InitService {
     constructor(utils, notificationService, serverStatusService, authUIService, themeService, loadSystemService, elements) {
         this.utils = utils;
@@ -36,9 +40,9 @@ class InitService {
             });
 
             // 等待 Supabase 初始化完成
-            await window.supabaseReady;
+            await registry.get('supabaseReady');
 
-            const auth = window.supabaseAuth;
+            const auth = registry.get('supabaseAuth');
             if (auth) {
                 // 认证状态检查函数
                 const checkAuthStatus = async (retries = 2) => {
@@ -91,7 +95,7 @@ class InitService {
                 checkAuthStatus();
 
                 // 设置认证状态变化监听器
-                auth.onAuthStateChange((event, session) => {
+                this._authSubscription = auth.onAuthStateChange((event, session) => {
                     try {
                         if (event === 'SIGNED_IN' && session) {
                             // 用户已登录，更新UI并加载渲染系统
@@ -144,6 +148,10 @@ class InitService {
                     }
                 };
                 document.addEventListener('visibilitychange', this._visibilityHandler);
+
+                window.addEventListener('beforeunload', () => {
+                    this._cleanup();
+                });
 
                 // 启动服务器状态监测
                 this.serverStatusService.startMonitoring();
@@ -208,6 +216,20 @@ class InitService {
             body.style.opacity = '1';
             this.elements.nav.style.display = 'block';
             this.elements.main.style.display = 'block';
+        }
+    }
+
+    _cleanup() {
+        if (this._sessionCheckInterval) {
+            clearInterval(this._sessionCheckInterval);
+            this._sessionCheckInterval = null;
+        }
+        if (this._visibilityHandler) {
+            document.removeEventListener('visibilitychange', this._visibilityHandler);
+            this._visibilityHandler = null;
+        }
+        if (this.serverStatusService) {
+            this.serverStatusService.stopMonitoring();
         }
     }
 }

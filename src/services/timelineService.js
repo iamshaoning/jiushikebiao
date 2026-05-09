@@ -1,7 +1,11 @@
 /**
- * 时间轴服务模块
- * 负责记录操作历史、提供撤销恢复功能
+ * 时间轴服务
+ *
+ * @description 记录课程操作历史（添加/编辑/删除），支持撤销/重做，按用户 ID 分组存储
+ * @module timelineService
  */
+import { registry } from '../core/registry.js';
+
 class TimelineService {
     constructor() {
         this.timelineKey = 'coursemanagertimeline';
@@ -15,8 +19,8 @@ class TimelineService {
      */
     async getUserIdDirectly() {
         try {
-            if (window.supabaseAuth) {
-                const { data } = await window.supabaseAuth.getSession();
+            if (registry.get('supabaseAuth')) {
+                const { data } = await registry.get('supabaseAuth').getSession();
                 return data?.session?.user?.id || null;
             }
         } catch (error) {
@@ -40,7 +44,7 @@ class TimelineService {
      */
     async reloadTimelineForUser() {
         // 检查是否处于试用模式，如果是则清空时间轴
-        const isTrialMode = window.serverStatusService?.isTrialMode || false;
+        const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
             this.timeline = [];
@@ -131,8 +135,8 @@ class TimelineService {
      * 获取学生信息
      */
     getStudentInfo(studentId) {
-        if (!window.state) return { name: '未知学生' };
-        const student = window.state.students.find(s => s.id === studentId);
+        if (!registry.get('state')) return { name: '未知学生' };
+        const student = registry.get('state').students.find(s => s.id === studentId);
         return student || { name: '未知学生' };
     }
 
@@ -159,21 +163,20 @@ class TimelineService {
     /**
      * 生成课程标签HTML（类似日历样式）
      */
-    generateCourseTag(course) {
+    generateCourseTag(course, changes = []) {
         if (!course) return '';
 
-        const escapeHtml = (str) => {
-            if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        };
+        const escapeHtml = (str) => registry.get('utils')?.escapeHtml?.(str) || '';
 
         const primaryColor = course.colors && course.colors[0] ? course.colors[0] : 'var(--color-secondary)';
         const studentNames = course.studentNames || [];
 
-        // 如果 studentNames 是字符串，转换为数组
         const namesArray = Array.isArray(studentNames) ? studentNames : studentNames.split('、').filter(n => n);
+        const changedSet = new Set(changes.map(c => c.field));
+        const hlStyle = 'font-weight:700;color:var(--color-warning);text-shadow:0 0 6px rgba(250,204,21,0.3)';
+        const hl = (key) => changedSet.has(key) ? hlStyle : '';
+        const hlTime = changedSet.has('时间') || changedSet.has('时长');
 
-        // 生成学生名字标签
         const studentTags = namesArray.map((name, index) => {
             const color = course.colors && course.colors[index] ? course.colors[index] : primaryColor;
             return `
@@ -185,19 +188,25 @@ class TimelineService {
         }).join('');
 
         const endTime = this.calculateEndTime(course.startTime, course.duration);
+        const fee = course.fees?.[0] ?? 0;
+        const feeText = fee > 0 ? `¥${fee}` : '';
+        const dateText = course.date ? this.formatDate(course.date) : '';
 
         return `
-            <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block w-full"
-                 style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);">
-                <div class="tag-content p-2">
-                    <div class="flex flex-wrap gap-1 mb-1">
+            <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); min-width: 220px; max-width: 100%;">
+                <div class="tag-content p-3">
+                    <div class="flex flex-wrap gap-1" style="margin-bottom: 8px;">
                         ${studentTags}
                     </div>
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-medium" style="color: var(--text-secondary);">${escapeHtml(course.lessonType)}</span>
-                        <span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${endTime}</span>
+                    <div>
+                        <span style="color: var(--text-primary);${hl('课型')}">${escapeHtml(course.lessonType)}</span>
+                        ${feeText ? '<span style="color: var(--text-primary); margin-left: 6px;' + hl('课时费') + '">' + feeText + '</span>' : ''}
                     </div>
-                    ${course.note ? `<div class="text-[9px] truncate mt-1" style="color: var(--text-secondary);">${escapeHtml(course.note)}</div>` : ''}
+                    <div style="margin-top: 4px;">
+                        <span style="color: var(--text-secondary);${hl('日期')}">${dateText || ''}</span>
+                        <span style="color: var(--text-secondary); margin-left: 2px;${hlTime ? hlStyle : ''}">${dateText ? ' · ' : ''}${course.startTime} - ${endTime}</span>
+                    </div>
+                    ${course.note ? `<div class="text-[10px] truncate mt-1 ml-1" style="color: var(--text-secondary);${hl('备注')}">${escapeHtml(course.note)}</div>` : ''}
                 </div>
             </div>
         `;
@@ -220,7 +229,7 @@ class TimelineService {
      */
     async ensureUserInitialized() {
         // 检查是否处于试用模式，如果是则不初始化时间轴
-        const isTrialMode = window.serverStatusService?.isTrialMode || false;
+        const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
             this.timeline = [];
@@ -249,7 +258,7 @@ class TimelineService {
             timestamp: new Date().toISOString(),
             isPaste,
             course: { ...course },
-            description: `添加了${this.formatDate(course.date)}的课程`
+            description: `添加：`
         };
 
         await this.addToTimeline(action);
@@ -269,7 +278,7 @@ class TimelineService {
             timestamp: new Date().toISOString(),
             courses: courses.map(c => ({ ...c })),
             expanded: false,
-            description: `粘贴了${this.formatDate(courses[0].date)}共${courses.length}节课程`
+            description: `粘贴：`
         };
 
         await this.addToTimeline(action);
@@ -330,6 +339,16 @@ class TimelineService {
             });
         }
 
+        const oldFee = oldCourse.fees?.[0] ?? 0;
+        const newFee = newCourse.fees?.[0] ?? 0;
+        if (oldFee !== newFee) {
+            changes.push({
+                field: '课时费',
+                old: `¥${oldFee}`,
+                new: `¥${newFee}`
+            });
+        }
+
         const action = {
             id: this.generateId(),
             type: 'update-course',
@@ -338,7 +357,7 @@ class TimelineService {
             newCourse: { ...newCourse },
             changes: changes,
             reason: reason,
-            description: `修改了${this.formatDate(newCourse.date)}的课程`
+            description: `修改：`
         };
 
         await this.addToTimeline(action);
@@ -357,7 +376,7 @@ class TimelineService {
             type: 'delete-course',
             timestamp: new Date().toISOString(),
             course: { ...course },
-            description: `删除了${this.formatDate(course.date)}的课程`
+            description: `删除：`
         };
 
         await this.addToTimeline(action);
@@ -378,7 +397,7 @@ class TimelineService {
             date: date,
             courses: courses.map(c => ({ ...c })),
             expanded: false,
-            description: `删除了${this.formatDate(date)}共${courses.length}节课程`
+            description: `删除：`
         };
 
         await this.addToTimeline(action);
@@ -442,7 +461,7 @@ class TimelineService {
      * 撤销添加课程
      */
     undoAddCourses(action) {
-        if (!window.state) return false;
+        if (!registry.get('state')) return false;
         
         let coursesToRemove = [];
         
@@ -454,7 +473,7 @@ class TimelineService {
 
         if (!coursesToRemove.length) return false;
 
-        window.setState(draft => draft.courses = draft.courses.filter(c => !coursesToRemove.includes(c.id)), ['courses', 'calendar']);
+        registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !coursesToRemove.includes(c.id)), ['courses', 'calendar']);
         return true;
     }
 
@@ -462,9 +481,9 @@ class TimelineService {
      * 撤销修改课程
      */
     undoUpdateCourse(action) {
-        if (!window.state) return false;
+        if (!registry.get('state')) return false;
 
-        window.setState(draft => {
+        registry.get('setState')(draft => {
             const index = draft.courses.findIndex(c => c.id === action.newCourse.id);
             if (index !== -1) {
                 draft.courses[index] = { ...action.oldCourse };
@@ -478,7 +497,7 @@ class TimelineService {
      * 撤销删除课程
      */
     undoDeleteCourses(action) {
-        if (!window.state) return false;
+        if (!registry.get('state')) return false;
         
         let coursesToRestore = [];
         
@@ -490,7 +509,7 @@ class TimelineService {
 
         if (!coursesToRestore.length) return false;
 
-        window.setState(draft => {
+        registry.get('setState')(draft => {
             coursesToRestore.forEach(course => {
                 const exists = draft.courses.find(c => c.id === course.id);
                 if (!exists) {
@@ -543,7 +562,7 @@ class TimelineService {
      * 重做添加课程
      */
     redoAddCourses(action) {
-        if (!window.state) return false;
+        if (!registry.get('state')) return false;
         
         let coursesToAdd = [];
         
@@ -555,7 +574,7 @@ class TimelineService {
 
         if (!coursesToAdd.length) return false;
 
-        window.setState(draft => {
+        registry.get('setState')(draft => {
             coursesToAdd.forEach(course => {
                 const exists = draft.courses.find(c => c.id === course.id);
                 if (!exists) {
@@ -571,9 +590,9 @@ class TimelineService {
      * 重做修改课程
      */
     redoUpdateCourse(action) {
-        if (!window.state) return false;
+        if (!registry.get('state')) return false;
 
-        window.setState(draft => {
+        registry.get('setState')(draft => {
             const index = draft.courses.findIndex(c => c.id === action.oldCourse.id);
             if (index !== -1) {
                 draft.courses[index] = { ...action.newCourse };
@@ -587,7 +606,7 @@ class TimelineService {
      * 重做删除课程
      */
     redoDeleteCourses(action) {
-        if (!window.state) return false;
+        if (!registry.get('state')) return false;
         
         let coursesToRemove = [];
         
@@ -599,7 +618,7 @@ class TimelineService {
 
         if (!coursesToRemove.length) return false;
 
-        window.setState(draft => draft.courses = draft.courses.filter(c => !coursesToRemove.includes(c.id)), ['courses', 'calendar']);
+        registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !coursesToRemove.includes(c.id)), ['courses', 'calendar']);
 
         return true;
     }

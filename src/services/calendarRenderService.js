@@ -1,458 +1,159 @@
 /**
- * 日历渲染服务模块
- * 负责日历页面的渲染逻辑
+ * 日历渲染服务
+ *
+ * @description 渲染月视图日历网格、课程标签、节假日标识，支持课程点击交互
+ * @module calendarRenderService
  */
-
+import { registry } from '../core/registry.js';
 export class CalendarRenderService {
     constructor(state, elements, utils) {
         this.state = state;
         this.elements = elements;
         this.utils = utils;
-        this.lucide = window.lucide || null;
-        
-        // 将 getCourseTagHTML 方法绑定到 this
+        this.lucide = registry.get('lucide') || null;
         this.getCourseTagHTML = (course) => {
             const primaryColor = course.colors[0] || 'var(--color-secondary)';
-            return `
-                <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10"
-                     data-action="course-click"
-                     data-course-id="${course.id}"
-                     style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);">
-                    <div class="tag-content p-1">
-                        <div class="flex flex-wrap gap-1 mb-1">
-                            ${course.studentNames.map((name, index) => {
-                                const color = course.colors[index] || 'var(--color-secondary)';
-                                return `
-                                    <span class="px-1 py-0.5 rounded text-xs"
-                                          style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">
-                                        ${this.utils.escapeHtml(name)}
-                                    </span>
-                                `;
-                            }).join('')}
-                        </div>
-                        <div class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${this.utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</div>
-                        ${course.note ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${this.utils.escapeHtml(course.note)}</div>` : ''}
-                    </div>
-                </div>
-            `;
+            const fee = course.fees?.[0] ?? 0;
+            const feeHtml = fee > 0 ? `<span style="color: var(--text-primary);">¥${fee}</span>` : '';
+            return `<div class="course-tag-item course-item mt-1 rounded text-xs relative z-10" data-action="course-click" data-course-id="${course.id}" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);"><div class="tag-content p-1"><div class="flex flex-wrap gap-1 mb-1">${course.studentNames.map((name, index) => { const color = course.colors[index] || 'var(--color-secondary)'; return `<span class="px-1 py-0.5 rounded text-xs" style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${this.utils.escapeHtml(name)}</span>`; }).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${this.utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</span>${feeHtml}</div>${course.note ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${this.utils.escapeHtml(course.note)}</div>` : ''}</div></div>`;
         };
     }
 
-    /**
-     * 处理课程标签点击事件
-     * @param {HTMLElement} element - 课程标签元素
-     * @param {string} courseId - 课程ID
-     * @param {MouseEvent} event - 鼠标事件
-     */
-    handleCourseClick(element, courseId, event) {
-        if (event && event.button !== 0) {
-            return;
-        }
+    handleCourseClick(element, courseId, event) { if (event && event.button !== 0) return; element.classList.add('is-selected'); this.showActionButtons(element, courseId); }
 
-        element.classList.add('is-selected');
-        this.showActionButtons(element, courseId);
-    }
-
-    /**
-     * 显示操作按钮组
-     * @param {HTMLElement} element - 课程标签元素
-     * @param {string} courseId - 课程ID
-     */
     showActionButtons(element, courseId) {
-        if (!element.querySelector('.course-action-group')) {
-            const btnGroup = document.createElement('div');
-            btnGroup.className = 'course-action-group flex items-center space-x-1 transform translate-x-full opacity-0 transition-all duration-300';
-            btnGroup.style.position = 'absolute';
-            btnGroup.style.right = '4px';
-            btnGroup.style.bottom = '4px';
-            btnGroup.style.zIndex = '10';
-
-            const escapedCourseId = this.utils.escapeHtml(courseId);
-            btnGroup.innerHTML = `
-                <div data-action="edit-course" data-id="${escapedCourseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-primary);">
-                    <i data-lucide="square-pen" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
-                </div>
-                <div data-action="copy-course" data-id="${escapedCourseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-success);">
-                    <i data-lucide="copy" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
-                </div>
-                <div data-action="delete-course" data-id="${escapedCourseId}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-danger);">
-                    <i data-lucide="trash-2" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i>
-                </div>
-            `;
-
-            element.style.position = 'relative';
-            element.appendChild(btnGroup);
-
-            if (this.lucide) {
-                this.lucide.createIcons();
-            }
-
-            setTimeout(() => {
-                btnGroup.style.transform = 'translateX(0)';
-                btnGroup.style.opacity = '1';
-            }, 10);
-        }
+        if (element.querySelector('.course-action-group')) return;
+        const btnGroup = document.createElement('div');
+        btnGroup.className = 'course-action-group flex items-center space-x-1 transform translate-x-full opacity-0 transition-all duration-300';
+        btnGroup.style.cssText = 'position:absolute;right:4px;bottom:4px;z-index:10';
+        btnGroup.innerHTML = `<div data-action="edit-course" data-id="${this.utils.escapeHtml(courseId)}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-primary);"><i data-lucide="square-pen" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i></div><div data-action="copy-course" data-id="${this.utils.escapeHtml(courseId)}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-success);"><i data-lucide="copy" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i></div><div data-action="delete-course" data-id="${this.utils.escapeHtml(courseId)}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-danger);"><i data-lucide="trash-2" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i></div>`;
+        element.style.position = 'relative'; element.appendChild(btnGroup);
+        if (this.lucide) this.lucide.createIcons();
+        setTimeout(() => { btnGroup.style.transform = 'translateX(0)'; btnGroup.style.opacity = '1'; }, 10);
     }
 
-    /**
-     * 隐藏操作按钮组
-     * @param {HTMLElement} element - 课程标签元素
-     */
     hideActionButtons(element) {
         element.classList.remove('is-selected');
-        const btnGroup = element.querySelector('.course-action-group');
-        if (btnGroup) {
-            btnGroup.style.transform = 'translateX(100%)';
-            btnGroup.style.opacity = '0';
-            setTimeout(() => {
-                btnGroup.remove();
-            }, 300);
+        const g = element.querySelector('.course-action-group');
+        if (!g) return; g.style.transform = 'translateX(100%)'; g.style.opacity = '0';
+        setTimeout(() => g.remove(), 300);
+    }
+
+    _buildCoursesByDate() {
+        const map = new Map();
+        this.state.courses.forEach(c => { const a = map.get(c.date) || []; a.push(c); map.set(c.date, a); });
+        return map;
+    }
+
+    _fillDays(fragment, year, month, count, startDay, coursesByDate, isCurrent) {
+        for (let day = startDay; day < startDay + count; day++) {
+            const m = isCurrent ? month : (month === 0 ? 11 : month - 1);
+            const y = isCurrent ? year : (month === 0 ? year - 1 : year);
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const isToday = isCurrent && new Date().getFullYear() === y && new Date().getMonth() === m && new Date().getDate() === day;
+            fragment.appendChild(this.createDayCell(day, dateStr, coursesByDate.get(dateStr) || [], isCurrent, isToday));
         }
     }
 
-    /**
-     * 渲染日历
-     * @param {boolean} forceUpdate - 是否强制更新
-     */
-    calendar(forceUpdate = false) {
-        const year = this.state.currentDate.getFullYear();
-        const month = this.state.currentDate.getMonth();
-
-        // 更新月份显示
-        this.utils.safeSet(this.elements.calendarYearTrigger, 'textContent', `${year}年`);
-        const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
-        this.utils.safeSet(this.elements.calendarMonthTrigger, 'textContent', monthNames[month]);
-
-        // 更新日历年月下拉菜单的选中状态
-        if (typeof this.utils.setCustomSelectValue === 'function') {
-            this.utils.setCustomSelectValue('calendar-year-wrapper', year);
-            this.utils.setCustomSelectValue('calendar-month-wrapper', month);
-        }
-
-        // 获取日历网格
-        const grid = this.elements.calendarGrid;
-
-        // 总是重新渲染整个日历，确保日期正确更新
-        // 使用文档片段减少DOM操作
-        const fragment = document.createDocumentFragment();
-
-        // 计算月份数据
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const today = new Date();
-
-        // 创建日期到课程的映射，优化性能
-        const coursesByDate = new Map();
-        this.state.courses.forEach(course => {
-            if (!coursesByDate.has(course.date)) {
-                coursesByDate.set(course.date, []);
-            }
-            coursesByDate.get(course.date).push(course);
-        });
-
-        // 添加上个月的日期（补齐第一行）
-        const lastMonth = month === 0 ? 11 : month - 1;
-        const lastYear = month === 0 ? year - 1 : year;
-        const daysInLastMonth = new Date(lastYear, lastMonth + 1, 0).getDate();
-
-        for (let day = daysInLastMonth - firstDayOfMonth + 1; day <= daysInLastMonth; day++) {
-            const dateStr = `${lastYear}-${String(lastMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const courses = coursesByDate.get(dateStr) || [];
-            fragment.appendChild(this.createDayCell(day, dateStr, courses, false, false));
-        }
-
-        // 添加当前月的日期
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const courses = coursesByDate.get(dateStr) || [];
-            const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
-            fragment.appendChild(this.createDayCell(day, dateStr, courses, true, isToday));
-        }
-
-        // 添加下个月的日期
-        const totalCells = 42;
-        const cellsAdded = firstDayOfMonth + daysInMonth;
-        const nextMonthCells = totalCells - cellsAdded;
-
-        const nextMonth = month === 11 ? 0 : month + 1;
-        const nextYear = month === 11 ? year + 1 : year;
-
-        for (let day = 1; day <= nextMonthCells; day++) {
-            const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const courses = coursesByDate.get(dateStr) || [];
-            fragment.appendChild(this.createDayCell(day, dateStr, courses, false, false));
-        }
-
-        // 一次性添加所有单元格，减少DOM重排
-        grid.innerHTML = '';
-        grid.appendChild(fragment);
-
-        // 为日历四个外角添加圆角
+    _applyCornerRadius(grid) {
         const cells = grid.querySelectorAll('.calendar-cell');
-        if (cells.length > 0) {
-            // 左下角
-            cells[cells.length - 7].style.borderBottomLeftRadius = '0.75rem';
-            // 右下角
-            cells[cells.length - 1].style.borderBottomRightRadius = '0.75rem';
+        if (cells.length > 0) { cells[cells.length - 7].style.borderBottomLeftRadius = '0.75rem'; cells[cells.length - 1].style.borderBottomRightRadius = '0.75rem'; }
+    }
+
+    calendar(forceUpdate = false) {
+        const year = this.state.currentDate.getFullYear(), month = this.state.currentDate.getMonth();
+        this.utils.safeSet(this.elements.calendarYearTrigger, 'textContent', `${year}年`);
+        this.utils.safeSet(this.elements.calendarMonthTrigger, 'textContent', `${month + 1}月`);
+        if (typeof this.utils.setCustomSelectValue === 'function') { this.utils.setCustomSelectValue('calendar-year-wrapper', year); this.utils.setCustomSelectValue('calendar-month-wrapper', month); }
+
+        document.querySelectorAll('.course-action-group').forEach(g => { g.style.transition = 'none'; g.remove(); });
+
+        const coursesByDate = this._buildCoursesByDate();
+        const fragment = document.createDocumentFragment();
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInLastMonth = new Date(month === 0 ? year - 1 : year, month === 0 ? 12 : month, 0).getDate();
+
+        this._fillDays(fragment, year, month, firstDayOfMonth, daysInLastMonth - firstDayOfMonth + 1, coursesByDate, false);
+        for (let d = 1; d <= daysInMonth; d++) {
+            const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isToday = new Date().getFullYear() === year && new Date().getMonth() === month && new Date().getDate() === d;
+            fragment.appendChild(this.createDayCell(d, ds, coursesByDate.get(ds) || [], true, isToday));
         }
-
-        // 为表头添加顶部圆角
-        const headerRow = grid.previousElementSibling;
-        if (headerRow) {
-            // 为表头容器添加圆角
-            headerRow.style.borderTopLeftRadius = '0.75rem';
-            headerRow.style.borderTopRightRadius = '0.75rem';
-            // 确保表头容器的溢出设置为hidden，裁剪内部元素的背景
-            headerRow.style.overflow = 'hidden';
-
-            // 为表头内部的第一个和最后一个单元格添加圆角
-            const headerCells = headerRow.querySelectorAll('div');
-            if (headerCells.length > 0) {
-                // 第一个单元格（周日）
-                headerCells[0].style.borderTopLeftRadius = '0.75rem';
-                // 最后一个单元格（周六）
-                headerCells[headerCells.length - 1].style.borderTopRightRadius = '0.75rem';
-                // 确保内部单元格的背景色不会溢出
-                headerCells.forEach(cell => {
-                    cell.style.overflow = 'hidden';
-                });
+        const remaining = 42 - firstDayOfMonth - daysInMonth;
+        if (remaining > 0) {
+            const nm = month === 11 ? 0 : month + 1, ny = month === 11 ? year + 1 : year;
+            for (let d = 1; d <= remaining; d++) {
+                const ds = `${ny}-${String(nm + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = new Date().getFullYear() === ny && new Date().getMonth() === nm && new Date().getDate() === d;
+                fragment.appendChild(this.createDayCell(d, ds, coursesByDate.get(ds) || [], false, isToday));
             }
         }
 
-        // 同时为日历容器添加圆角，确保整体效果一致
-        const calendarContainer = headerRow.parentElement;
-        if (calendarContainer) {
-            calendarContainer.style.borderTopLeftRadius = '0.75rem';
-            calendarContainer.style.borderTopRightRadius = '0.75rem';
-            calendarContainer.style.borderBottomLeftRadius = '0.75rem';
-            calendarContainer.style.borderBottomRightRadius = '0.75rem';
-            // 添加overflow: hidden确保背景色被正确裁剪
-            calendarContainer.style.overflow = 'hidden';
-        }
+        this.elements.calendarGrid.innerHTML = '';
+        this.elements.calendarGrid.appendChild(fragment);
+        this._applyCornerRadius(this.elements.calendarGrid);
 
-        // 标记日历已初始化
-        grid._calendarInitialized = true;
-
-        // 阻止浏览器默认文本选择行为（只添加一次）
-        if (!grid._mousedownListenerAdded) {
-            grid.addEventListener('mousedown', function(e) {
-                // 阻止默认文本选择行为
-                e.preventDefault();
-            });
-            grid._mousedownListenerAdded = true;
+        if (!this.elements.calendarGrid._containerStyled) {
+            this.elements.calendarGrid._containerStyled = true;
+            const headerRow = this.elements.calendarGrid.previousElementSibling;
+            if (headerRow) { headerRow.style.cssText = 'border-top-left-radius:0.75rem;border-top-right-radius:0.75rem;overflow:hidden'; const hc = headerRow.querySelectorAll('div'); if (hc.length) { hc[0].style.borderTopLeftRadius = '0.75rem'; hc[hc.length - 1].style.borderTopRightRadius = '0.75rem'; hc.forEach(c => c.style.overflow = 'hidden'); } }
+            const cc = headerRow?.parentElement; if (cc) cc.style.cssText = 'border-radius:0.75rem;overflow:hidden';
         }
+        this.elements.calendarGrid._calendarInitialized = true;
+        if (!this.elements.calendarGrid._mousedownListenerAdded) { this.elements.calendarGrid.addEventListener('mousedown', e => e.preventDefault()); this.elements.calendarGrid._mousedownListenerAdded = true; }
     }
 
-    /**
-     * 更新所有包含课程的日期单元格
-     */
     updateCourseCells() {
-        // 创建日期到课程的映射，优化性能
-        const coursesByDate = new Map();
-        this.state.courses.forEach(course => {
-            if (!coursesByDate.has(course.date)) {
-                coursesByDate.set(course.date, []);
-            }
-            coursesByDate.get(course.date).push(course);
-        });
-
-        // 遍历所有日期单元格，只更新有课程的单元格
-        const cells = document.querySelectorAll('.calendar-cell');
-        cells.forEach(cell => {
-            const dateStr = cell.dataset.date;
-            if (dateStr) {
-                const courses = coursesByDate.get(dateStr) || [];
-                this.updateDayCell(cell, courses);
-            }
-        });
+        const map = this._buildCoursesByDate();
+        document.querySelectorAll('.calendar-cell').forEach(c => { const ds = c.dataset.date; if (ds) this.updateDayCell(c, map.get(ds) || []); });
     }
 
-    /**
-     * 更新单个日期单元格的课程
-     * @param {HTMLElement} cell - 单元格元素
-     * @param {Array} courses - 课程列表
-     */
     updateDayCell(cell, courses) {
-        // 找到课程容器
-        const coursesContainer = cell.querySelector('.course-container');
-        if (coursesContainer) {
-            let coursesHTML = '';
-            if (courses.length > 0) {
-                // 按开始时间排序课程
-                const sortedCourses = [...courses].sort((a, b) => {
-                    return a.startTime.localeCompare(b.startTime);
-                });
-                coursesHTML = sortedCourses.map(course => this.getCourseTagHTML(course)).join('');
-            }
-
-            // 更新课程容器的内容
-            coursesContainer.innerHTML = coursesHTML;
-        }
+        const cc = cell.querySelector('.course-container');
+        if (!cc) return;
+        cc.innerHTML = courses.length ? [...courses].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(c => this.getCourseTagHTML(c)).join('') : '';
     }
 
-    /**
-     * 获取日期详细信息
-     * @param {string} dateStr - 日期字符串
-     * @returns {Object|null} 日期信息
-     */
     getDateInfo(dateStr) {
-        if (typeof chineseDays !== 'undefined') {
-            try {
-                const dayDetail = chineseDays.getDayDetail(dateStr);
-                if (dayDetail) {
-                    // 检查是否是真正的节假日（不是周末或普通工作日）
-                    const isDayName = dayDetail.name === 'Sunday' ||
-                        dayDetail.name === 'Monday' ||
-                        dayDetail.name === 'Tuesday' ||
-                        dayDetail.name === 'Wednesday' ||
-                        dayDetail.name === 'Thursday' ||
-                        dayDetail.name === 'Friday' ||
-                        dayDetail.name === 'Saturday' ||
-                        dayDetail.name === '1';
-
-                    const info = {
-                        isWorkday: dayDetail.work === true && !isDayName,
-                        isHoliday: isDayName === false && dayDetail.work !== true,
-                        isInLieu: chineseDays.isInLieu ? chineseDays.isInLieu(dateStr) : false,
-                        name: ''
-                    };
-
-                    // 提取中文节假日名称（格式: "Holiday Name,中文名称"）
-                    if (info.isHoliday && dayDetail.name) {
-                        const nameParts = dayDetail.name.split(',');
-                        // 找到包含中文字符的部分
-                        const chineseName = nameParts.find(part => /[\u4e00-\u9fa5]/.test(part));
-                        info.name = chineseName || nameParts[nameParts.length - 1] || dayDetail.name;
-                    }
-                    return info;
-                }
-            } catch (e) {
-                console.error('Error checking date info:', e);
-            }
-        }
-        return null;
+        if (typeof chineseDays === 'undefined') return null;
+        try {
+            const dd = chineseDays.getDayDetail(dateStr);
+            if (!dd) return null;
+            const isDayName = /^[A-Z][a-z]+$/.test(dd.name) || dd.name === '1';
+            const info = { isWorkday: dd.work === true && !isDayName, isHoliday: !isDayName && dd.work !== true, isInLieu: chineseDays.isInLieu ? chineseDays.isInLieu(dateStr) : false, name: '' };
+            if (info.isHoliday && dd.name) { const parts = dd.name.split(','); info.name = parts.find(p => /[\u4e00-\u9fa5]/.test(p)) || parts[parts.length - 1] || dd.name; }
+            return info;
+        } catch (e) { console.error('Error checking date info:', e); return null; }
     }
 
-    /**
-     * 创建日期单元格
-     * @param {number} day - 日期
-     * @param {string} dateStr - 日期字符串
-     * @param {Array} courses - 课程列表
-     * @param {boolean} isCurrentMonth - 是否当前月
-     * @param {boolean} isToday - 是否今天
-     * @returns {HTMLElement} 单元格元素
-     */
+    _getScheduleTag(dateInfo, dateStr) {
+        if (!dateInfo) return '';
+        if (dateInfo.isInLieu) return '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-purple);">调</span>';
+        if (dateInfo.isHoliday) return '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-success);">休</span>';
+        if (dateInfo.isWorkday) { const d = new Date(dateStr); if (d.getDay() === 0 || d.getDay() === 6) return '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-primary);">班</span>'; }
+        return '';
+    }
+
+    _getHolidayTag(dateInfo) {
+        if (!dateInfo?.isHoliday || !dateInfo.name) return '';
+        let nm = dateInfo.name;
+        if (nm.includes('劳动节')) nm = '劳动'; else if (nm.includes('国庆')) nm = '国庆'; else if (nm.includes('清明')) nm = '清明'; else if (nm.includes('中秋')) nm = '中秋';
+        const styles = { '元旦':'background-color:rgba(239,68,68,0.2);color:var(--color-danger)', '春节':'background-color:var(--color-gold);color:var(--color-danger);font-weight:bold', '劳动':'background-color:transparent;color:var(--color-warning);border:2px solid var(--color-warning)', '清明':'background-color:rgba(59,130,246,0.2);color:#2563eb', '端午':'background-color:rgba(34,197,94,0.2);color:var(--color-success)', '中秋':'background-color:rgba(234,179,8,0.2);color:#b45309', '国庆':'background-color:var(--color-danger);color:var(--color-gold);font-weight:bold' };
+        const bdCls = '';
+        const st = styles[nm] || 'background-color:var(--color-warning);color:black';
+        return `<span class="mr-2 px-2 h-6 ${bdCls} rounded items-center justify-center text-xs font-semibold inline-flex shadow-sm" style="${st}">${nm}</span>`;
+    }
+
     createDayCell(day, dateStr, courses, isCurrentMonth, isToday) {
-        const cell = document.createElement('div');
-        const dateInfo = this.getDateInfo(dateStr);
-        const textColorClass = isCurrentMonth ? (isToday ? 'font-bold' : '') : '';
-        const textColorStyle = isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)';
-        const borderClass = isToday ? 'today-border relative z-10 today-cell' : '';
-        cell.className = `calendar-cell ${borderClass} border p-2 min-h-28 hover-cell transition-all cursor-pointer overflow-visible`;
+        const cell = document.createElement('div'), dateInfo = this.getDateInfo(dateStr);
+        cell.className = `calendar-cell ${isToday ? 'today-border relative z-10 today-cell' : ''} border p-2 min-h-28 hover-cell transition-all cursor-pointer overflow-visible`;
         cell.style.backgroundColor = isCurrentMonth ? 'var(--bg-secondary)' : 'var(--bg-content)';
-        cell.style.color = textColorStyle;
-        cell.tabIndex = 0; // 使单元格可以获得焦点
-        cell.dataset.date = dateStr; // 添加日期数据属性
-        let coursesHTML = '';
-        if (courses.length > 0) {
-            // 按开始时间排序课程
-            const sortedCourses = [...courses].sort((a, b) => {
-                return a.startTime.localeCompare(b.startTime);
-            });
-            coursesHTML = sortedCourses.map(course => this.getCourseTagHTML(course)).join('');
-        }
+        cell.style.color = isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)';
+        cell.tabIndex = 0; cell.dataset.date = dateStr;
 
-        // 生成调休标识（彩色圆形背景白色文字）
-        // 优先级：调 > 休 > 班
-        let scheduleTag = '';
-        if (dateInfo) {
-            if (dateInfo.isInLieu) {
-                // 调休 - 为了节假日连续休息，将本来周末的休息日调整到了这天，所以这天是休息日
-                scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-purple);">调</span>';
-            } else if (dateInfo.isHoliday) {
-                // 节假日
-                scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-success);">休</span>';
-            } else if (dateInfo.isWorkday) {
-                // 周末需要上班的日子 - 本来要休息，因为节假日调休而需要上班
-                const date = new Date(dateStr);
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    scheduleTag = '<span class="mr-2 w-5 h-5 rounded-full text-white flex items-center justify-center text-xs font-medium" style="background-color: var(--color-primary);">班</span>';
-                }
-            }
-        }
-
-        // 生成节假日标签，根据不同节假日应用不同样式
-        let holidayTag = '';
-        if (dateInfo && dateInfo.isHoliday && dateInfo.name) {
-            let holidayName = dateInfo.name;
-            
-            // 缩短特定节假日名称
-            if (holidayName.includes('劳动节')) {
-                holidayName = '劳动';
-            } else if (holidayName.includes('国庆')) {
-                holidayName = '国庆';
-            }
-            
-            let tagClass = '';
-            let holidayTagStyle = '';
-            if (holidayName === '元旦') {
-                // 元旦：半透明浅红色背景，红字
-                tagClass = '';
-                holidayTagStyle = 'background-color: rgba(239, 68, 68, 0.2); color: var(--color-danger);';
-            } else if (holidayName === '春节') {
-                // 春节：金底红字
-                tagClass = '';
-                holidayTagStyle = 'background-color: var(--color-gold); color: var(--color-danger); font-weight: bold;';
-            } else if (holidayName.includes('清明')) {
-                // 清明：透明底蓝字，加粗边框
-                tagClass = 'border-2';
-                holidayTagStyle = 'background-color: transparent; color: var(--color-info); border-color: var(--color-info);';
-            } else if (holidayName === '劳动') {
-                // 劳动节：透明底，金色字和加粗边框
-                tagClass = 'border-2';
-                holidayTagStyle = 'background-color: transparent; color: var(--color-warning); border-color: var(--color-warning);';
-            } else if (holidayName === '端午') {
-                // 端午：半透明浅绿色背景，绿字
-                tagClass = '';
-                holidayTagStyle = 'background-color: rgba(34, 197, 94, 0.2); color: var(--color-success);';
-            } else if (holidayName.includes('中秋')) {
-                // 中秋：橙底白字
-                tagClass = '';
-                holidayTagStyle = 'background-color: var(--color-orange); color: white;';
-            } else if (holidayName === '国庆') {
-                // 国庆：红底金字
-                tagClass = '';
-                holidayTagStyle = 'background-color: var(--color-danger); color: var(--color-gold); font-weight: bold;';
-            } else {
-                // 其他未定义的节假日：黄底黑字
-                holidayTagStyle = 'background-color: var(--color-warning); color: black;';
-            }
-
-            if (!holidayTag) {
-                if (holidayTagStyle) {
-                    holidayTag = `<span class="mr-2 px-2 h-6 ${tagClass} rounded items-center justify-center text-xs font-semibold inline-flex shadow-sm" style="${holidayTagStyle}">${holidayName}</span>`;
-                } else {
-                    holidayTag = `<span class="mr-2 px-2 h-6 ${tagClass} rounded items-center justify-center text-xs font-semibold inline-flex shadow-sm">${holidayName}</span>`;
-                }
-            }
-        }
-
-        cell.innerHTML = `
-            <div class="text-right ${textColorClass} flex items-center justify-end flex-wrap" style="color: ${textColorStyle};">
-                <div class="flex items-center justify-end w-full">
-                    ${holidayTag}
-                    ${isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-danger); color: white;">今</span>' : ''}
-                    ${scheduleTag}
-                    ${day}
-                </div>
-            </div>
-            <div class="course-container mt-1 space-y-1 max-h-[calc(100%-1rem)] overflow-y-auto overflow-x-hidden">
-                ${coursesHTML}
-            </div>
-        `;
-
-        // 单击选择日期，显示加号按钮
+        const coursesHTML = courses.length ? [...courses].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(c => this.getCourseTagHTML(c)).join('') : '';
+        cell.innerHTML = `<div class="text-right ${isCurrentMonth ? (isToday ? 'font-bold' : '') : ''} flex items-center justify-end flex-wrap" style="color: ${isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)'};"><div class="flex items-center justify-end w-full">${this._getHolidayTag(dateInfo)}${isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-danger); color: white;">今</span>' : ''}${this._getScheduleTag(dateInfo, dateStr)}${day}</div></div><div class="course-container mt-1 space-y-1 max-h-[calc(100%-1rem)] overflow-y-auto overflow-x-hidden">${coursesHTML}</div>`;
         return cell;
     }
 }

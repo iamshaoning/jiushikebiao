@@ -1,7 +1,10 @@
 /**
- * 系统加载服务模块
- * 处理系统初始化、试用模式、正常模式等加载逻辑
+ * 系统加载服务
+ *
+ * @description 编排系统完整加载流程：认证检查、数据加载、Realtime 连接、视图初始化
+ * @module loadSystemService
  */
+import { registry } from '../core/registry.js';
 
 class LoadSystemService {
     constructor() {
@@ -48,7 +51,7 @@ class LoadSystemService {
      * @param {boolean} isTrialMode - 是否为试用模式
      */
     async loadSystem(isTrialMode = false) {
-        if (window.lucide) {
+        if (registry.get('lucide')) {
             lucide.createIcons();
         }
 
@@ -93,10 +96,10 @@ class LoadSystemService {
     enterTrialMode() {
         this.authUIService.enterTrialMode();
 
-        if (window.realtimeChannel) {
+        if (registry.get('realtimeChannel')) {
             try {
-                window.realtimeChannel.unsubscribe();
-                window.realtimeChannel = null;
+                registry.get('realtimeChannel').unsubscribe();
+                registry.set('realtimeChannel', null);
             } catch (error) {
                 console.error('取消实时监听器订阅失败:', error);
             }
@@ -113,9 +116,9 @@ class LoadSystemService {
         
         // 重置时间轴服务状态，避免显示其他账号的历史操作记录
         // 注意：不删除 localStorage 中的时间轴数据，只重置内存中的状态
-        if (window.timelineService) {
-            window.timelineService.currentUserId = null;
-            window.timelineService.timeline = [];
+        if (registry.get('timelineService')) {
+            registry.get('timelineService').currentUserId = null;
+            registry.get('timelineService').timeline = [];
         }
 
         this.notificationService.show('您现在处于试用模式，数据不会被保存', 'info');

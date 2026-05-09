@@ -1,9 +1,8 @@
 /**
- * 核心工具函数模块
- * 提供通用的工具函数，包括ID生成、HTML转义、防抖、polyfill、安全操作等
- * 
+ * 核心工具函数
+ *
+ * @description 通用工具函数：ID生成、HTML转义、防抖、安全DOM操作等
  * @module coreUtils
- * @exports coreUtils
  */
 const coreUtils = {
     generateId: () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
@@ -57,6 +56,13 @@ const coreUtils = {
         } else if (Array.isArray(classes)) {
             classes.forEach(cls => element.classList.remove(cls));
         }
+    },
+
+    withTimeout: (fn, timeout, errorMessage) => {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error(errorMessage)), timeout);
+            fn().then(resolve).catch(reject).finally(() => clearTimeout(timer));
+        });
     }
 };
 

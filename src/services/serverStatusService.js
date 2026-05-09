@@ -1,7 +1,10 @@
 /**
- * 服务器状态监测服务模块
- * 负责网络连通检测和服务器状态管理
+ * 服务器状态服务
+ *
+ * @description 轮询检测 Supabase 连接状态、试用模式管理、网络在线/离线监听、状态指示器 UI
+ * @module serverStatusService
  */
+import { registry } from '../core/registry.js';
 
 class ServerStatusService {
     constructor() {
@@ -37,14 +40,14 @@ class ServerStatusService {
 
         // 如果没有初始化，尝试从 window 获取
         if (!this.supabaseClient) {
-            this.supabaseClient = window.supabaseClient;
+            this.supabaseClient = registry.get('supabaseClient');
         }
         if (!this.supabaseAuth) {
-            this.supabaseAuth = window.supabaseAuth;
+            this.supabaseAuth = registry.get('supabaseAuth');
         }
 
         // 立即检测一次
-        this.monitorServerStatus();
+        this.monitorServerStatus().catch(err => console.error('初始状态检测失败:', err));
 
         // 每15秒检测一次
         this.statusInterval = setInterval(() => {
@@ -68,6 +71,16 @@ class ServerStatusService {
             }
         };
         document.addEventListener('visibilitychange', this._visibilityHandler);
+
+        // 监听浏览器 online/offline 事件，断网/恢复即时响应
+        this._onlineHandler = () => {
+            if (!this.isTrialMode) this.monitorServerStatus().catch(() => {});
+        };
+        this._offlineHandler = () => {
+            if (!this.isTrialMode) this.updateServerStatus('offline');
+        };
+        window.addEventListener('online', this._onlineHandler);
+        window.addEventListener('offline', this._offlineHandler);
     }
 
     /**
@@ -81,6 +94,14 @@ class ServerStatusService {
         if (this._visibilityHandler) {
             document.removeEventListener('visibilitychange', this._visibilityHandler);
             this._visibilityHandler = null;
+        }
+        if (this._onlineHandler) {
+            window.removeEventListener('online', this._onlineHandler);
+            this._onlineHandler = null;
+        }
+        if (this._offlineHandler) {
+            window.removeEventListener('offline', this._offlineHandler);
+            this._offlineHandler = null;
         }
     }
 
@@ -96,10 +117,10 @@ class ServerStatusService {
 
         // 如果没有初始化，尝试从 window 获取
         if (!this.supabaseClient) {
-            this.supabaseClient = window.supabaseClient;
+            this.supabaseClient = registry.get('supabaseClient');
         }
         if (!this.supabaseAuth) {
-            this.supabaseAuth = window.supabaseAuth;
+            this.supabaseAuth = registry.get('supabaseAuth');
         }
 
         if (!this.supabaseClient || !this.supabaseAuth) {
@@ -261,8 +282,8 @@ class ServerStatusService {
             // 检查网络是否从离线恢复到在线
             if (oldStatus === 'offline' && status === 'online') {
                 // 网络恢复，比较本地和服务器数据
-                if (window.utils && window.utils.compareLocalAndServerData) {
-                    window.utils.compareLocalAndServerData();
+                if (registry.get('utils') && registry.get('utils').compareLocalAndServerData) {
+                    registry.get('utils').compareLocalAndServerData();
                 }
             }
             // 网络断开不再显示通知，图标状态已足够提示
@@ -307,15 +328,12 @@ class ServerStatusService {
      * @returns {Promise} 执行结果
      */
     withTimeout(fn, timeout, errorMessage) {
+        if (registry.get('coreUtils')?.withTimeout) {
+            return registry.get('coreUtils').withTimeout(fn, timeout, errorMessage);
+        }
         return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => {
-                reject(new Error(errorMessage));
-            }, timeout);
-
-            fn()
-                .then(resolve)
-                .catch(reject)
-                .finally(() => clearTimeout(timer));
+            const timer = setTimeout(() => reject(new Error(errorMessage)), timeout);
+            fn().then(resolve, reject).finally(() => clearTimeout(timer));
         });
     }
 

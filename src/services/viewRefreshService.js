@@ -1,7 +1,10 @@
 /**
- * 视图刷新服务模块
- * 负责管理页面视图的刷新和更新，支持细粒度的作用域控制
+ * 视图刷新服务
+ *
+ * @description 统一调度视图刷新，支持按作用域选择性刷新，内置 100ms 防抖
+ * @module viewRefreshService
  */
+import { registry } from '../core/registry.js';
 
 class ViewRefreshService {
     constructor(state, render, elements) {
@@ -69,16 +72,16 @@ class ViewRefreshService {
             scopes = ['students', 'courses', 'organizations', 'grades', 'calendar'];
         }
 
-        if (scopes.includes('courses') && window.utils && window.utils.generateYearDropdowns) {
-            window.utils.generateYearDropdowns();
+        if (scopes.includes('courses') && registry.get('utils') && registry.get('utils').generateYearDropdowns) {
+            registry.get('utils').generateYearDropdowns();
         }
 
         const currentPage = document.querySelector('.page.active');
 
         if (scopes.includes('students')) {
             // 清除 listRenderService 的缓存
-            if (window.listRenderService && window.listRenderService.resetStudentCache) {
-                window.listRenderService.resetStudentCache();
+            if (registry.get('listRenderService') && registry.get('listRenderService').resetStudentCache) {
+                registry.get('listRenderService').resetStudentCache();
             }
         }
 
@@ -93,8 +96,8 @@ class ViewRefreshService {
         if (currentPage === this.elements.statisticsPage) {
             if (scopes.includes('statistics') || scopes.includes('courses')) {
                 let params = { year: new Date().getFullYear(), month: new Date().getMonth(), organization: '' };
-                if (window.utils && window.utils.getStatisticsParams) {
-                    params = window.utils.getStatisticsParams();
+                if (registry.get('utils') && registry.get('utils').getStatisticsParams) {
+                    params = registry.get('utils').getStatisticsParams();
                 }
                 this.render.statistics(params.year, params.month, params.organization);
             }

@@ -1,10 +1,11 @@
 /**
- * 日期时间处理模块
- * 提供时间转换、计算等工具函数
- * 
+ * 日期工具
+ *
+ * @description 时间转换、结束时间计算、课程时长计算、时间选择器逻辑等日期相关工具函数
  * @module dateUtils
- * @exports dateUtils
  */
+import { registry } from '../core/registry.js';
+
 const dateUtils = {
     timeToMins: (timeStr, duration = 0) => {
         if (!timeStr) return 0;
@@ -84,8 +85,8 @@ const dateUtils = {
                     endTimeInput.value = '00:00';
                     
                     // 显示通知
-                    if (typeof window.notificationService !== 'undefined') {
-                        window.notificationService.show('只能在当天排课', 'warning');
+                    if (typeof registry.get('notificationService') !== 'undefined') {
+                        registry.get('notificationService').show('只能在当天排课', 'warning');
                     }
                     
                     // 计算可设置的时长并自动填写
@@ -102,8 +103,8 @@ const dateUtils = {
                 
                 // 触发费用计算
                 setTimeout(() => {
-                    if (typeof window.utils?.calculateFee === 'function') {
-                        window.utils.calculateFee();
+                    if (typeof registry.get('utils')?.calculateFee === 'function') {
+                        registry.get('utils').calculateFee();
                     }
                 }, 10);
             }
@@ -168,8 +169,8 @@ const dateUtils = {
                 
                 // 触发费用计算
                 setTimeout(() => {
-                    if (typeof window.utils?.calculateFee === 'function') {
-                        window.utils.calculateFee();
+                    if (typeof registry.get('utils')?.calculateFee === 'function') {
+                        registry.get('utils').calculateFee();
                     }
                 }, 10);
             }

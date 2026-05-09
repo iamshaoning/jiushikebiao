@@ -1,7 +1,10 @@
 /**
- * 列表渲染服务模块
- * 负责各种列表的渲染逻辑，包括学生列表、机构列表、年级列表等
+ * 列表渲染服务
+ *
+ * @description 渲染学生列表，支持搜索过滤和 VirtualList 虚拟滚动
+ * @module listRenderService
  */
+import { registry } from '../core/registry.js';
 
 export class ListRenderService {
     constructor(state, elements, utils) {
@@ -89,6 +92,14 @@ export class ListRenderService {
         
         // 渲染学生列表
         if (filteredStudents.length === 0) {
+            const tableEl = studentsList.closest('table');
+            if (tableEl) tableEl.style.display = '';
+            const vlistContainer = document.getElementById('students-virtual-container');
+            if (vlistContainer) vlistContainer.style.display = 'none';
+            if (this._virtualList) {
+                this._virtualList.destroy();
+                this._virtualList = null;
+            }
             studentsList.innerHTML = `
                 <tr>
                     <td colspan="5" class="px-6 py-10 text-center" style="color: var(--text-secondary);">
@@ -97,37 +108,47 @@ export class ListRenderService {
                     </td>
                 </tr>
             `;
-
-            // 重新初始化 Lucide 图标
-            if (window.lucide) {
-                lucide.createIcons();
-            }
             return;
         }
-        
-        // 检查是否有 VirtualList 库
         if (typeof VirtualList !== 'undefined' && filteredStudents.length > 50) {
-            // 对于大型列表使用虚拟滚动
-            // 销毁旧的虚拟列表
+            // 对于大型列表使用虚拟滚动 — 不能在 tbody 中使用 div 定位，改用独立容器
+            const tableEl = studentsList.closest('table');
+            if (tableEl) tableEl.style.display = 'none';
+
+            let vlistContainer = document.getElementById('students-virtual-container');
+            if (!vlistContainer) {
+                vlistContainer = document.createElement('div');
+                vlistContainer.id = 'students-virtual-container';
+                vlistContainer.style.position = 'relative';
+                vlistContainer.style.overflowY = 'auto';
+                vlistContainer.style.maxHeight = '70vh';
+                studentsList.parentElement.insertAdjacentElement('afterend', vlistContainer);
+            }
+
             if (this._virtualList) {
                 this._virtualList.destroy();
                 this._virtualList = null;
             }
-            
-            // 创建新的虚拟列表
+
+            vlistContainer.style.display = '';
+
             this._virtualList = new VirtualList({
-                container: studentsList,
+                container: vlistContainer,
                 items: filteredStudents,
                 itemHeight: 80,
                 renderItem: (student) => this._renderStudentItem(student)
             });
         } else {
             // 对于小型列表使用传统渲染
-            // 销毁旧的虚拟列表
+            // 销毁旧的虚拟列表并恢复表格显示
             if (this._virtualList) {
                 this._virtualList.destroy();
                 this._virtualList = null;
             }
+            const tableEl = studentsList.closest('table');
+            if (tableEl) tableEl.style.display = '';
+            const vlistContainer = document.getElementById('students-virtual-container');
+            if (vlistContainer) vlistContainer.style.display = 'none';
             
             // 使用DocumentFragment减少DOM重排
             const fragment = document.createDocumentFragment();
@@ -186,9 +207,48 @@ export class ListRenderService {
         }
 
         // 重新初始化 Lucide 图标
-        if (window.lucide) {
+        if (registry.get('lucide')) {
             lucide.createIcons();
         }
+    }
+
+    _renderStudentItem(student) {
+        const name = student.name || '未命名';
+        const organization = student.organization || '未分配';
+        const fees = student.fees || { '一对一': 0 };
+        const oneOnOneFee = fees['一对一'] || 0;
+        const oneOnOneDuration = fees['一对一_duration'] || 120;
+        const feeDisplay = `${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟`;
+        const orgColor = this.utils.generateColor(organization, 'organization');
+        const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');
+        const id = student.id || '';
+
+        return `
+            <div class="student-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;height:80px;box-sizing:border-box;border-bottom:1px solid var(--border-color);background-color:var(--bg-secondary);">
+                <div style="flex:1;min-width:0;">
+                    <div class="font-medium" style="color:var(--text-primary);">${this.utils.escapeHtml(name)}</div>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,${orgColor} 20%,transparent);color:${orgColor};">${this.utils.escapeHtml(organization)}</span>
+                </div>
+                <div style="flex:1;min-width:0;">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,${gradeColor} 20%,transparent);color:${gradeColor};">${this.utils.escapeHtml(student.grade || '未设置')}</span>
+                </div>
+                <div style="flex:0 0 auto;text-align:center;">
+                    <div class="text-sm" style="color:var(--text-secondary);">${feeDisplay}</div>
+                </div>
+                <div style="flex:0 0 auto;text-align:center;">
+                    <div class="flex items-center justify-center">
+                        <button class="edit-student w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-student" data-id="${this.utils.escapeHtml(id)}">
+                            <i data-lucide="square-pen" class="inline-block" style="width:18px;height:18px;color:var(--color-success);"></i>
+                        </button>
+                        <button class="delete-student w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-student" data-id="${this.utils.escapeHtml(id)}">
+                            <i data-lucide="trash-2" class="inline-block" style="width:18px;height:18px;color:var(--color-danger);"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     /**

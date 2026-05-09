@@ -1,6 +1,8 @@
 /**
- * 自定义选择器服务模块
- * 负责管理自定义下拉选择器的交互逻辑
+ * 自定义选择器服务
+ *
+ * @description 管理自定义下拉选择器的交互逻辑
+ * @module customSelectService
  */
 class CustomSelectService {
     constructor() {
@@ -183,12 +185,6 @@ class CustomSelectService {
         }
     }
 
-    /**
-     * 清理事件监听器（兼容旧版本）
-     */
-    cleanup() {
-        this.destroy();
-    }
 }
 
 export default CustomSelectService;

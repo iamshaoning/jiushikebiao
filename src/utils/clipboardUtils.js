@@ -1,17 +1,18 @@
 /**
- * 复制粘贴课程模块
- * 提供课程的复制和粘贴功能，支持时间冲突检测和重复检测
- * 
+ * 剪贴板工具
+ *
+ * @description 课程复制/粘贴功能，支持跨日期批量粘贴和时间偏移处理
  * @module clipboardUtils
- * @exports clipboardUtils
  */
+import { registry } from '../core/registry.js';
+
 const clipboardUtils = {
     copyCourses: (courses) => {
         if (courses.length > 0) {
             localStorage.setItem('copiedCourses', JSON.stringify(courses));
-            window.notificationService?.show(`已复制 ${courses.length} 节课程`, 'success');
+            registry.get('notificationService')?.show(`已复制 ${courses.length} 节课程`, 'success');
         } else {
-            window.notificationService?.show('该日期没有课程可复制', 'warning');
+            registry.get('notificationService')?.show('该日期没有课程可复制', 'warning');
         }
     },
     
@@ -22,11 +23,11 @@ const clipboardUtils = {
                 const courses = JSON.parse(copiedCourses);
                 
                 if (!courses || courses.length === 0) {
-                    window.notificationService?.show('没有可粘贴的课程', 'warning');
+                    registry.get('notificationService')?.show('没有可粘贴的课程', 'warning');
                     return;
                 }
                 
-                const originalCourses = [...window.state.courses];
+                const originalCourses = [...registry.get('state').courses];
                 const targetDateCourses = originalCourses.filter(course => course.date === dateStr);
                 
                 let addedCount = 0;
@@ -68,7 +69,7 @@ const clipboardUtils = {
                     if (!isDuplicate) {
                         const newCourse = {
                             ...course,
-                            id: window.utils.generateId(),
+                            id: registry.get('utils').generateId(),
                             date: dateStr,
                             createdAt: new Date().toISOString()
                         };
@@ -76,10 +77,10 @@ const clipboardUtils = {
                         let hasConflict = false;
                         
                         for (const existingCourse of targetDateCourses) {
-                            const newStartMins = window.utils.timeToMins(newCourse.startTime);
+                            const newStartMins = registry.get('utils').timeToMins(newCourse.startTime);
                             const newEndMins = newStartMins + Number(newCourse.duration || 120);
 
-                            const existingStartMins = window.utils.timeToMins(existingCourse.startTime);
+                            const existingStartMins = registry.get('utils').timeToMins(existingCourse.startTime);
                             const existingEndMins = existingStartMins + Number(existingCourse.duration || 120);
                             
                             if (Math.max(newStartMins, existingStartMins) < Math.min(newEndMins, existingEndMins)) {
@@ -90,10 +91,10 @@ const clipboardUtils = {
                         
                         if (!hasConflict) {
                             for (const addedCourse of coursesToAdd) {
-                                const newStartMins = window.utils.timeToMins(newCourse.startTime);
+                                const newStartMins = registry.get('utils').timeToMins(newCourse.startTime);
                                 const newEndMins = newStartMins + Number(newCourse.duration || 120);
 
-                                const addedStartMins = window.utils.timeToMins(addedCourse.startTime);
+                                const addedStartMins = registry.get('utils').timeToMins(addedCourse.startTime);
                                 const addedEndMins = addedStartMins + Number(addedCourse.duration || 120);
                                 
                                 if (Math.max(newStartMins, addedStartMins) < Math.min(newEndMins, addedEndMins)) {
@@ -115,39 +116,39 @@ const clipboardUtils = {
                 });
                 
                 if (coursesToAdd.length > 0) {
-                    window.setState(draft => draft.courses.push(...coursesToAdd), 'courses');
+                    registry.get('setState')(draft => draft.courses.push(...coursesToAdd), 'courses');
                     
                     // 记录到时间轴
-                    if (window.timelineService) {
-                        window.timelineService.recordPasteCourses(coursesToAdd);
+                    if (registry.get('timelineService')) {
+                        registry.get('timelineService').recordPasteCourses(coursesToAdd);
                     }
                 }
                 
                 if (addedCount > 0) {
                     if (conflictCount > 0 && duplicateCount > 0) {
-                        window.notificationService?.show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴，${duplicateCount} 节课程已存在`, 'warning');
+                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴，${duplicateCount} 节课程已存在`, 'warning');
                     } else if (conflictCount > 0) {
-                        window.notificationService?.show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴`, 'warning');
+                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴`, 'warning');
                     } else if (duplicateCount > 0) {
-                        window.notificationService?.show(`成功粘贴 ${addedCount} 节课程，${duplicateCount} 节课程已存在`, 'warning');
+                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程，${duplicateCount} 节课程已存在`, 'warning');
                     } else {
-                        window.notificationService?.show(`成功粘贴 ${addedCount} 节课程`, 'success');
+                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程`, 'success');
                     }
                 } else if (conflictCount > 0 && duplicateCount > 0) {
-                    window.notificationService?.show('所有课程未能粘贴', 'warning');
+                    registry.get('notificationService')?.show('所有课程未能粘贴', 'warning');
                 } else if (conflictCount > 0) {
-                    window.notificationService?.show('所有课程未能粘贴', 'warning');
+                    registry.get('notificationService')?.show('所有课程未能粘贴', 'warning');
                 } else if (duplicateCount > 0) {
-                    window.notificationService?.show('所有课程已存在', 'warning');
+                    registry.get('notificationService')?.show('所有课程已存在', 'warning');
                 } else {
-                    window.notificationService?.show('没有可粘贴的课程', 'warning');
+                    registry.get('notificationService')?.show('没有可粘贴的课程', 'warning');
                 }
             } catch (error) {
                 console.error('数据异常，操作失败:', error);
-                window.notificationService?.show('数据异常，操作失败', 'error');
+                registry.get('notificationService')?.show('数据异常，操作失败', 'error');
             }
         } else {
-            window.notificationService?.show('没有可粘贴的课程', 'warning');
+            registry.get('notificationService')?.show('没有可粘贴的课程', 'warning');
         }
     }
 };

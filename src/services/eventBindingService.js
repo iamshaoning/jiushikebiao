@@ -1,8 +1,9 @@
 /**
- * 事件绑定服务模块
- * 集中管理所有页面事件绑定，包括导航、搜索、下拉菜单等
+ * 事件绑定服务
+ *
+ * @description 集中管理所有页面事件绑定：导航、搜索、下拉菜单、排序等
+ * @module eventBindingService
  */
-
 class EventBindingService {
     constructor(elements, state, utils, render, modalService, notificationService) {
         this.elements = elements;
@@ -20,9 +21,8 @@ class EventBindingService {
         this.bindNavigationEvents();
         this.bindStudentSearchEvent();
         this.bindStatisticsDropdownEvents();
-        this.bindStudentSortEvent();
-        this.bindSnapshotManagerEvent();
         this.bindTimelineButtonEvent();
+        this.bindSnapshotButtonEvent();
         this.bindSyncStatusEvent();
         this.bindOrganizationOptionsEvent();
         this.bindCalendarDropdownEvents();
@@ -65,35 +65,28 @@ class EventBindingService {
         if (typeof this.utils.generateMonthDropdowns === 'function') {
             this.utils.generateMonthDropdowns();
         }
-    }
 
-    /**
-     * 绑定学生排序事件
-     */
-    bindStudentSortEvent() {
-        const studentSortSelect = document.getElementById('student-sort');
-        if (studentSortSelect) {
-            studentSortSelect.addEventListener('change', () => {
-                const { year, month, organization } = this.utils.getStatisticsParams();
+        if (this.elements.statisticsYearWrapper) {
+            this.elements.statisticsYearWrapper.addEventListener('change', (e) => {
+                const year = parseInt(e.detail.value);
+                const { month, organization } = this.utils.getStatisticsParams();
                 this.render.statistics(year, month, organization);
             });
         }
-    }
 
-    /**
-     * 绑定快照管理按钮事件
-     */
-    bindSnapshotManagerEvent() {
-        const snapshotManager = document.getElementById('snapshot-manager');
-        if (snapshotManager) {
-            snapshotManager.addEventListener('click', () => {
-                this.modalService.showSnapshotManager();
+        if (this.elements.statisticsMonthWrapper) {
+            this.elements.statisticsMonthWrapper.addEventListener('change', (e) => {
+                const month = parseInt(e.detail.value);
+                const { year, organization } = this.utils.getStatisticsParams();
+                this.render.statistics(year, month, organization);
             });
         }
-        const snapshotBtn = document.getElementById('snapshot-btn');
-        if (snapshotBtn) {
-            snapshotBtn.addEventListener('click', () => {
-                this.modalService.showSnapshotManager();
+
+        if (this.elements.statisticsOrganizationWrapper) {
+            this.elements.statisticsOrganizationWrapper.addEventListener('change', (e) => {
+                const { year, month } = this.utils.getStatisticsParams();
+                const organization = e.detail.value;
+                this.render.statistics(year, month, organization);
             });
         }
     }
@@ -106,6 +99,18 @@ class EventBindingService {
         if (timelineBtn) {
             timelineBtn.addEventListener('click', () => {
                 this.modalService.showTimeline();
+            });
+        }
+    }
+
+    /**
+     * 绑定快照按钮事件
+     */
+    bindSnapshotButtonEvent() {
+        const snapshotBtn = document.getElementById('snapshot-btn');
+        if (snapshotBtn) {
+            snapshotBtn.addEventListener('click', () => {
+                this.modalService.showSnapshotManager();
             });
         }
     }

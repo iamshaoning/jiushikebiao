@@ -1,7 +1,11 @@
 /**
- * 主题管理服务
- * 负责处理深色/浅色/自动模式切换、系统主题变化监听、View Transition API动画效果、主题设置持久化
+ * 主题服务
+ *
+ * @description 管理系统深色/浅色主题切换，跟随系统或手动设置，存储偏好到 localStorage
+ * @module themeService
  */
+import { registry } from '../core/registry.js';
+
 class ThemeService {
     constructor(elements, utils, render) {
         this.elements = elements;
@@ -35,7 +39,21 @@ class ThemeService {
         const body = document.body;
 
         if (document.startViewTransition) {
+            if (this._transitionActive) {
+                document.documentElement.classList.remove('dark');
+                if (mode === 'dark' || (mode === 'auto' && prefersDark)) {
+                    document.documentElement.classList.add('dark');
+                }
+                this.reRenderStatistics();
+                return;
+            }
+
+            this._transitionActive = true;
             body.classList.add('theme-transition');
+            const onDone = () => {
+                this._transitionActive = false;
+                body.classList.remove('theme-transition');
+            };
             try {
                 const transition = document.startViewTransition(() => {
                     if (mode === 'dark' || (mode === 'auto' && prefersDark)) {
@@ -43,31 +61,21 @@ class ThemeService {
                     } else {
                         document.documentElement.classList.remove('dark');
                     }
-
                     this.reRenderStatistics();
                 });
-                transition.finished
-                    .then(() => {
-                        body.classList.remove('theme-transition');
-                    })
-                    .catch(() => {
-                        body.classList.remove('theme-transition');
-                    });
+                transition.finished.then(onDone).catch(onDone);
             } catch (e) {
-                body.classList.remove('theme-transition');
+                onDone();
             }
         } else {
             body.classList.add('theme-transitioning');
-
             setTimeout(() => {
                 if (mode === 'dark' || (mode === 'auto' && prefersDark)) {
                     document.documentElement.classList.add('dark');
                 } else {
                     document.documentElement.classList.remove('dark');
                 }
-
                 this.reRenderStatistics();
-
                 setTimeout(() => {
                     body.classList.remove('theme-transitioning');
                 }, 400);

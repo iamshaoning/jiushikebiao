@@ -1,8 +1,9 @@
 /**
- * 认证服务模块
- * 负责用户认证相关的业务逻辑
+ * 认证服务
+ *
+ * @description 用户认证相关的业务逻辑：登录、注册、登出、会话管理
+ * @module authService
  */
-
 class AuthService {
     constructor() {
         this.supabaseAuth = null;

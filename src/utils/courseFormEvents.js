@@ -1,6 +1,11 @@
 /**
- * 课程表单事件初始化模块
+ * 课程表单事件
+ *
+ * @description 初始化课程添加/编辑表单的动态交互：学生选择、课型切换、费用计算、时间联动
+ * @module courseFormEvents
  */
+import { registry } from '../core/registry.js';
+
 export function initCourseFormEvents(isEdit, courseData = null) {
     // 更新学生选择区域
     const updateStudentSelection = () => {
@@ -36,7 +41,7 @@ export function initCourseFormEvents(isEdit, courseData = null) {
         }
         
         // 显示所有学生，不按课型筛选
-        let filteredStudents = [...window.state.students];
+        let filteredStudents = [...registry.get('state').students];
         
         // 按机构、年级、姓名拼音排序
         filteredStudents.sort((a, b) => {
@@ -75,20 +80,20 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                                 if (isEdit && courseData && courseData.studentIds && Array.isArray(courseData.studentIds)) {
                                     isSelected = courseData.studentIds.includes(student.id);
                                 }
-                                const color = window.utils.generateColor(student.organization);
+                                const color = registry.get('utils').generateColor(student.organization);
                                 const studentFees = student.fees || { '一对一': 0 };
                                 const fee = lessonType === '一对一' ? (studentFees['一对一'] || 0) : 0;
                                 return `
                                     <button type="button" class="student-btn px-3 py-1 rounded-full text-sm border-2 transition-all duration-200 ${isSelected ? 'selected bg-opacity-40' : ''}" 
                                             data-id="${student.id}" 
-                                            data-name="${window.utils.escapeHtml(student.name)}" 
-                                            data-organization="${window.utils.escapeHtml(student.organization)}" 
-                                            data-grade="${window.utils.escapeHtml(student.grade || '未设置')}" 
+                                            data-name="${registry.get('utils').escapeHtml(student.name)}" 
+                                            data-organization="${registry.get('utils').escapeHtml(student.organization)}" 
+                                            data-grade="${registry.get('utils').escapeHtml(student.grade || '未设置')}" 
                                             data-color="${color}"
                                             data-fee="${fee}"
                                             data-lesson-type="${lessonType}"
                                             style="border-color: ${color}; color: ${color}; background-color: ${isSelected ? `${color}40` : 'transparent'};"
-                                    >${window.utils.escapeHtml(student.name)}</button>
+                                    >${registry.get('utils').escapeHtml(student.name)}</button>
                                 `;
                             }).join('')}
                         </div>
@@ -127,14 +132,14 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                     
                     if (isEdit) {
                         setTimeout(() => {
-                            if (typeof window.utils.calculateFee === 'function') {
-                                window.utils.calculateFee();
+                            if (typeof registry.get('utils').calculateFee === 'function') {
+                                registry.get('utils').calculateFee();
                             }
                         }, 10);
                     } else {
                         const durationInput = document.getElementById('course-duration');
                         const actualDuration = durationInput ? (parseInt(durationInput.value) || 120) : 120;
-                        const studentFees = window.state.students.find(s => s.id === btn.dataset.id)?.fees || {};
+                        const studentFees = registry.get('state').students.find(s => s.id === btn.dataset.id)?.fees || {};
                         const studentBaseFee = studentFees['一对一'] || parseFloat(btn.dataset.fee) || 0;
                         const studentBaseDuration = studentFees['一对一_duration'] || 120;
                         const calculatedFee = (studentBaseFee / studentBaseDuration) * actualDuration;
@@ -160,12 +165,12 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                     });
                     
                     if (!organizationMatch) {
-                        if (typeof window.notificationService !== 'undefined') {
-                            window.notificationService.show('多人课只能选择同一机构的学生', 'warning');
+                        if (typeof registry.get('notificationService') !== 'undefined') {
+                            registry.get('notificationService').show('多人课只能选择同一机构的学生', 'warning');
                         }
                     } else if (!gradeMatch) {
-                        if (typeof window.notificationService !== 'undefined') {
-                            window.notificationService.show('多人课只能选择同一年级的学生', 'warning');
+                        if (typeof registry.get('notificationService') !== 'undefined') {
+                            registry.get('notificationService').show('多人课只能选择同一年级的学生', 'warning');
                         }
                     } else {
                         btn.classList.toggle('selected');
@@ -224,11 +229,11 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                 return;
             }
             const startTime = document.getElementById('course-start-time')?.value;
-            if (startTime && typeof window.utils.calculateEndTime === 'function') {
-                window.utils.calculateEndTime('course-start-time', 'course-end-time', duration);
+            if (startTime && typeof registry.get('utils').calculateEndTime === 'function') {
+                registry.get('utils').calculateEndTime('course-start-time', 'course-end-time', duration);
             }
-            if (typeof window.utils.calculateFee === 'function') {
-                window.utils.calculateFee();
+            if (typeof registry.get('utils').calculateFee === 'function') {
+                registry.get('utils').calculateFee();
             }
         });
     }
@@ -252,12 +257,12 @@ export function initCourseFormEvents(isEdit, courseData = null) {
     // 绑定时间输入框事件
     const courseStartTime = document.getElementById('course-start-time');
     if (courseStartTime) {
-        courseStartTime.addEventListener('change', window.utils.calculateFee);
+        courseStartTime.addEventListener('change', registry.get('utils').calculateFee);
     }
     
     const courseEndTime = document.getElementById('course-end-time');
     if (courseEndTime) {
-        courseEndTime.addEventListener('change', window.utils.calculateFee);
+        courseEndTime.addEventListener('change', registry.get('utils').calculateFee);
     }
     
     // 绑定费用输入框事件
@@ -270,9 +275,4 @@ export function initCourseFormEvents(isEdit, courseData = null) {
             }
         });
     }
-}
-
-// 添加到全局
-if (window && window.utils) {
-    window.utils.initCourseFormEvents = initCourseFormEvents;
 }

@@ -1,7 +1,11 @@
 /**
- * 状态服务模块
- * 负责管理应用全局状态，包括学生、课程、机构、年级数据等
+ * 状态管理服务
+ *
+ * @description 管理应用全局状态（学生、课程、机构、年级数据），提供 setState/updateStateFromData 接口
+ * @module stateService
  */
+import { registry } from '../core/registry.js';
+
 class StateService {
     constructor() {
         this.state = {
@@ -9,9 +13,7 @@ class StateService {
             currentYear: new Date().getFullYear(),
             currentMonth: new Date().getMonth(),
             students: [],
-            studentsMap: new Map(),
             courses: [],
-            coursesByDate: new Map(),
             organizations: [],
             grades: [],
             organizationColors: {},
@@ -20,57 +22,17 @@ class StateService {
         };
     }
 
-    /**
-     * 获取状态对象
-     */
     getState() {
         return this.state;
     }
 
-    /**
-     * 同步数据到Map结构
-     */
-    syncDataToMaps() {
-        this.state.studentsMap.clear();
-        this.state.students.forEach(student => {
-            this.state.studentsMap.set(student.id, student);
-        });
-
-        this.state.coursesByDate.clear();
-        this.state.courses.forEach(course => {
-            if (!this.state.coursesByDate.has(course.date)) {
-                this.state.coursesByDate.set(course.date, []);
-            }
-            this.state.coursesByDate.get(course.date).push(course);
-        });
-    }
-
-    /**
-     * 更新状态
-     * @param {Function} updater - 更新函数
-     * @param {string|Array|null} scope - 刷新范围
-     */
     setState(updater, scope = null) {
         updater(this.state);
-        
-        if (window.serverStatusService) {
-            window.serverStatusService.setSyncing();
-        }
-        
-        if (window.utils && window.utils.debouncedSaveData) {
-            window.utils.debouncedSaveData();
-        }
-        
-        if (window.utils && window.utils.refreshAllViews) {
-            window.utils.refreshAllViews(scope);
-        }
+        if (registry.get('serverStatusService')) registry.get('serverStatusService').setSyncing();
+        if (registry.get('utils') && registry.get('utils').debouncedSaveData) registry.get('utils').debouncedSaveData();
+        if (registry.get('utils') && registry.get('utils').refreshAllViews) registry.get('utils').refreshAllViews(scope);
     }
 
-    /**
-     * 更新状态数据
-     * @param {Object} data - 数据对象
-     * @param {boolean} useDefaults - 是否使用默认值
-     */
     updateStateFromData(data, useDefaults = true) {
         const defaults = { organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
         this.state.students = data.students || [];
@@ -80,25 +42,11 @@ class StateService {
         this.state.organizationColors = data.organizationColors || {};
         this.state.gradeColors = data.gradeColors || {};
         this.state.lastupdated = data.lastupdated;
-        
-        if (window.utils && window.utils.initColorsFromState) {
-            window.utils.initColorsFromState();
-        }
-        
-        this.syncDataToMaps();
-        
-        if (window.utils && window.utils.refreshAllViews) {
-            window.utils.refreshAllViews(true);
-        }
+        if (registry.get('utils') && registry.get('utils').initColorsFromState) registry.get('utils').initColorsFromState();
+        if (registry.get('utils') && registry.get('utils').refreshAllViews) registry.get('utils').refreshAllViews(true);
     }
 
-    /**
-     * 初始化服务
-     */
-    init() {
-        window.state = this.state;
-        window.setState = (updater, scope) => this.setState(updater, scope);
-    }
+    init() {}
 }
 
 const stateService = new StateService();

@@ -1,7 +1,11 @@
 /**
- * 认证UI服务
- * 负责处理认证界面的显示/隐藏、登录/注册流程、UI状态更新
+ * 认证 UI 服务
+ *
+ * @description 管理登录/注册模态框、标签切换、按钮状态、试用模式入口等认证界面交互
+ * @module authUIService
  */
+import { registry } from '../core/registry.js';
+
 class AuthUIService {
     constructor(elements, utils, notificationService, authService, modalService, serverStatusService) {
         this.elements = elements;
@@ -155,6 +159,7 @@ class AuthUIService {
         }
 
         authModal.style.display = 'flex';
+        authModal.style.pointerEvents = 'auto';
         authModal.offsetHeight;
         authModal.style.opacity = '1';
         authContainer.classList.remove('scale-95', 'opacity-0');
@@ -504,7 +509,7 @@ class AuthUIService {
      */
     logout() {
         this.modalService.showConfirm('确定要登出吗？', () => {
-            if (window.supabaseAuth) {
+            if (registry.get('supabaseAuth')) {
                 this.authService.logout()
                     .then(() => {
                         this.cleanupRealtimeChannel();
@@ -542,10 +547,10 @@ class AuthUIService {
      * 清理实时数据通道
      */
     cleanupRealtimeChannel() {
-        if (window.realtimeChannel) {
+        if (registry.get('realtimeChannel')) {
             try {
-                window.realtimeChannel.unsubscribe();
-                window.realtimeChannel = null;
+                registry.get('realtimeChannel').unsubscribe();
+                registry.set('realtimeChannel', null);
             } catch (error) {
                 console.error('清理实时数据监听失败:', error);
             }

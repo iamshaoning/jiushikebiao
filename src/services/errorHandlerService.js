@@ -1,13 +1,16 @@
 /**
- * 统一错误处理和日志服务
- * 负责全局错误收集、处理和日志记录
+ * 全局错误处理服务
+ *
+ * @description 捕获未处理的 Promise 异常和全局错误，提供统一错误报告接口
+ * @module errorHandlerService
  */
+import { registry } from '../core/registry.js';
 
 class ErrorHandlerService {
     constructor() {
         this.logs = [];
         this.maxLogSize = 500;
-        this.GLOBAL_DEBUG = typeof window !== 'undefined' ? window.GLOBAL_DEBUG : false;
+        this.GLOBAL_DEBUG = typeof window !== 'undefined' ? import.meta.env?.DEV : false;
         
         // 错误级别
         this.LEVELS = {
@@ -81,8 +84,8 @@ class ErrorHandlerService {
     handleError(error, message, showNotification = false) {
         this.log(this.LEVELS.ERROR, message, error);
 
-        if (showNotification && window.notificationService) {
-            window.notificationService.show(message, 'error');
+        if (showNotification && registry.get('notificationService')) {
+            registry.get('notificationService').show(message, 'error');
         }
     }
 
@@ -139,15 +142,13 @@ class ErrorHandlerService {
 
         // 监听未处理的 Promise 拒绝
         window.addEventListener('unhandledrejection', (event) => {
-            this.warn('未处理的 Promise 拒绝', event.reason);
+            const msg = event.reason?.message || String(event.reason || '');
+            if (/InvalidStateError|Transition.*aborted|insertBefore|abort/i.test(msg)) {
+                this.debug('已忽略的 Promise 拒绝', event.reason);
+            } else {
+                this.warn('未处理的 Promise 拒绝', event.reason);
+            }
         });
-
-        // 暴露到全局
-        window.errorHandler = this;
-        window.utils = window.utils || {};
-        window.utils.handleError = (error, message, showNotification) => {
-            this.handleError(error, message, showNotification);
-        };
     }
 }
 

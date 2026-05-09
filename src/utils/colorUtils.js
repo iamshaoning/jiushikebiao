@@ -1,10 +1,13 @@
 /**
- * 颜色生成工具模块
- * 负责根据文本生成独立颜色、颜色分配管理等功能
+ * 颜色工具
+ *
+ * @description 为机构和年级名称生成唯一颜色、管理调色板、颜色分配/移除/重分配
+ * @module colorUtils
  */
+import { registry } from '../core/registry.js';
 
 const colorPalette = [
-    '#000000', '#7FFFD4', '#B87333', '#FFB6C1',
+    '#3B82F6', '#7FFFD4', '#B87333', '#FFB6C1',
     '#C0C0C0', '#0ABAB5', '#FFBF00', '#EE82EE',
     '#32CD32', '#1E90FF', '#FF4500', '#9400D3',
     '#2E8B57', '#003153', '#800020', '#7B68EE',
@@ -38,33 +41,6 @@ export function generateColor(text, type = 'organization') {
     return color;
 }
 
-export function getAssignedColor(text, type = 'organization') {
-    const validType = colorAssignments[type] ? type : 'organization';
-    return colorAssignments[validType].get(text) || null;
-}
-
-export function resetColorAssignments(type) {
-    if (colorAssignments[type]) {
-        colorAssignments[type].clear();
-        nextColorIndex[type] = 0;
-        scheduleSyncToState(type);
-    }
-}
-
-export function resetAllColorAssignments() {
-    Object.keys(colorAssignments).forEach(key => {
-        colorAssignments[key].clear();
-        nextColorIndex[key] = 0;
-    });
-    scheduleSyncToState('organization');
-    scheduleSyncToState('grade');
-}
-
-export function getAssignedCount(type) {
-    const validType = colorAssignments[type] ? type : 'organization';
-    return colorAssignments[validType].size;
-}
-
 export function removeColorAssignment(text, type) {
     if (colorAssignments[type]) {
         colorAssignments[type].delete(text);
@@ -87,14 +63,6 @@ export function getUsedColors(type) {
     return Array.from(colorAssignments[validType].values());
 }
 
-export function isColorUsed(color, type) {
-    const validType = colorAssignments[type] ? type : 'organization';
-    for (const usedColor of colorAssignments[validType].values()) {
-        if (usedColor === color) return true;
-    }
-    return false;
-}
-
 export function setColor(text, color, type = 'organization') {
     const validType = colorAssignments[type] ? type : 'organization';
     const existingColor = colorAssignments[validType].get(text);
@@ -103,15 +71,15 @@ export function setColor(text, color, type = 'organization') {
     }
     colorAssignments[validType].set(text, color);
     
-    if (window.state) {
+    if (registry.get('state')) {
         if (validType === 'organization') {
-            const newColors = { ...(window.state.organizationColors || {}) };
+            const newColors = { ...(registry.get('state').organizationColors || {}) };
             newColors[text] = color;
-            window.state.organizationColors = newColors;
+            registry.get('state').organizationColors = newColors;
         } else if (validType === 'grade') {
-            const newColors = { ...(window.state.gradeColors || {}) };
+            const newColors = { ...(registry.get('state').gradeColors || {}) };
             newColors[text] = color;
-            window.state.gradeColors = newColors;
+            registry.get('state').gradeColors = newColors;
         }
     }
 }
@@ -131,7 +99,7 @@ function scheduleSyncToState(type) {
 function syncColorsToState(type, stateKey) {
     const newColors = {};
     let hasChanges = false;
-    const currentColors = window.state[stateKey] || {};
+    const currentColors = registry.get('state')[stateKey] || {};
 
     colorAssignments[type].forEach((color, text) => {
         newColors[text] = color;
@@ -153,12 +121,12 @@ function syncColorsToState(type, stateKey) {
     }
 
     if (hasChanges) {
-        window.state[stateKey] = newColors;
+        registry.get('state')[stateKey] = newColors;
     }
 }
 
 function performSyncToState() {
-    if (!window.state) {
+    if (!registry.get('state')) {
         pendingSyncTypes.clear();
         return;
     }
@@ -175,12 +143,12 @@ function performSyncToState() {
 }
 
 export function initColorsFromState() {
-    if (!window.state) {
+    if (!registry.get('state')) {
         return;
     }
     
-    const orgColors = window.state.organizationColors;
-    const gradeColors = window.state.gradeColors;
+    const orgColors = registry.get('state').organizationColors;
+    const gradeColors = registry.get('state').gradeColors;
     
     if (orgColors) {
         const orgEntries = Object.entries(orgColors);
@@ -225,4 +193,13 @@ export function initColorsFromState() {
 
 export function getColorPalette() {
     return [...colorPalette];
+}
+
+export function isLightColor(hex) {
+    const c = hex.replace('#', '');
+    const r = parseInt(c.substring(0, 2), 16);
+    const g = parseInt(c.substring(2, 4), 16);
+    const b = parseInt(c.substring(4, 6), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.55;
 }

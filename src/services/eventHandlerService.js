@@ -1,746 +1,84 @@
-import modalService from './modalService.js';
-import notificationService from './notificationService.js';
-
 /**
- * 事件处理器服务
- * 管理所有事件处理函数，包括学生管理、课程操作、机构/年级管理等
- * 
- * @class EventHandlerService
- * @exports EventHandlerService
- * @exports eventHandlerService
+ * 事件处理服务
+ *
+ * @description 注册并管理所有业务事件处理器（学生/课程/机构/年级/日历/UI 交互），由 eventDispatcherService 调起
+ * @module eventHandlerService
  */
+import { registry } from '../core/registry.js';
+
 class EventHandlerService {
     constructor() {
         this.handlers = {};
         this.initHandlers();
     }
-    
+
     initHandlers() {
-        this.handlers = {
-            'edit-student': (payload, e) => {
-                const student = window.state.students.find(s => s.id === payload.id);
-                if (student) {
-                    modalService.showEditStudent(student);
-                }
-            },
-            
-            'delete-student': (payload, e) => {
-                const student = window.state.students.find(s => s.id === payload.id);
-                if (student) {
-                    const relatedCourses = window.state.courses.filter(course => {
-                        if (course.studentIds && Array.isArray(course.studentIds)) {
-                            return course.studentIds.includes(student.id);
-                        }
-                        return false;
-                    });
-                    const courseCount = relatedCourses.length;
-                    modalService.showConfirm(
-                        `删除学生 <strong>${window.utils.escapeHtml(student.name)}</strong> 后，相关的${courseCount}节课也将全部删除，确定吗？`,
-                        async () => {
-                            // 删除相关课程
-                            relatedCourses.forEach(course => {
-                                const idx = window.state.courses.findIndex(c => c.id === course.id);
-                                if (idx !== -1) {
-                                    window.state.courses.splice(idx, 1);
-                                }
-                            });
-                            
-                            // 删除学生
-                            const studentIndex = window.state.students.findIndex(s => s.id === student.id);
-                            if (studentIndex !== -1) {
-                                window.state.students.splice(studentIndex, 1);
-                            }
-                            
-                            // 设置同步状态并保存
-                            if (window.serverStatusService) {
-                                window.serverStatusService.setSyncing();
-                            }
-                            await window.utils.saveData();
-                            
-                            // 刷新视图
-                            window.utils.refreshAllViews();
-                            
-                            // 显示成功提示
-                            window.notificationService.show('学生删除成功', 'success');
-                        },
-                        'delete'
-                    );
-                }
-            },
-            
-            'close-modal': () => {
-                modalService.hide();
-            },
-            
-            'toggle-duration-dropdown': (payload, e) => {
-                const dropdownElement = e.target.closest('#duration-dropdown');
-                if (dropdownElement) return;
-                
-                const utils = window.utils;
-                utils.safe(window.elements.courseDuration, 'select');
-                
-                if (typeof utils.toggleDurationPicker === 'function') {
-                    utils.toggleDurationPicker('duration-dropdown');
-                }
-            },
-            
-            'select-duration': (payload, e) => {
-                const btn = e.target.closest('[data-duration]');
-                if (!btn) return;
-                
-                const duration = parseInt(btn.dataset.duration);
-                if (isNaN(duration)) return;
-                
-                const courseDuration = document.getElementById('course-duration');
-                if (courseDuration) {
-                    courseDuration.value = duration;
-                }
-                
-                const courseStartTime = document.getElementById('course-start-time');
-                const startTime = courseStartTime ? courseStartTime.value : '';
-                const utils = window.utils;
-                if (startTime && typeof utils.calculateEndTime === 'function') {
-                    utils.calculateEndTime('course-start-time', 'course-end-time', duration);
-                }
-                
-                if (typeof utils.calculateFee === 'function') {
-                    utils.calculateFee();
-                }
-                
-                const durationDropdown = document.getElementById('duration-dropdown');
-                if (durationDropdown) {
-                    durationDropdown.classList.add('hidden');
-                }
-            },
-            
-            'show-login': () => {
-                if (window.authUIService?.showAuthModal) {
-                    window.authUIService.showAuthModal();
-                }
-            },
-
-            'show-register': () => {
-                if (window.authUIService?.showAuthModal) {
-                    window.authUIService.showAuthModal();
-                    const registerTab = document.getElementById('register-tab');
-                    if (registerTab) {
-                        registerTab.click();
-                    }
-                }
-            },
-
-            'logout': () => {
-                if (window.authUIService?.logout) {
-                    window.authUIService.logout();
-                }
-            },
-
-            'navigate-home': () => {
-                if (window.routerService) {
-                    window.routerService.navigate('/');
-                }
-            },
-            
-            'export-data': () => {
-                modalService.showConfirm('确定要导出课时统计数据吗？', () => {
-                    const utils = window.utils;
-                    const { year, month, organization } = utils.getStatisticsParams();
-                    utils.exportStatisticsData(year, month, organization);
-                }, 'confirm');
-            },
-            
-            'check-sync': () => {
-                if (window.serverStatusService) {
-                    window.serverStatusService.monitorServerStatus();
-                }
-            },
-            
-            'prev-month': () => {
-                window.state.currentDate.setMonth(window.state.currentDate.getMonth() - 1);
-                if (typeof window.utils.generateYearDropdowns === 'function') {
-                    window.utils.generateYearDropdowns();
-                }
-                if (typeof window.utils.generateMonthDropdowns === 'function') {
-                    window.utils.generateMonthDropdowns();
-                }
-                window.render.calendar();
-            },
-            
-            'next-month': () => {
-                window.state.currentDate.setMonth(window.state.currentDate.getMonth() + 1);
-                if (typeof window.utils.generateYearDropdowns === 'function') {
-                    window.utils.generateYearDropdowns();
-                }
-                if (typeof window.utils.generateMonthDropdowns === 'function') {
-                    window.utils.generateMonthDropdowns();
-                }
-                window.render.calendar();
-            },
-            
-            'add-student-main': () => {
-                modalService.showAddStudent();
-            },
-            
-            'manage-organizations': () => {
-                modalService.showManageOrganizations();
-            },
-            
-            'manage-grades': () => {
-                modalService.showManageGrades();
-            },
-            
-            'toggle-select': (payload) => {
-                const { selectWrapper } = payload;
-                const container = document.getElementById(selectWrapper);
-                if (!container) return;
-
-                const trigger = container.querySelector('.custom-select-trigger');
-                const options = container.querySelector('.custom-select-options');
-                if (!trigger || !options) return;
-
-                document.querySelectorAll('.custom-select-options.open').forEach(otherOptions => {
-                    if (otherOptions !== options) {
-                        otherOptions.classList.remove('open');
-                        otherOptions.parentElement.querySelector('.custom-select-trigger').classList.remove('active');
-                    }
-                });
-
-                options.classList.toggle('open');
-                trigger.classList.toggle('active');
-            },
-            
-            'select-option': (payload) => {
-                const { value, wrapper: selectWrapper } = payload;
-                const container = document.getElementById(selectWrapper);
-                if (!container) return;
-
-                const trigger = container.querySelector('.custom-select-trigger');
-                const option = container.querySelector(`.custom-option[data-value="${value}"]`);
-                if (!trigger || !option) return;
-
-                const triggerSpan = trigger.querySelector('span') || trigger;
-                triggerSpan.textContent = option.textContent;
-
-                container.querySelectorAll('.custom-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                option.classList.add('selected');
-
-                container.querySelector('.custom-select-options')?.classList.remove('open');
-                trigger.classList.remove('active');
-
-                container.dispatchEvent(new CustomEvent('change', {
-                    detail: { value, text: option.textContent },
-                    bubbles: true
-                }));
-            },
-            
-            'course-time-change': () => {
-                const utils = window.utils;
-                const duration = utils.safe(window.elements.courseDuration, 'value') ? 
-                    parseInt(utils.safe(window.elements.courseDuration, 'value')) : 120;
-
-                if (typeof utils.calculateEndTime === 'function') {
-                    utils.calculateEndTime('course-start-time', 'course-end-time', duration);
-                }
-                if (typeof utils.calculateFee === 'function') {
-                    utils.calculateFee();
-                }
-            },
-            
-            'calendar-cell-click': (payload, e) => {
-                if (e && e.button !== 0) {
-                    return;
-                }
-                
-                const courseItem = e.target.closest('.course-tag-item');
-                if (courseItem) {
-                    return;
-                }
-                
-                const currentCell = e.target.closest('.calendar-cell');
-                if (!currentCell) return;
-                
-                const currentDateStr = currentCell.dataset.date;
-
-                currentCell.classList.add('calendar-cell-selected');
-
-                const btnGroup = document.createElement('div');
-                btnGroup.className = 'cell-action-group flex items-center space-x-2 transform translate-y-full opacity-0 transition-all duration-300';
-                btnGroup.style.position = 'absolute';
-                btnGroup.style.bottom = '4px';
-                btnGroup.style.left = '50%';
-                btnGroup.style.transform = 'translate(-50%, 100%)';
-                btnGroup.style.zIndex = '10';
-
-                const escapedDateStr = window.utils.escapeHtml(currentDateStr);
-                btnGroup.innerHTML = `
-                    <div data-action="add-course" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-primary);">
-                        <i data-lucide="plus" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <div data-action="copy-date" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-success);">
-                        <i data-lucide="copy" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <div data-action="paste-to-date" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-warning);">
-                        <i data-lucide="clipboard" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
-                    </div>
-                    <div data-action="delete-date-courses" data-date="${escapedDateStr}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color: var(--color-danger);">
-                        <i data-lucide="trash-2" class="text-base pointer-events-none inline-block" style="width: 16px; height: 16px;"></i>
-                    </div>
-                `;
-
-                currentCell.style.position = 'relative';
-                currentCell.appendChild(btnGroup);
-
-                if (window.lucide) {
-                    lucide.createIcons();
-                }
-
-                setTimeout(() => {
-                    btnGroup.style.transform = 'translate(-50%, 0)';
-                    btnGroup.style.opacity = '1';
-                }, 10);
-            },
-            
-            'add-course': (payload, e) => {
-                const date = payload.date;
-                if (!date) return;
-                
-                modalService.showAddCourse(date);
-            },
-            
-            'copy-date': (payload) => {
-                const date = payload.date;
-                const utils = window.utils;
-                const courses = window.state.courses.filter(c => c.date === date);
-                utils.copyCourses(courses);
-            },
-            
-            'paste-to-date': (payload) => {
-                const date = payload.date;
-                const utils = window.utils;
-                utils.pasteCourses(date);
-            },
-            
-            'delete-date-courses': (payload, e) => {
-                const date = payload.date;
-                const courses = window.state.courses.filter(c => c.date === date);
-                
-                if (courses.length === 0) {
-                    notificationService.show('该日期没有课程可删除', 'warning');
-                    return;
-                }
-                
-                modalService.showConfirm(`确定要删除 ${date} 的全部课程吗？`, () => {
-                    // 记录到时间轴
-                    if (window.timelineService && courses.length > 0) {
-                        window.timelineService.recordDeleteDayCourses(date, [...courses]);
-                    }
-                    
-                    courses.forEach(course => {
-                        window.setState(draft => {
-                            const index = draft.courses.findIndex(c => c.id === course.id);
-                            if (index !== -1) {
-                                draft.courses.splice(index, 1);
-                            }
-                        }, 'courses');
-                    });
-                    notificationService.show('课程已删除', 'success');
-                }, 'delete');
-            },
-            
-            'edit-course': (payload) => {
-                const courseId = payload.id;
-                const course = window.state.courses.find(c => c.id === courseId);
-                if (course) {
-                    modalService.showEditCourse(course);
-                }
-            },
-            
-            'copy-course': (payload) => {
-                const courseId = payload.id;
-                const course = window.state.courses.find(c => c.id === courseId);
-                if (course) {
-                    window.utils.copyCourses([course]);
-                }
-            },
-            
-            'delete-course': (payload) => {
-                const courseId = payload.id;
-                const courseToDelete = window.state.courses.find(c => c.id === courseId);
-                
-                modalService.showConfirm('确定要删除这节课程吗？', () => {
-                    // 记录到时间轴
-                    if (window.timelineService && courseToDelete) {
-                        window.timelineService.recordDeleteCourse(courseToDelete);
-                    }
-                    
-                    window.setState(draft => {
-                        draft.courses = draft.courses.filter(c => c.id !== courseId);
-                    }, 'courses');
-                    notificationService.show('课程已删除', 'success');
-                }, 'delete');
-            },
-            
-            'course-click': (payload, e) => {
-                const courseId = payload.courseId;
-                const courseItem = e.target.closest('.course-tag-item');
-                
-                if (courseItem) {
-                    modalService.closeAllPopovers();
-                    if (window.render?.handleCourseClick) {
-                        window.render.handleCourseClick(courseItem, courseId, e);
-                    }
-                }
-            },
-            
-            'edit-org-inline': (payload, e) => {
-                const itemName = payload.itemName;
-                const item = payload.item;
-
-                const currentManagementModalConfig = window.currentManagementModalConfig;
-                if (!currentManagementModalConfig) return;
-                
-                // 找到对应的item元素
-                const itemElement = e.target.closest(`[data-${itemName}]`);
-                if (!itemElement) return;
-                
-                // 找到顶部输入框和添加按钮
-                const newItemInput = document.getElementById(`new-${itemName}`);
-                const addBtn = document.getElementById(`add-${itemName}`);
-                
-                if (!newItemInput || !addBtn) return;
-                
-                // 保存原始输入框值
-                const originalInputValue = newItemInput.value;
-                
-                // 将条目文本提取到输入框中
-                newItemInput.value = item;
-                newItemInput.focus();
-                newItemInput.select();
-                
-                // 保存原始按钮文本
-                const originalBtnText = addBtn.textContent;
-                
-                // 将添加按钮变为保存按钮
-                addBtn.textContent = '保存';
-                addBtn.classList.remove('bg-primary');
-                addBtn.style.backgroundColor = 'var(--color-success)';
-                
-                // 保存当前编辑的项目信息
-                currentManagementModalConfig.editingItem = {
-                    itemName,
-                    originalItem: item,
-                    itemElement,
-                    originalInputValue,
-                    originalBtnText
-                };
-                
-                // 移除添加按钮的原有事件
-                if (addBtn._originalClickHandler) {
-                    addBtn.removeEventListener('click', addBtn._originalClickHandler);
-                }
-                
-                // 添加保存按钮的事件
-                addBtn.onclick = async (e) => {
-                    // 阻止事件冒泡，避免触发add-org-inline事件
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const newName = newItemInput.value.trim();
-                    if (!newName) {
-                        notificationService.show(`请输入${itemName}名称`, 'warning');
-                        return;
-                    }
-                    if (newName === item) {
-                        cancelEdit();
-                        return;
-                    }
-                    if (currentManagementModalConfig.items.includes(newName)) {
-                        notificationService.show(`该${itemName}名称已存在`, 'warning');
-                        return;
-                    }
-
-                    if (window._isSaving) {
-                        notificationService.show('正在保存中，请稍候...', 'info');
-                        return;
-                    }
-
-                    window._isSaving = true;
-                    addBtn.disabled = true;
-                    newItemInput.disabled = true;
-
-                    try {
-                        // 获取索引
-                        const index = currentManagementModalConfig.items.indexOf(item);
-
-                        // 执行更新
-                        if (currentManagementModalConfig.editItem) {
-                            if (index !== -1) {
-                                const result = currentManagementModalConfig.editItem(index, newName);
-                                if (result === false) {
-                                    return;
-                                }
-                            } else {
-                                return;
-                            }
-                        }
-
-                        // 更新UI - 注意：具体的颜色更新和UI更新已经在 currentManagementModalConfig.editItem 中处理了
-
-                await window.utils.saveData();
-                notificationService.show(`${itemName}修改成功`, 'success');
-
-                        // 刷新视图 - 更新学生列表和日历
-                        if (currentManagementModalConfig.updateUI) {
-                            currentManagementModalConfig.updateUI();
-                        }
-
-                        // 恢复输入框和按钮状态
-                        cancelEdit();
-                    } finally {
-                        window._isSaving = false;
-                        addBtn.disabled = false;
-                        newItemInput.disabled = false;
-                    }
-                };
-                
-                // 添加编辑模式下的按键事件 - 回车保存，ESC取消
-                newItemInput.onkeydown = (event) => {
-                    if (event.key === 'Enter') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        addBtn.click();
-                    }
-                    if (event.key === 'Escape') {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        cancelEdit();
-                    }
-                };
-                
-                function cancelEdit() {
-                    // 恢复输入框值
-                    newItemInput.value = originalInputValue;
-                    
-                    // 恢复按钮状态
-                    addBtn.textContent = originalBtnText;
-                    addBtn.style.backgroundColor = 'var(--color-primary)';
-                    
-                    // 重新绑定添加模式的回车键事件
-                    newItemInput.onkeydown = (event) => {
-                        if (event.key === 'Enter') {
-                            event.preventDefault();
-                            const addBtnElement = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`);
-                            if (addBtnElement) {
-                                addBtnElement.click();
-                            }
-                        }
-                    };
-                    
-                    // 恢复添加按钮的原有事件
-                    if (addBtn._originalClickHandler) {
-                        addBtn.addEventListener('click', addBtn._originalClickHandler);
-                    }
-                    
-                    // 清除编辑状态
-                    delete currentManagementModalConfig.editingItem;
-                }
-            },
-            
-            'delete-org-inline': async (payload, e) => {
-                const itemName = payload.itemName;
-                const item = payload.item;
-
-                const config = window.currentManagementModalConfig;
-                if (!config) return;
-
-                if (window._isSaving) {
-                    notificationService.show('正在保存中，请稍候...', 'info');
-                    return;
-                }
-
-                const currentItem = config.items.find(i => i === item || i === payload[itemName]);
-                const deleteItem = currentItem || item;
-
-                if (config.onDelete && config.onDelete(deleteItem)) {
-                    notificationService.show(`该${itemName}正在被使用，无法删除`, 'warning');
-                    return;
-                }
-
-                window._isSaving = true;
-                
-                const inputBox = document.getElementById(`new-${itemName}`);
-                if (inputBox) inputBox.disabled = true;
-                
-                try {
-                    const itemIndex = config.items.indexOf(deleteItem);
-                    if (itemIndex !== -1) {
-                        if (config.deleteItem) {
-                            config.deleteItem(deleteItem);
-                        }
-                        
-                        await window.utils.saveData();
-
-                        const itemElement = e.target.closest(`[data-${itemName}="${deleteItem}"]`);
-                        if (itemElement) {
-                            itemElement.remove();
-                        }
-
-                        notificationService.show(`${itemName}删除成功`, 'success');
-                        if (config.updateUI) {
-                            config.updateUI();
-                        }
-                    }
-                } finally {
-                    window._isSaving = false;
-                    if (inputBox) {
-                        inputBox.disabled = false;
-                        inputBox.focus();
-                    }
-                }
-            },
-            
-            'add-org-inline': async (payload, e) => {
-                const itemName = payload.itemName;
-                const newItemInput = document.getElementById(`new-${itemName}`);
-                const addBtn = document.getElementById(`add-${itemName}`);
-                
-                if (!newItemInput || !window.currentManagementModalConfig) return;
-                
-                // 保存原始点击事件处理器
-                if (addBtn && !addBtn._originalClickHandler) {
-                    addBtn._originalClickHandler = addBtn.onclick || function() {};
-                }
-                
-                if (window._isSaving) {
-                    notificationService.show('正在保存中，请稍候...', 'info');
-                    return;
-                }
-                
-                const newItem = newItemInput.value.trim();
-                if (!newItem) {
-                    notificationService.show(`请输入${itemName}名称`, 'warning');
-                    return;
-                }
-                
-                if (window.currentManagementModalConfig.items.includes(newItem)) {
-                    notificationService.show(`该${itemName}名称已存在`, 'warning');
-                    return;
-                }
-
-                window._isSaving = true;
-                if (addBtn) addBtn.disabled = true;
-                newItemInput.disabled = true;
-                
-                try {
-                    window.currentManagementModalConfig.addItem(newItem);
-                    if (window.currentManagementModalConfig.onAdd) {
-                        window.currentManagementModalConfig.onAdd(newItem);
-                    }
-                    
-                    await window.utils.saveData();
-                    
-                    const itemsList = document.getElementById(`${itemName}s-list`);
-                    if (itemsList) {
-                        const itemDiv = document.createElement('div');
-                        itemDiv.className = 'flex items-center justify-between p-2 rounded';
-                        itemDiv.style.backgroundColor = 'var(--bg-secondary)';
-                        itemDiv.dataset[itemName] = newItem;
-                        
-                        const colorType = itemName === '机构' ? 'organization' : 'grade';
-                        const bgColor = window.utils.generateColor(newItem, colorType);
-                        
-                        itemDiv.innerHTML = `
-                            <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bgColor} 20%, transparent); color: ${bgColor};" data-item="${newItem}" data-item-name="${itemName}" data-color="${bgColor}">${window.utils.escapeHtml(newItem)}</button>
-                            <div class="flex items-center">
-                                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${newItem}">
-                                    <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
-                                </button>
-                                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${newItem}">
-                                    <i data-lucide="trash-2" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-danger);"></i>
-                                </button>
-                            </div>
-                        `;
-                        itemsList.appendChild(itemDiv);
-
-                        if (window.lucide) {
-                            lucide.createIcons();
-                        }
-
-                        const colorPickerTrigger = itemDiv.querySelector(`.${itemName}-name.color-picker-trigger`);
-                        if (colorPickerTrigger) {
-                            colorPickerTrigger.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                const item = colorPickerTrigger.dataset.item;
-                                const currentColor = colorPickerTrigger.dataset.color;
-                                
-                                window.modalService.showColorPicker({
-                                    itemName: item,
-                                    itemType: colorType,
-                                    currentColor: currentColor,
-                                    onSelect: (newColor) => {
-                                        window.utils.setColor(item, newColor, colorType);
-                                        colorPickerTrigger.style.backgroundColor = `color-mix(in srgb, ${newColor} 20%, transparent)`;
-                                        colorPickerTrigger.style.color = newColor;
-                                        colorPickerTrigger.dataset.color = newColor;
-                                        
-                                        if (colorType === 'organization') {
-                                            window.state.courses.forEach(course => {
-                                                if (Array.isArray(course.organizations)) {
-                                                    course.organizations.forEach((org, idx) => {
-                                                        if (org === item) {
-                                                            if (course.colors && course.colors[idx]) {
-                                                                course.colors[idx] = newColor;
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        }
-                                        
-                                        window.utils.saveData();
-                                        
-                                        if (window.currentManagementModalConfig.updateUI) {
-                                            window.currentManagementModalConfig.updateUI();
-                                        }
-                                    }
-                                });
-                            });
-                        }
-                    }
-                    
-                    newItemInput.value = '';
-                    newItemInput.focus();
-                    
-                    notificationService.show(`${itemName}添加成功`, 'success');
-                    if (window.currentManagementModalConfig.updateUI) {
-                        window.currentManagementModalConfig.updateUI();
-                    }
-                } finally {
-                    window._isSaving = false;
-                    if (addBtn) addBtn.disabled = false;
-                    newItemInput.disabled = false;
-                    newItemInput.focus();
-                }
-            }
-        };
+        this.handlers = {};
+        Object.assign(this.handlers,
+            this._setupStudentHandlers(),
+            this._setupCourseHandlers(),
+            this._setupAuthHandlers(),
+            this._setupCalendarHandlers(),
+            this._setupUIHandlers(),
+            this._setupOrgGradeHandlers()
+        );
     }
+
+    _setupStudentHandlers() { return {
+        'edit-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) registry.get('modalService').showEditStudent(s); },
+        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除，确定吗？`, async () => { registry.get('setState')(d => { d.courses = d.courses.filter(c => !rc.map(r => r.id).includes(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, 'students'); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
+        'add-student-main': () => { registry.get('modalService').showAddStudent(); },
+    };}
+
+    _setupCourseHandlers() { return {
+        'edit-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('modalService').showEditCourse(c); },
+        'copy-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('utils').copyCourses([c]); },
+        'delete-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); registry.get('modalService').showConfirm('确定要删除这节课程吗？', () => { if (registry.get('timelineService') && c) registry.get('timelineService').recordDeleteCourse(c); registry.get('setState')(d => { d.courses = d.courses.filter(co => co.id !== p.id); }, 'courses'); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
+        'course-click': (p, e) => { const ci = e.target.closest('.course-tag-item'); if (ci) { registry.get('modalService').closeAllPopovers(); if (registry.get('render')?.handleCourseClick) registry.get('render').handleCourseClick(ci, p.courseId, e); } },
+        'add-course': (p) => { if (p.date) registry.get('modalService').showAddCourse(p.date); },
+        'copy-date': (p) => { registry.get('utils').copyCourses(registry.get('state').courses.filter(c => c.date === p.date)); },
+        'paste-to-date': (p) => { registry.get('utils').pasteCourses(p.date); },
+        'delete-date-courses': (p) => { const cs = registry.get('state').courses.filter(c => c.date === p.date); if (!cs.length) { registry.get('notificationService').show('该日期没有课程可删除', 'warning'); return; } registry.get('modalService').showConfirm(`确定要删除 ${p.date} 的全部课程吗？`, () => { if (registry.get('timelineService')) registry.get('timelineService').recordDeleteDayCourses(p.date, [...cs]); cs.forEach(c => { registry.get('setState')(d => { d.courses = d.courses.filter(co => co.id !== c.id); }, 'courses'); }); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
+        'course-time-change': () => { const u = registry.get('utils'); const d = u.safe(registry.get('elements').courseDuration, 'value') ? parseInt(u.safe(registry.get('elements').courseDuration, 'value')) : 120; if (typeof u.calculateEndTime === 'function') u.calculateEndTime('course-start-time', 'course-end-time', d); if (typeof u.calculateFee === 'function') u.calculateFee(); },
+        'export-data': () => { registry.get('modalService').showConfirm('确定要导出课时统计数据吗？', () => { const u = registry.get('utils'); const { year, month, organization } = u.getStatisticsParams(); u.exportStatisticsData(year, month, organization); }, 'confirm'); },
+        'check-sync': () => { if (registry.get('serverStatusService')) registry.get('serverStatusService').monitorServerStatus(); },
+    };}
+
+    _setupAuthHandlers() { return {
+        'show-login': () => { registry.get('authUIService')?.showAuthModal?.(); },
+        'show-register': () => { registry.get('authUIService')?.showAuthModal?.(); const rt = document.getElementById('register-tab'); if (rt) rt.click(); },
+        'logout': () => { registry.get('authUIService')?.logout?.(); },
+        'navigate-home': () => { registry.get('router')?.navigate('/'); },
+    };}
+
+    _setupCalendarHandlers() { return {
+        'prev-month': () => { registry.get('state').currentDate.setMonth(registry.get('state').currentDate.getMonth() - 1); if (typeof registry.get('utils').generateYearDropdowns === 'function') registry.get('utils').generateYearDropdowns(); if (typeof registry.get('utils').generateMonthDropdowns === 'function') registry.get('utils').generateMonthDropdowns(); registry.get('render').calendar(); },
+        'next-month': () => { registry.get('state').currentDate.setMonth(registry.get('state').currentDate.getMonth() + 1); if (typeof registry.get('utils').generateYearDropdowns === 'function') registry.get('utils').generateYearDropdowns(); if (typeof registry.get('utils').generateMonthDropdowns === 'function') registry.get('utils').generateMonthDropdowns(); registry.get('render').calendar(); },
+        'calendar-cell-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; const ds = cell.dataset.date; cell.classList.add('calendar-cell-selected'); const bg = document.createElement('div'); bg.className = 'cell-action-group flex items-center space-x-2 transform translate-y-full opacity-0 transition-all duration-300'; bg.style.cssText = 'position:absolute;bottom:4px;left:50%;transform:translate(-50%,100%);z-index:10'; const esc = registry.get('utils').escapeHtml(ds); bg.innerHTML = `<div data-action="add-course" data-date="${esc}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-primary)"><i data-lucide="plus" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div><div data-action="copy-date" data-date="${esc}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-success)"><i data-lucide="copy" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div><div data-action="paste-to-date" data-date="${esc}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-warning)"><i data-lucide="clipboard" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div><div data-action="delete-date-courses" data-date="${esc}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-danger)"><i data-lucide="trash-2" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div>`; cell.style.position = 'relative'; cell.appendChild(bg); if (registry.get('lucide')) lucide.createIcons(); setTimeout(() => { const isCellVisible = (el) => { const style = window.getComputedStyle(el); return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null; }; if (isCellVisible(cell)) { bg.style.transform = 'translate(-50%,0)'; bg.style.opacity = '1'; } }, 50); },
+    };}
+
+    _setupUIHandlers() { return {
+        'close-modal': () => { registry.get('modalService').hide(); },
+        'toggle-duration-dropdown': (p, e) => { if (e.target.closest('#duration-dropdown')) return; const u = registry.get('utils'); u.safe(registry.get('elements').courseDuration, 'select'); if (typeof u.toggleDurationPicker === 'function') u.toggleDurationPicker('duration-dropdown'); },
+        'select-duration': (p, e) => { const b = e.target.closest('[data-duration]'); if (!b) return; const d = parseInt(b.dataset.duration); if (isNaN(d)) return; const el = document.getElementById('course-duration'); if (el) el.value = d; const sti = document.getElementById('course-start-time'); const st = sti?.value || ''; const u = registry.get('utils'); if (st && typeof u.calculateEndTime === 'function') u.calculateEndTime('course-start-time', 'course-end-time', d); if (typeof u.calculateFee === 'function') u.calculateFee(); const dd = document.getElementById('duration-dropdown'); if (dd) dd.classList.add('hidden'); },
+        'toggle-select': (p) => { const c = document.getElementById(p.selectWrapper); if (!c) return; const t = c.querySelector('.custom-select-trigger'), o = c.querySelector('.custom-select-options'); if (!t || !o) return; document.querySelectorAll('.custom-select-options.open').forEach(oo => { if (oo !== o) { oo.classList.remove('open'); oo.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } }); o.classList.toggle('open'); t.classList.toggle('active'); },
+        'select-option': (p) => { const c = document.getElementById(p.wrapper); if (!c) return; const t = c.querySelector('.custom-select-trigger'), o = c.querySelector(`.custom-option[data-value="${p.value}"]`); if (!t || !o) return; (t.querySelector('span') || t).textContent = o.textContent; c.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected')); o.classList.add('selected'); c.querySelector('.custom-select-options')?.classList.remove('open'); t.classList.remove('active'); c.dispatchEvent(new CustomEvent('change', { detail: { value: p.value, text: o.textContent }, bubbles: true })); },
+    };}
+
+    _setupOrgGradeHandlers() { return {
+        'manage-organizations': () => { registry.get('modalService').showManageOrganizations(); },
+        'manage-grades': () => { registry.get('modalService').showManageGrades(); },
+        'edit-org-inline': (p, e) => { const itemName = p.itemName, item = p.item; const cfg = registry.get('currentManagementModalConfig'); if (!cfg) return; const el = e.target.closest(`[data-${itemName}]`); if (!el) return; const nip = document.getElementById(`new-${itemName}`), ab = document.getElementById(`add-${itemName}`); if (!nip || !ab) return; const oiv = nip.value; nip.value = item; nip.focus(); nip.select(); const obt = ab.textContent; ab.textContent = '保存'; ab.classList.remove('bg-primary'); ab.style.backgroundColor = 'var(--color-success)'; cfg.editingItem = { itemName, originalItem: item, itemElement: el, originalInputValue: oiv, originalBtnText: obt }; if (ab._originalClickHandler) ab.removeEventListener('click', ab._originalClickHandler); const cancelEdit = () => { nip.value = oiv; ab.textContent = obt; ab.style.backgroundColor = 'var(--color-primary)'; nip.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const beb = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`); if (beb) beb.click(); } }; if (ab._originalClickHandler) ab.addEventListener('click', ab._originalClickHandler); delete cfg.editingItem; }; ab.onclick = async (ev) => { ev.preventDefault(); ev.stopPropagation(); const nn = nip.value.trim(); if (!nn) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; } if (nn === item) { cancelEdit(); return; } if (cfg.items.includes(nn)) { registry.get('notificationService').show(`该${itemName}名称已存在`, 'warning'); return; } if (window._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } window._isSaving = true; ab.disabled = true; nip.disabled = true; try { const idx = cfg.items.indexOf(item); if (cfg.editItem && idx !== -1) { const r = cfg.editItem(idx, nn); if (r === false) return; }; await registry.get('utils').saveData(); registry.get('notificationService').show(`${itemName}修改成功`, 'success'); if (cfg.updateUI) cfg.updateUI(); cancelEdit(); } finally { window._isSaving = false; ab.disabled = false; nip.disabled = false; } }; nip.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); ab.click(); } if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); cancelEdit(); } }; },
+        'delete-org-inline': async (p, e) => { const itemName = p.itemName, item = p.item; const cfg = registry.get('currentManagementModalConfig'); if (!cfg) return; if (window._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } const ci = cfg.items.find(i => i === item || i === p[itemName]), di = ci || item; if (cfg.onDelete?.(di)) { registry.get('notificationService').show(`该${itemName}正在被使用，无法删除`, 'warning'); return; } window._isSaving = true; const ib = document.getElementById(`new-${itemName}`); if (ib) ib.disabled = true; const rowElem = e.target.closest(`[data-${itemName}]`); try { const idx = cfg.items.indexOf(di); if (idx !== -1) { cfg.deleteItem?.(di); await registry.get('utils').saveData(); if (rowElem) rowElem.remove(); registry.get('notificationService').show(`${itemName}删除成功`, 'success'); cfg.updateUI?.(); } } finally { window._isSaving = false; if (ib) { ib.disabled = false; ib.focus(); } } },
+        'add-org-inline': async (p, e) => { const itemName = p.itemName, nip = document.getElementById(`new-${itemName}`), ab = document.getElementById(`add-${itemName}`); if (!nip || !registry.get('currentManagementModalConfig')) return; if (ab && !ab._originalClickHandler) ab._originalClickHandler = ab.onclick || function(){}; if (window._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } const ni = nip.value.trim(); if (!ni) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; } if (registry.get('currentManagementModalConfig').items.includes(ni)) { registry.get('notificationService').show(`该${itemName}名称已存在`, 'warning'); return; } window._isSaving = true; if (ab) ab.disabled = true; nip.disabled = true; try { registry.get('currentManagementModalConfig').addItem(ni); registry.get('currentManagementModalConfig').onAdd?.(ni); await registry.get('utils').saveData(); const il = document.getElementById(`${itemName}s-list`); if (il) { const idiv = document.createElement('div'); idiv.className = 'flex items-center justify-between p-2 rounded'; idiv.style.backgroundColor = 'var(--bg-secondary)'; idiv.dataset[itemName] = ni; const ct = itemName === '机构' ? 'organization' : 'grade', bc = registry.get('utils').generateColor(ni, ct); idiv.innerHTML = `<button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bc} 20%, transparent); color: ${bc};" data-item="${ni}" data-item-name="${itemName}" data-color="${bc}">${registry.get('utils').escapeHtml(ni)}</button><div class="flex items-center"><button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${ni}"><i data-lucide="square-pen" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-success)"></i></button><button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${ni}"><i data-lucide="trash-2" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-danger)"></i></button></div>`; il.appendChild(idiv); if (registry.get('lucide')) lucide.createIcons(); const cpt = idiv.querySelector(`.${itemName}-name.color-picker-trigger`); if (cpt) { cpt.addEventListener('click', (ev) => { ev.stopPropagation(); registry.get('modalService').showColorPicker({ itemName: cpt.dataset.item, itemType: ct, currentColor: cpt.dataset.color, onSelect: (nc) => { registry.get('utils').setColor(cpt.dataset.item, nc, ct); cpt.style.backgroundColor = `color-mix(in srgb, ${nc} 20%, transparent)`; cpt.style.color = nc; cpt.dataset.color = nc; if (ct === 'organization') { registry.get('state').courses.forEach(c => { if (Array.isArray(c.organizations)) c.organizations.forEach((o, i) => { if (o === cpt.dataset.item && c.colors?.[i]) c.colors[i] = nc; }); }); } registry.get('utils').saveData(); registry.get('currentManagementModalConfig').updateUI?.(); } }); }); } } nip.value = ''; nip.focus(); registry.get('notificationService').show(`${itemName}添加成功`, 'success'); registry.get('currentManagementModalConfig').updateUI?.(); } finally { window._isSaving = false; if (ab) ab.disabled = false; nip.disabled = false; nip.focus(); } },
+    };}
     
     handle(action, payload, e) {
-        const handler = this.handlers[action];
-        if (handler) {
-            try {
-                handler(payload, e);
-            } catch (error) {
-                console.error(`处理事件 ${action} 失败:`, error);
-                notificationService.show('操作失败', 'error');
-            }
-        }
+        const h = this.handlers[action];
+        if (h) { try { h(payload, e); } catch (error) { console.error(`处理事件 ${action} 失败:`, error); registry.get('notificationService').show('操作失败', 'error'); } }
     }
 }
 
 const eventHandlerService = new EventHandlerService();
-
 export { EventHandlerService, eventHandlerService };
 export default eventHandlerService;
