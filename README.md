@@ -1,9 +1,9 @@
-# 课程管理系统
+# 玖拾课表
 
 [![Github Pages](https://img.shields.io/badge/Github-Pages-blue?logo=github)](https://iamshaoning.github.io/kechengguanlixitong)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-blue?logo=cloudflare)](https://kechengguanlixitong.pages.dev)
 
-一个由 AI 辅助开发的课程管理系统，专为课外辅导老师设计。系统支持学生管理、课程安排、课时费统计等功能，数据可同步到云端，支持多设备访问。
+一个由 AI 辅助开发的排课系统，专为课外辅导老师设计。系统支持学生管理、课程安排、课时费统计等功能，数据可同步到云端，支持多设备访问。
 
 > [!IMPORTANT]
 > 通过 Supabase 免费功能管理数据，为防止滥用未开放注册

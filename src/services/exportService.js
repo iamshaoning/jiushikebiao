@@ -56,7 +56,7 @@ class ExportService {
             totalStudents = sections.org.reduce((s, r) => s + (parseInt(r.所属机构) || 0), 0);
         }
 
-        const systemUrl = typeof window !== 'undefined' ? (window.location.origin || '课程管理系统') : '课程管理系统';
+        const systemUrl = typeof window !== 'undefined' ? (window.location.origin || '玖拾课表') : '玖拾课表';
 
         let html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>${title}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:40px;background-color:#f5f7fa}table{width:100%;border-collapse:collapse}th{background:#f8fafc;padding:14px 20px;text-align:left;font-weight:600;color:#475569;font-size:13px;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0}td{padding:14px 20px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#334155}tr:hover{background:#fafafa}.container{max-width:1200px;margin:0 auto;background:white;border-radius:12px;box-shadow:0 2px 20px rgba(0,0,0,.08);overflow:hidden}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:24px 32px}.header h1{margin:0;font-size:24px;font-weight:600}.header p{margin:8px 0 0;opacity:.9;font-size:14px}.stats{display:flex;gap:24px;padding:20px 32px;background:#f8fafc;border-bottom:1px solid #e2e8f0}.stat-item{text-align:center;flex:1}.stat-value{font-size:28px;font-weight:700;color:#1e293b}.stat-label{font-size:13px;color:#64748b;margin-top:4px}.section{padding:20px 32px}.section h2{color:#374151;margin-bottom:15px;font-size:18px;border-bottom:2px solid #e2e8f0;padding-bottom:8px}.section h3{color:#4b5563;margin-top:20px;margin-bottom:10px;font-size:16px}.empty{text-align:center;padding:40px;color:#6b7280;font-style:italic}.footer{padding:20px 32px;text-align:center;color:#94a3b8;font-size:13px;border-top:1px solid #e2e8f0}.footer a{color:#667eea;text-decoration:none}.footer a:hover{text-decoration:underline}</style></head><body><div class="container"><div class="header"><h1>${title}</h1><p>生成时间：${new Date().toLocaleString('zh-CN')}${organization ? ' | 机构：' + organization : ''}</p></div><div class="stats"><div class="stat-item"><div class="stat-value">${totalCourseCount}</div><div class="stat-label">总课节数</div></div><div class="stat-item"><div class="stat-value">¥${totalFee.toFixed(2)}</div><div class="stat-label">总课时费</div></div><div class="stat-item"><div class="stat-value">${totalStudents}</div><div class="stat-label">学生人数</div></div></div>`;
 
@@ -90,7 +90,7 @@ class ExportService {
             html += `<div class="empty">暂无学生课量数据</div>`;
         }
 
-        html += `</div><div class="footer">报告生成于 <a href="${systemUrl}" target="_blank">课程管理系统</a></div></div></body></html>`;
+        html += `</div><div class="footer">报告生成于 <a href="${systemUrl}" target="_blank">玖拾课表</a></div></div></body></html>`;
         return html;
     }
 

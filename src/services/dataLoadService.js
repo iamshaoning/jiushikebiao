@@ -103,7 +103,7 @@ class DataLoadService {
             this.utils.updateStateFromData(defaultData, false);
             localStorage.setItem('coursemanagerdata', JSON.stringify(defaultData));
             this.utils.refreshAllViews(true);
-            this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
+            this.notificationService.show('欢迎使用玖拾课表！请添加您的第一条数据', 'info', 5000);
         } catch (e) {
             this.utils.handleError(e, '创建初始数据失败', true);
             this.serverStatusService.updateServerStatus('offline');
@@ -141,7 +141,7 @@ class DataLoadService {
         try { await this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').insert(data), 5000, '创建初始数据超时'); this.serverStatusService.updateServerStatus('online'); }
         catch (e) { this.utils.handleError(e, '创建初始数据失败', true); this.serverStatusService.updateServerStatus('offline'); }
         this.utils.updateStateFromData({});
-        this.notificationService.show('欢迎使用课程管理系统！请添加您的第一条数据', 'info', 5000);
+        this.notificationService.show('欢迎使用玖拾课表！请添加您的第一条数据', 'info', 5000);
         this.utils.refreshAllViews(true);
     }
 
