@@ -28,9 +28,9 @@ class StateService {
 
     setState(updater, scope = null) {
         updater(this.state);
-        if (registry.get('serverStatusService')) registry.get('serverStatusService').setSyncing();
-        if (registry.get('utils') && registry.get('utils').debouncedSaveData) registry.get('utils').debouncedSaveData();
-        if (registry.get('utils') && registry.get('utils').refreshAllViews) registry.get('utils').refreshAllViews(scope);
+        registry.get('serverStatusService').setSyncing();
+        registry.get('utils').debouncedSaveData();
+        registry.get('utils').refreshAllViews(scope);
     }
 
     updateStateFromData(data, useDefaults = true) {
@@ -42,8 +42,8 @@ class StateService {
         this.state.organizationColors = data.organizationColors || {};
         this.state.gradeColors = data.gradeColors || {};
         this.state.lastupdated = data.lastupdated;
-        if (registry.get('utils') && registry.get('utils').initColorsFromState) registry.get('utils').initColorsFromState();
-        if (registry.get('utils') && registry.get('utils').refreshAllViews) registry.get('utils').refreshAllViews(true);
+        registry.get('utils').initColorsFromState();
+        registry.get('utils').refreshAllViews(true);
     }
 
     init() {}

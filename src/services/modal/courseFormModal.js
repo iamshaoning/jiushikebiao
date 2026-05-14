@@ -15,14 +15,18 @@ export class CourseFormModal {
 
         this.modal.show(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
-                if (typeof registry.get('utils').initCourseFormEvents === 'function') {
-                    registry.get('utils').initCourseFormEvents(false, { date });
-                }
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
 
                 const addCourseForm = document.getElementById('add-course-form');
                 if (addCourseForm) {
-                    addCourseForm.addEventListener('submit', async (e) => {
+                    addCourseForm.replaceWith(addCourseForm.cloneNode(true));
+                }
+
+                registry.get('utils').initCourseFormEvents(false, { date });
+
+                const freshForm = document.getElementById('add-course-form');
+                if (freshForm) {
+                    freshForm.addEventListener('submit', async (e) => {
                         e.preventDefault();
                         const courseDate = document.getElementById('course-date').value;
                         const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
@@ -52,13 +56,13 @@ export class CourseFormModal {
                             createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
                         };
 
-                        if (registry.get('utils')?.checkTimeConflict(newCourse)) {
+                        if (registry.get('utils').checkTimeConflict(newCourse)) {
                             registry.get('notificationService').show('该时间段已有课程安排', 'warning');
                             return;
                         }
 
                         registry.get('setState')(draft => { draft.courses.push(newCourse); }, 'courses');
-                        if (registry.get('timelineService')) registry.get('timelineService').recordAddCourse(newCourse, false);
+                        registry.get('timelineService').recordAddCourse(newCourse, false);
                         await registry.get('utils').saveData();
                         this.modal.hide();
                         registry.get('notificationService').show('课程添加成功', 'success');
@@ -73,14 +77,18 @@ export class CourseFormModal {
 
         this.modal.show(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
-                if (typeof registry.get('utils').initCourseFormEvents === 'function') {
-                    registry.get('utils').initCourseFormEvents(true, course);
-                }
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
 
                 const editCourseForm = document.getElementById('edit-course-form');
                 if (editCourseForm) {
-                    editCourseForm.addEventListener('submit', async (e) => {
+                    editCourseForm.replaceWith(editCourseForm.cloneNode(true));
+                }
+
+                registry.get('utils').initCourseFormEvents(true, course);
+
+                const freshEditForm = document.getElementById('edit-course-form');
+                if (freshEditForm) {
+                    freshEditForm.addEventListener('submit', async (e) => {
                         e.preventDefault();
                         const saveCourseBtn = document.getElementById('save-course');
                         const resetSaveBtn = () => {
@@ -119,14 +127,14 @@ export class CourseFormModal {
                             updatedAt: new Date().toISOString()
                         };
 
-                        if (registry.get('utils')?.checkTimeConflict(updatedCourse)) return fail('该时间段已有课程安排');
+                        if (registry.get('utils').checkTimeConflict(updatedCourse)) return fail('该时间段已有课程安排');
 
                         const courseIndex = registry.get('state').courses.findIndex(c => c.id === courseId);
                         if (courseIndex === -1) { resetSaveBtn(); registry.get('notificationService').show('课程不存在', 'error'); return; }
 
                         const oldCourse = { ...registry.get('state').courses[courseIndex] };
                         registry.get('setState')(draft => { draft.courses[courseIndex] = updatedCourse; }, 'courses');
-                        if (registry.get('timelineService')) registry.get('timelineService').recordUpdateCourse(oldCourse, updatedCourse, '');
+                        registry.get('timelineService').recordUpdateCourse(oldCourse, updatedCourse, '');
                         await registry.get('utils').saveData();
                         this.modal.hide();
                         registry.get('notificationService').show('课程编辑成功', 'success');

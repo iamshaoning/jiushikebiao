@@ -73,7 +73,7 @@ export class StudentFormModal {
                             <div class="mt-2 text-sm" style="color: var(--text-secondary);">多人课请在排课时定价</div>
                         </div>
                         <div class="flex justify-end">
-                            <button type="button" class="close-modal text-white px-4 py-2 rounded-lg mr-2" style="background-color: var(--color-secondary);">关闭</button>
+                            <button type="button" class="close-modal text-white px-4 py-2 rounded-lg mr-2" style="background-color: var(--color-danger);">关闭</button>
                             <button type="submit" id="${saveBtnId}" class="bg-primary text-white px-4 py-2 rounded-lg">保存</button>
                         </div>
                     </form>
@@ -87,7 +87,7 @@ export class StudentFormModal {
 
         this.modal.show(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
                 const form = document.getElementById('add-student-form');
                 if (!form) return;
                 form.addEventListener('submit', async (e) => {
@@ -104,7 +104,6 @@ export class StudentFormModal {
                     }
                     registry.get('setState')(draft => { draft.students.push({
                         id: registry.get('utils').generateId(), name, organization, grade,
-                        color: registry.get('utils').generateColor(name),
                         fees: { '一对一': fee, '一对一_duration': duration },
                         createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
                     }); }, 'students');
@@ -121,7 +120,7 @@ export class StudentFormModal {
 
         this.modal.show(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
                 const nameEl = document.getElementById('edit-student-name');
                 if (nameEl) nameEl.value = student.name;
 
@@ -148,7 +147,6 @@ export class StudentFormModal {
                         draft.students[studentIndex] = {
                             ...draft.students[studentIndex],
                             name, organization, grade,
-                            color: registry.get('utils').generateColor(name),
                             fees: { '一对一': fee, '一对一_duration': duration },
                             updatedAt: new Date().toISOString()
                         };

@@ -10,7 +10,6 @@ const LOCAL_STORAGE_KEY = 'coursemanagerdata';
 
 const CONSTANTS = {
     DEBOUNCE_SAVE_DELAY: 2000,
-    DEBOUNCE_SYNC_DELAY: 3000,
     SESSION_TIMEOUT: 5000,
     SYNC_TIMEOUT: 10000,
     DEFAULT_DURATION: 120,
@@ -42,7 +41,8 @@ const stateUtils = {
                 console.error('[存储] 本地存储保存失败:', error);
             }
             
-            const isOffline = registry.get('elements')?.syncIcon?.classList.contains('sync-offline');
+            const status = registry.get('serverStatusService').previousStatus;
+            const isOffline = !status || status === 'offline' || status === 'loggedout';
             
             if (!isOffline && registry.get('serverStatusService')) {
                 registry.get('serverStatusService').setSyncing();
@@ -54,11 +54,7 @@ const stateUtils = {
                         let sessionData = null;
                         try {
                             let result;
-                            if (registry.get('utils')?.withTimeout) {
-                                result = await registry.get('utils').withTimeout(() => auth.getSession(), CONSTANTS.SESSION_TIMEOUT, '获取会话超时');
-                            } else {
-                                result = await auth.getSession();
-                            }
+                            result = await registry.get('utils').withTimeout(() => auth.getSession(), CONSTANTS.SESSION_TIMEOUT, '获取会话超时');
                             
                             if (result && typeof result === 'object') {
                                 if (result.data && typeof result.data === 'object') {
@@ -92,11 +88,7 @@ const stateUtils = {
                                     .upsert(upsertData, { onConflict: 'userid' });
                                 
                                 let upsertResult;
-                                if (registry.get('utils')?.withTimeout) {
-                                    upsertResult = await registry.get('utils').withTimeout(() => upsertPromise, CONSTANTS.SYNC_TIMEOUT, '同步数据超时');
-                                } else {
-                                    upsertResult = await upsertPromise;
-                                }
+                                upsertResult = await registry.get('utils').withTimeout(() => upsertPromise, CONSTANTS.SYNC_TIMEOUT, '同步数据超时');
                                 
                                 const { error } = upsertResult;
                                 
@@ -112,22 +104,14 @@ const stateUtils = {
                                     registry.get('serverStatusService').updateServerStatus('online');
                                 }
                             } catch (syncError) {
-                                if (registry.get('utils')?.handleError) {
-                                    registry.get('utils').handleError(syncError, '同步数据到服务器失败', true);
-                                } else {
-                                    console.error('[存储] 同步数据到服务器失败:', syncError);
-                                }
+                                registry.get('errorHandlerService').handleError(syncError, '同步数据到服务器失败', true);
                                 registry.get('serverStatusService').updateServerStatus('offline');
                             }
                         } else {
                             registry.get('serverStatusService').updateServerStatus('loggedout');
                         }
                     } catch (error) {
-                        if (registry.get('utils')?.handleError) {
-                            registry.get('utils').handleError(error, '获取 session 失败', true);
-                        } else {
-                            console.error('[存储] 获取 session 失败:', error);
-                        }
+                        registry.get('errorHandlerService').handleError(error, '获取 session 失败', true);
                         registry.get('serverStatusService').updateServerStatus('loggedout');
                     }
                 } else {
@@ -135,11 +119,7 @@ const stateUtils = {
                 }
             }
         } catch (error) {
-            if (registry.get('utils')?.handleError) {
-                registry.get('utils').handleError(error, '保存数据失败', true);
-            } else {
-                console.error('[存储] 保存数据失败:', error);
-            }
+            registry.get('errorHandlerService').handleError(error, '保存数据失败', true);
             try {
                 const currentState = registry.get('state');
                 if (!currentState || !currentState.students) return;
@@ -161,13 +141,10 @@ const stateUtils = {
         }
     },
     
-    debouncedSaveData: null,
-    debouncedSyncToServer: null,
-    
-    syncToServer: async (force = false) => {
+    syncToServer: async () => {
         const auth = registry.get('supabaseAuth');
         if (!registry.get('supabaseClient') || !auth) {
-            registry.get('serverStatusService')?.updateServerStatus('loggedout');
+            registry.get('serverStatusService').updateServerStatus('loggedout');
             return false;
         }
         
@@ -220,24 +197,10 @@ const stateUtils = {
             registry.get('serverStatusService').updateServerStatus('online');
             return true;
         } catch (error) {
-            if (registry.get('utils')?.handleError) {
-                registry.get('utils').handleError(error, '同步到服务器失败', true);
-            } else {
-                console.error('[同步] 同步到服务器失败:', error);
-            }
+            registry.get('errorHandlerService').handleError(error, '同步到服务器失败', true);
             registry.get('serverStatusService').updateServerStatus('offline');
             return false;
         }
-    },
-    
-    initDebouncedSave: function() {
-        const debounce = registry.get('coreUtils')?.debounce;
-        if (typeof debounce !== 'function') {
-            console.error('[状态] coreUtils.debounce not found');
-            return;
-        }
-        this.debouncedSaveData = debounce(this.saveData.bind(this), CONSTANTS.DEBOUNCE_SAVE_DELAY);
-        this.debouncedSyncToServer = debounce(this.syncToServer.bind(this), CONSTANTS.DEBOUNCE_SYNC_DELAY);
     }
 };
 

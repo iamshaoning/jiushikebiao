@@ -35,7 +35,7 @@ class DataLoadService {
                 session = result.data?.session || result.session || null;
             }
             return { isLoggedIn: !!session, session };
-        } catch (error) { this.utils.handleError(error, '获取 session 失败'); return { isLoggedIn: false, session: null }; }
+        } catch (error) { registry.get('errorHandlerService').handleError(error, '获取 session 失败'); return { isLoggedIn: false, session: null }; }
     }
 
     _getLocalData() { try { const s = localStorage.getItem('coursemanagerdata'); return s ? JSON.parse(s) : null; } catch (e) { console.error('本地数据解析失败:', e); return null; } }
@@ -74,7 +74,7 @@ class DataLoadService {
             });
             channel.subscribe();
             registry.set('realtimeChannel', channel);
-        } catch (error) { this.utils.handleError(error, '建立实时数据连接失败'); }
+        } catch (error) { registry.get('errorHandlerService').handleError(error, '建立实时数据连接失败'); }
     }
 
     async _handleServerSync(userId, localData) {
@@ -88,7 +88,7 @@ class DataLoadService {
                 await this._createDefaultDataOnServer(userId);
                 return;
             }
-            this.utils.handleError(error, '从服务器加载数据失败');
+            registry.get('errorHandlerService').handleError(error, '从服务器加载数据失败');
             this.serverStatusService.updateServerStatus('offline');
             return;
         }
@@ -105,7 +105,7 @@ class DataLoadService {
             this.utils.refreshAllViews(true);
             this.notificationService.show('欢迎使用玖拾课表！请添加您的第一条数据', 'info', 5000);
         } catch (e) {
-            this.utils.handleError(e, '创建初始数据失败', true);
+            registry.get('errorHandlerService').handleError(e, '创建初始数据失败', true);
             this.serverStatusService.updateServerStatus('offline');
             this.notificationService.show('数据加载失败，请刷新页面重试', 'error');
         }
@@ -132,14 +132,14 @@ class DataLoadService {
         const data = { userid: userId, students: localData.students, courses: localData.courses, organizations: localData.organizations, grades: localData.grades, organizationColors: localData.organizationColors || {}, gradeColors: localData.gradeColors || {}, lastupdated: localData.lastupdated };
         if (this.currentDeviceId) data.device_id = this.currentDeviceId;
         try { await this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').upsert(data), 5000, '上传数据超时'); }
-        catch (e) { this.utils.handleError(e, '上传数据失败'); }
+        catch (e) { registry.get('errorHandlerService').handleError(e, '上传数据失败'); }
     }
 
     async _initEmptyOnServer(userId) {
         const data = { userid: userId, students: [], courses: [], organizations: [], grades: [], organizationColors: {}, gradeColors: {}, lastupdated: new Date().toISOString() };
         if (this.currentDeviceId) data.device_id = this.currentDeviceId;
         try { await this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').insert(data), 5000, '创建初始数据超时'); this.serverStatusService.updateServerStatus('online'); }
-        catch (e) { this.utils.handleError(e, '创建初始数据失败', true); this.serverStatusService.updateServerStatus('offline'); }
+        catch (e) { registry.get('errorHandlerService').handleError(e, '创建初始数据失败', true); this.serverStatusService.updateServerStatus('offline'); }
         this.utils.updateStateFromData({});
         this.notificationService.show('欢迎使用玖拾课表！请添加您的第一条数据', 'info', 5000);
         this.utils.refreshAllViews(true);
@@ -159,7 +159,7 @@ class DataLoadService {
             const currentUserId = session?.user?.id;
             const localData = this._getLocalData();
 
-            if (this._shouldCreateLoginSnapshot(localData, isLoggedIn, currentUserId) && registry.get('snapshotUtils')) {
+            if (this._shouldCreateLoginSnapshot(localData, isLoggedIn, currentUserId)) {
                 await registry.get('snapshotUtils').createSnapshot('login', false);
             }
             if (this._isOtherAccount(localData, currentUserId)) {
@@ -178,7 +178,7 @@ class DataLoadService {
                 try { await this._handleServerSync(userId, currentLocalData); }
                 catch (error) {
                     console.error('从服务器加载数据失败:', error);
-                    this.utils.handleError(error, '从服务器加载数据失败', true);
+                    registry.get('errorHandlerService').handleError(error, '从服务器加载数据失败', true);
                     this.serverStatusService.updateServerStatus('offline');
                     const fallback = this._getLocalData();
                     if (fallback) { this.utils.updateStateFromData(fallback); this.notificationService.show('已使用本地缓存数据', 'info'); }
@@ -187,9 +187,9 @@ class DataLoadService {
                 }
             } else { this._handleOffline(localData, isLoggedIn); }
 
-            if (registry.get('timelineService')?.reloadTimelineForUser) await registry.get('timelineService').reloadTimelineForUser();
+            if (registry.get('timelineService').reloadTimelineForUser) await registry.get('timelineService').reloadTimelineForUser();
         } catch (error) {
-            this.utils.handleError(error, '加载数据失败', true);
+            registry.get('errorHandlerService').handleError(error, '加载数据失败', true);
             this.utils.updateStateFromData({});
             this.utils.refreshAllViews(true);
         } finally { this.utils.startAutoSnapshotTimer(); }

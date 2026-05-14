@@ -43,7 +43,6 @@ class ViewRefreshService {
                             const cell = document.querySelector(`.calendar-cell[data-date="${dateStr}"]`);
                             if (cell) {
                                 const courses = this.state.courses.filter(course => course.date === dateStr);
-                                const existingCell = cell;
                                 const newCell = this.render.createDayCell(
                                     parseInt(dateStr.split('-')[2]),
                                     dateStr,
@@ -51,7 +50,7 @@ class ViewRefreshService {
                                     true,
                                     false
                                 );
-                                existingCell.replaceWith(newCell);
+                                cell.replaceWith(newCell);
                             }
                         });
                     }
@@ -72,17 +71,14 @@ class ViewRefreshService {
             scopes = ['students', 'courses', 'organizations', 'grades', 'calendar'];
         }
 
-        if (scopes.includes('courses') && registry.get('utils') && registry.get('utils').generateYearDropdowns) {
+        if (scopes.includes('courses')) {
             registry.get('utils').generateYearDropdowns();
         }
 
         const currentPage = document.querySelector('.page.active');
 
         if (scopes.includes('students')) {
-            // 清除 listRenderService 的缓存
-            if (registry.get('listRenderService') && registry.get('listRenderService').resetStudentCache) {
-                registry.get('listRenderService').resetStudentCache();
-            }
+            registry.get('listRenderService').resetStudentCache();
         }
 
         if (currentPage === this.elements.studentsPage && scopes.includes('students')) {
@@ -95,10 +91,7 @@ class ViewRefreshService {
         }
         if (currentPage === this.elements.statisticsPage) {
             if (scopes.includes('statistics') || scopes.includes('courses')) {
-                let params = { year: new Date().getFullYear(), month: new Date().getMonth(), organization: '' };
-                if (registry.get('utils') && registry.get('utils').getStatisticsParams) {
-                    params = registry.get('utils').getStatisticsParams();
-                }
+                const params = registry.get('utils').getStatisticsParams();
                 this.render.statistics(params.year, params.month, params.organization);
             }
         }

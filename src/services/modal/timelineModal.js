@@ -69,74 +69,70 @@ export class TimelineModal {
                 const undoBtns = document.querySelectorAll('[data-action="undo-timeline-action"]');
                 undoBtns.forEach(btn => btn.addEventListener('click', async () => {
                     const id = btn.dataset.id;
-                    if (registry.get('timelineService')) {
-                        const success = await registry.get('timelineService').undoAction(id);
-                        if (success) {
-                            registry.get('utils').refreshAllViews(true);
-                            this.modal.hide();
-                            registry.get('notificationService').show('操作已撤销', 'success');
-                            await registry.get('utils').saveData();
-                        } else {
-                            registry.get('notificationService').show('撤销失败', 'error');
-                        }
+                    const success = await registry.get('timelineService').undoAction(id);
+                    if (success) {
+                        registry.get('utils').refreshAllViews(true);
+                        this.modal.hide();
+                        registry.get('notificationService').show('操作已撤销', 'success');
+                        await registry.get('utils').saveData();
+                    } else {
+                        registry.get('notificationService').show('撤销失败', 'error');
                     }
                 }));
 
                 const redoBtns = document.querySelectorAll('[data-action="redo-timeline-action"]');
                 redoBtns.forEach(btn => btn.addEventListener('click', async () => {
                     const id = btn.dataset.id;
-                    if (registry.get('timelineService')) {
-                        const success = await registry.get('timelineService').redoAction(id);
-                        if (success) {
-                            registry.get('utils').refreshAllViews(true);
-                            this.modal.hide();
-                            registry.get('notificationService').show('操作已重做', 'success');
-                            await registry.get('utils').saveData();
-                        } else {
-                            registry.get('notificationService').show('重做失败', 'error');
-                        }
+                    const success = await registry.get('timelineService').redoAction(id);
+                    if (success) {
+                        registry.get('utils').refreshAllViews(true);
+                        this.modal.hide();
+                        registry.get('notificationService').show('操作已重做', 'success');
+                        await registry.get('utils').saveData();
+                    } else {
+                        registry.get('notificationService').show('重做失败', 'error');
                     }
                 }));
 
                 const expandBtns = document.querySelectorAll('[data-action="toggle-timeline-expand"]');
                 expandBtns.forEach(btn => btn.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    const id = btn.dataset.id;
-                    if (registry.get('timelineService')) {
+                    e.stopPropagation();
+                    try {
+                        const id = btn.dataset.id;
                         await registry.get('timelineService').toggleExpand(id);
-                    }
-                    const container = btn.closest('.timeline-expand-container');
-                    if (!container) return;
-                    const content = container.querySelector('.timeline-expanded-content');
-                    const icon = btn.querySelector('i');
-                    const textSpan = btn.querySelector('span');
-                    if (!content || !icon) return;
-                    const isExpanded = content.dataset.expanded === '1';
-                    if (isExpanded) {
-                        content.style.display = 'none';
-                        content.dataset.expanded = '0';
-                        icon.setAttribute('data-lucide', 'chevron-right');
-                        if (textSpan) textSpan.textContent = '展开详情';
-                    } else {
-                        content.style.display = '';
-                        content.dataset.expanded = '1';
-                        icon.setAttribute('data-lucide', 'chevron-down');
-                        if (textSpan) textSpan.textContent = '收起详情';
-                    }
-                    if (registry.get('lucide')) {
-                        const name = isExpanded ? 'chevron-right' : 'chevron-down';
-                        registry.get('lucide').createIcons({ icons: [name] });
+                        const container = btn.closest('.timeline-expand-container');
+                        if (!container) return;
+                        const content = container.querySelector('.timeline-expanded-content');
+                        const icon = btn.querySelector('[data-lucide]');
+                        const textSpan = btn.querySelector('span');
+                        if (!content || !icon) return;
+                        const isExpanded = content.dataset.expanded === '1';
+                        if (isExpanded) {
+                            content.style.display = 'none';
+                            content.dataset.expanded = '0';
+                            icon.setAttribute('data-lucide', 'chevron-right');
+                            if (textSpan) textSpan.textContent = '展开详情';
+                        } else {
+                            content.style.display = '';
+                            content.dataset.expanded = '1';
+                            icon.setAttribute('data-lucide', 'chevron-down');
+                            if (textSpan) textSpan.textContent = '收起详情';
+                        }
+                        if (registry.get('lucide')) {
+                            registry.get('lucide').createIcons();
+                        }
+                    } catch (error) {
+                        registry.get('errorHandlerService').log('error', '操作历史展开失败', error);
                     }
                 }));
 
                 const clearBtn = document.getElementById('clear-timeline-btn');
                 if (clearBtn) clearBtn.addEventListener('click', () => {
                     this.modal.showConfirm('确定要清空所有操作历史吗？', async () => {
-                        if (registry.get('timelineService')) {
-                            await registry.get('timelineService').clearTimeline();
-                            registry.get('notificationService').show('历史已清空', 'success');
-                            this.modal.hide();
-                        }
+                        await registry.get('timelineService').clearTimeline();
+                        registry.get('notificationService').show('历史已清空', 'success');
+                        this.modal.hide();
                     }, 'delete');
                 });
             }

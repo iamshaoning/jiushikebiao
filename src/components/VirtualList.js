@@ -54,13 +54,14 @@ class VirtualList {
     }
     
     update() {
+        if (!this.content) return;
         this.calculateVisibleItems();
-        
+
         const totalHeight = this.items.length * this.itemHeight;
         this.content.style.height = `${totalHeight}px`;
-        
+
         this.content.innerHTML = '';
-        
+
         this.state.visibleItems.forEach((item, index) => {
             const itemElement = document.createElement('div');
             itemElement.style.position = 'absolute';
@@ -71,10 +72,10 @@ class VirtualList {
             this.content.appendChild(itemElement);
         });
     }
-    
+
     setItems(items) {
         this.items = items;
-        this.update();
+        if (this.content) this.update();
     }
     
     destroy() {

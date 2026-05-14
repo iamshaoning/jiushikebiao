@@ -256,11 +256,10 @@ class ServerStatusService {
             const config = statusConfig[status] || statusConfig.loggedout;
 
             // 移除所有卡片状态类
-            this.safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing', 'sync-trial']);
-            
-            // 添加当前卡片状态类
+            registry.get('utils').safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing']);
+
             if (config.cardClass) {
-                this.safeAddClass(elements.syncStatus, config.cardClass);
+                registry.get('utils').safeAddClass(elements.syncStatus, config.cardClass);
             }
 
             // 更新图标内容
@@ -281,10 +280,7 @@ class ServerStatusService {
 
             // 检查网络是否从离线恢复到在线
             if (oldStatus === 'offline' && status === 'online') {
-                // 网络恢复，比较本地和服务器数据
-                if (registry.get('utils') && registry.get('utils').compareLocalAndServerData) {
-                    registry.get('utils').compareLocalAndServerData();
-                }
+                registry.get('utils').compareLocalAndServerData();
             }
             // 网络断开不再显示通知，图标状态已足够提示
         }
@@ -307,8 +303,8 @@ class ServerStatusService {
 
         if (elements.syncStatus && elements.syncIcon) {
             // 移除所有卡片状态类并添加syncing类
-            this.safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing']);
-            this.safeAddClass(elements.syncStatus, 'sync-syncing');
+            registry.get('utils').safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing']);
+            registry.get('utils').safeAddClass(elements.syncStatus, 'sync-syncing');
 
             // 更新图标为加载状态
             elements.syncIcon.innerHTML = '<div class="sync-loader"></div>';
@@ -321,44 +317,16 @@ class ServerStatusService {
     }
 
     /**
-     * 带超时的Promise
-     * @param {Function} fn - 要执行的函数
-     * @param {number} timeout - 超时时间（毫秒）
-     * @param {string} errorMessage - 错误信息
-     * @returns {Promise} 执行结果
+     * 带超时的Promise包装
      */
     withTimeout(fn, timeout, errorMessage) {
-        if (registry.get('coreUtils')?.withTimeout) {
+        if (registry.get('coreUtils').withTimeout) {
             return registry.get('coreUtils').withTimeout(fn, timeout, errorMessage);
         }
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => reject(new Error(errorMessage)), timeout);
             fn().then(resolve, reject).finally(() => clearTimeout(timer));
         });
-    }
-
-    /**
-     * 安全添加CSS类
-     * @param {Element} element - DOM元素
-     * @param {string} className - CSS类名
-     */
-    safeAddClass(element, className) {
-        if (element && element.classList) {
-            element.classList.add(className);
-        }
-    }
-
-    /**
-     * 安全移除CSS类
-     * @param {Element} element - DOM元素
-     * @param {Array} classNames - CSS类名数组
-     */
-    safeRemoveClass(element, classNames) {
-        if (element && element.classList) {
-            classNames.forEach(className => {
-                element.classList.remove(className);
-            });
-        }
     }
 }
 

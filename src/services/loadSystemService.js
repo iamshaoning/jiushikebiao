@@ -39,20 +39,12 @@ class LoadSystemService {
     }
 
     /**
-     * 设置原始方法（用于试用模式恢复）
-     */
-    setOriginalMethods(saveData, loadData) {
-        this.originalSaveData = saveData;
-        this.originalLoadData = loadData;
-    }
-
-    /**
      * 加载系统
      * @param {boolean} isTrialMode - 是否为试用模式
      */
     async loadSystem(isTrialMode = false) {
         if (registry.get('lucide')) {
-            lucide.createIcons();
+            registry.get('lucide').createIcons();
         }
 
         const isSystemVisible =
@@ -128,12 +120,14 @@ class LoadSystemService {
         const { year, month, organization } = this.utils.getStatisticsParams();
         this.render.statistics(year, month, organization);
 
-        this.utils.saveData = () => {
+        const trialSaveData = () => {
             this.render.students();
             this.render.calendar();
             const params = this.utils.getStatisticsParams();
             this.render.statistics(params.year, params.month, params.organization);
         };
+        this.utils.saveData = trialSaveData;
+        this.utils.debouncedSaveData = trialSaveData;
 
         this.utils.loadData = () => {};
     }
@@ -150,6 +144,7 @@ class LoadSystemService {
         if (this.originalLoadData) {
             this.utils.loadData = this.originalLoadData;
         }
+        this.utils.initDebouncedSave();
     }
 
     /**

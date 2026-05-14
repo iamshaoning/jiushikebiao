@@ -18,7 +18,6 @@ class EventBindingService {
      * 初始化所有事件监听
      */
     init() {
-        this.bindNavigationEvents();
         this.bindStudentSearchEvent();
         this.bindStatisticsDropdownEvents();
         this.bindTimelineButtonEvent();
@@ -26,21 +25,6 @@ class EventBindingService {
         this.bindSyncStatusEvent();
         this.bindOrganizationOptionsEvent();
         this.bindCalendarDropdownEvents();
-    }
-
-    /**
-     * 绑定导航切换事件
-     */
-    bindNavigationEvents() {
-        if (this.elements.navButtons) {
-            this.elements.navButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const pageId = button.dataset.page;
-                    this.render.page(pageId);
-                });
-            });
-        }
     }
 
     /**
@@ -58,17 +42,12 @@ class EventBindingService {
      * 绑定统计页面的年份和月份下拉菜单事件
      */
     bindStatisticsDropdownEvents() {
-        if (typeof this.utils.generateYearDropdowns === 'function') {
-            this.utils.generateYearDropdowns();
-        }
-
-        if (typeof this.utils.generateMonthDropdowns === 'function') {
-            this.utils.generateMonthDropdowns();
-        }
+        this.utils.generateYearDropdowns();
+        this.utils.generateMonthDropdowns();
 
         if (this.elements.statisticsYearWrapper) {
             this.elements.statisticsYearWrapper.addEventListener('change', (e) => {
-                const year = parseInt(e.detail.value);
+                const year = parseInt(e.detail.value) || new Date().getFullYear();
                 const { month, organization } = this.utils.getStatisticsParams();
                 this.render.statistics(year, month, organization);
             });
@@ -77,6 +56,7 @@ class EventBindingService {
         if (this.elements.statisticsMonthWrapper) {
             this.elements.statisticsMonthWrapper.addEventListener('change', (e) => {
                 const month = parseInt(e.detail.value);
+                if (isNaN(month)) return;
                 const { year, organization } = this.utils.getStatisticsParams();
                 this.render.statistics(year, month, organization);
             });
@@ -163,7 +143,7 @@ class EventBindingService {
     bindCalendarDropdownEvents() {
         if (this.elements.calendarYearWrapper) {
             this.elements.calendarYearWrapper.addEventListener('change', (e) => {
-                const year = parseInt(e.detail.value);
+                const year = parseInt(e.detail.value) || this.state.currentDate.getFullYear();
                 const month = this.state.currentDate.getMonth();
                 this.state.currentDate = new Date(year, month, 1);
                 this.render.calendar();
@@ -173,6 +153,7 @@ class EventBindingService {
         if (this.elements.calendarMonthWrapper) {
             this.elements.calendarMonthWrapper.addEventListener('change', (e) => {
                 const month = parseInt(e.detail.value);
+                if (isNaN(month)) return;
                 const year = this.state.currentDate.getFullYear();
                 this.state.currentDate = new Date(year, month, 1);
                 this.render.calendar();
@@ -184,24 +165,7 @@ class EventBindingService {
      * 刷新机构选项（当机构数据变化时调用）
      */
     refreshOrganizationOptions() {
-        if (!this.elements.statisticsOrganizationOptions) return;
-
-        this.elements.statisticsOrganizationOptions.innerHTML = '<div class="custom-option selected" data-value="">全部机构</div>';
-
-        this.state.organizations.forEach(org => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'custom-option';
-            optionDiv.dataset.value = org;
-            optionDiv.textContent = org;
-            this.elements.statisticsOrganizationOptions.appendChild(optionDiv);
-        });
-
-        if (this.elements.statisticsOrganizationTrigger) {
-            const triggerText = this.elements.statisticsOrganizationTrigger.querySelector('span');
-            if (triggerText) {
-                triggerText.textContent = '全部机构';
-            }
-        }
+        this.bindOrganizationOptionsEvent();
     }
 }
 

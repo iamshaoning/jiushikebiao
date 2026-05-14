@@ -17,9 +17,12 @@ class EventDispatcherService {
         }
         this.initialized = true;
 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            return false;
+        document.body.addEventListener('contextmenu', (e) => {
+            const calendarCell = e.target.closest('.calendar-cell');
+            const courseTag = e.target.closest('.course-tag-item');
+            if (calendarCell || courseTag) {
+                e.preventDefault();
+            }
         });
 
         document.body.addEventListener('click', (e) => {
@@ -27,9 +30,7 @@ class EventDispatcherService {
                 const container = e.target.closest('[data-action="toggle-time-picker"]');
                 if (container) {
                     const targetId = container.dataset.target;
-                    if (typeof registry.get('utils').toggleTimePicker === 'function') {
-                        registry.get('utils').toggleTimePicker(targetId);
-                    }
+                    registry.get('utils').toggleTimePicker(targetId);
                     return;
                 }
             }

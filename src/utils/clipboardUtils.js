@@ -10,9 +10,9 @@ const clipboardUtils = {
     copyCourses: (courses) => {
         if (courses.length > 0) {
             localStorage.setItem('copiedCourses', JSON.stringify(courses));
-            registry.get('notificationService')?.show(`已复制 ${courses.length} 节课程`, 'success');
+            registry.get('notificationService').show(`已复制 ${courses.length} 节课程`, 'success');
         } else {
-            registry.get('notificationService')?.show('该日期没有课程可复制', 'warning');
+            registry.get('notificationService').show('该日期没有课程可复制', 'warning');
         }
     },
     
@@ -23,7 +23,7 @@ const clipboardUtils = {
                 const courses = JSON.parse(copiedCourses);
                 
                 if (!courses || courses.length === 0) {
-                    registry.get('notificationService')?.show('没有可粘贴的课程', 'warning');
+                    registry.get('notificationService').show('没有可粘贴的课程', 'warning');
                     return;
                 }
                 
@@ -126,29 +126,29 @@ const clipboardUtils = {
                 
                 if (addedCount > 0) {
                     if (conflictCount > 0 && duplicateCount > 0) {
-                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴，${duplicateCount} 节课程已存在`, 'warning');
+                        registry.get('notificationService').show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴，${duplicateCount} 节课程已存在`, 'warning');
                     } else if (conflictCount > 0) {
-                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴`, 'warning');
+                        registry.get('notificationService').show(`成功粘贴 ${addedCount} 节课程，${conflictCount} 节课程未能粘贴`, 'warning');
                     } else if (duplicateCount > 0) {
-                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程，${duplicateCount} 节课程已存在`, 'warning');
+                        registry.get('notificationService').show(`成功粘贴 ${addedCount} 节课程，${duplicateCount} 节课程已存在`, 'warning');
                     } else {
-                        registry.get('notificationService')?.show(`成功粘贴 ${addedCount} 节课程`, 'success');
+                        registry.get('notificationService').show(`成功粘贴 ${addedCount} 节课程`, 'success');
                     }
                 } else if (conflictCount > 0 && duplicateCount > 0) {
-                    registry.get('notificationService')?.show('所有课程未能粘贴', 'warning');
+                    registry.get('notificationService').show('所有课程未能粘贴', 'warning');
                 } else if (conflictCount > 0) {
-                    registry.get('notificationService')?.show('所有课程未能粘贴', 'warning');
+                    registry.get('notificationService').show('所有课程未能粘贴', 'warning');
                 } else if (duplicateCount > 0) {
-                    registry.get('notificationService')?.show('所有课程已存在', 'warning');
+                    registry.get('notificationService').show('所有课程已存在', 'warning');
                 } else {
-                    registry.get('notificationService')?.show('没有可粘贴的课程', 'warning');
+                    registry.get('notificationService').show('没有可粘贴的课程', 'warning');
                 }
             } catch (error) {
                 console.error('数据异常，操作失败:', error);
-                registry.get('notificationService')?.show('数据异常，操作失败', 'error');
+                registry.get('notificationService').show('数据异常，操作失败', 'error');
             }
         } else {
-            registry.get('notificationService')?.show('没有可粘贴的课程', 'warning');
+            registry.get('notificationService').show('没有可粘贴的课程', 'warning');
         }
     }
 };

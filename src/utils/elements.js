@@ -64,32 +64,10 @@ const elements = {
     modalContent: null,
     nestedModalContainer: null,
     nestedModalContent: null,
-    courseDate: null,
-    courseStartTime: null,
-    courseEndTime: null,
-    courseDuration: null,
-    courseFee: null,
-    courseNote: null,
-    editCourseId: null,
-    editCourseForm: null,
-    saveCourse: null,
-    addCourseSave: null,
-    studentSelectionArea: null,
-    courseFeeContainer: null,
-    studentButtons: null,
-    studentName: null,
-    editStudentName: null,
-    editStudentId: null,
-    editStudentSave: null,
-    addStudentForm: null,
-    addStudentSave: null,
     durationDropdown: null,
     organizationTable: null,
     detailedTypeTableContainer: null,
-    studentDataContainer: null,
-    cancelConfirm: null,
-    acceptConfirm: null,
-    studentSort: null
+    studentDataContainer: null
 };
 
 function initElements() {
@@ -152,32 +130,10 @@ function initElements() {
     elements.modalContent = document.getElementById('modal-content');
     elements.nestedModalContainer = document.getElementById('nested-modal-container');
     elements.nestedModalContent = document.getElementById('nested-modal-content');
-    elements.courseDate = document.getElementById('course-date');
-    elements.courseStartTime = document.getElementById('course-start-time');
-    elements.courseEndTime = document.getElementById('course-end-time');
-    elements.courseDuration = document.getElementById('course-duration');
-    elements.courseFee = document.getElementById('course-fee');
-    elements.courseNote = document.getElementById('course-note');
-    elements.editCourseId = document.getElementById('edit-course-id');
-    elements.editCourseForm = document.getElementById('edit-course-form');
-    elements.saveCourse = document.getElementById('save-course');
-    elements.addCourseSave = document.getElementById('add-course-save');
-    elements.studentSelectionArea = document.getElementById('student-selection-area');
-    elements.courseFeeContainer = document.getElementById('course-fee-container');
-    elements.studentButtons = document.getElementById('student-buttons');
-    elements.studentName = document.getElementById('student-name');
-    elements.editStudentName = document.getElementById('edit-student-name');
-    elements.editStudentId = document.getElementById('edit-student-id');
-    elements.editStudentSave = document.getElementById('edit-student-save');
-    elements.addStudentForm = document.getElementById('add-student-form');
-    elements.addStudentSave = document.getElementById('add-student-save');
     elements.durationDropdown = document.getElementById('duration-dropdown');
     elements.organizationTable = document.getElementById('organization-table');
     elements.detailedTypeTableContainer = document.getElementById('detailed-type-table-container');
     elements.studentDataContainer = document.getElementById('student-data-container');
-    elements.cancelConfirm = document.getElementById('cancel-confirm');
-    elements.acceptConfirm = document.getElementById('accept-confirm');
-    elements.studentSort = document.getElementById('student-sort');
 
     return elements;
 }

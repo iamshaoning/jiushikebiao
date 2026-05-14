@@ -64,9 +64,9 @@ export class CalendarRenderService {
         const year = this.state.currentDate.getFullYear(), month = this.state.currentDate.getMonth();
         this.utils.safeSet(this.elements.calendarYearTrigger, 'textContent', `${year}年`);
         this.utils.safeSet(this.elements.calendarMonthTrigger, 'textContent', `${month + 1}月`);
-        if (typeof this.utils.setCustomSelectValue === 'function') { this.utils.setCustomSelectValue('calendar-year-wrapper', year); this.utils.setCustomSelectValue('calendar-month-wrapper', month); }
+        this.utils.setCustomSelectValue('calendar-year-wrapper', year); this.utils.setCustomSelectValue('calendar-month-wrapper', month);
 
-        document.querySelectorAll('.course-action-group').forEach(g => { g.style.transition = 'none'; g.remove(); });
+        document.querySelectorAll('.course-action-group, .cell-action-group').forEach(g => { g.style.transition = 'none'; g.remove(); });
 
         const coursesByDate = this._buildCoursesByDate();
         const fragment = document.createDocumentFragment();
@@ -116,7 +116,7 @@ export class CalendarRenderService {
     }
 
     getDateInfo(dateStr) {
-        if (typeof chineseDays === 'undefined') return null;
+        if (typeof chineseDays === 'undefined' || !chineseDays) return null;
         try {
             const dd = chineseDays.getDayDetail(dateStr);
             if (!dd) return null;
@@ -140,9 +140,8 @@ export class CalendarRenderService {
         let nm = dateInfo.name;
         if (nm.includes('劳动节')) nm = '劳动'; else if (nm.includes('国庆')) nm = '国庆'; else if (nm.includes('清明')) nm = '清明'; else if (nm.includes('中秋')) nm = '中秋';
         const styles = { '元旦':'background-color:rgba(239,68,68,0.2);color:var(--color-danger)', '春节':'background-color:var(--color-gold);color:var(--color-danger);font-weight:bold', '劳动':'background-color:transparent;color:var(--color-warning);border:2px solid var(--color-warning)', '清明':'background-color:rgba(59,130,246,0.2);color:#2563eb', '端午':'background-color:rgba(34,197,94,0.2);color:var(--color-success)', '中秋':'background-color:rgba(234,179,8,0.2);color:#b45309', '国庆':'background-color:var(--color-danger);color:var(--color-gold);font-weight:bold' };
-        const bdCls = '';
         const st = styles[nm] || 'background-color:var(--color-warning);color:black';
-        return `<span class="mr-2 px-2 h-6 ${bdCls} rounded items-center justify-center text-xs font-semibold inline-flex shadow-sm" style="${st}">${nm}</span>`;
+        return `<span class="mr-2 px-2 h-6 rounded items-center justify-center text-xs font-semibold inline-flex shadow-sm" style="${st}">${nm}</span>`;
     }
 
     createDayCell(day, dateStr, courses, isCurrentMonth, isToday) {

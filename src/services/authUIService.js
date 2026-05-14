@@ -15,8 +15,6 @@ class AuthUIService {
         this.modalService = modalService;
         this.serverStatusService = serverStatusService;
         this.loadSystemService = null;
-        this.originalSaveData = null;
-        this.originalLoadData = null;
     }
 
     /**
@@ -100,12 +98,26 @@ class AuthUIService {
     }
 
     /**
+     * 判断当前是否为登录标签页激活
+     */
+    isLoginTabActive() {
+        if (this.elements.loginBtnContainer && this.elements.registerBtnContainer) {
+            return this.elements.loginBtnContainer.style.opacity === '1';
+        }
+        const loginTab = document.getElementById('login-tab');
+        if (loginTab) {
+            return loginTab.style.borderColor !== 'transparent';
+        }
+        return true;
+    }
+
+    /**
      * 设置回车键支持
      */
     setupEnterKey() {
         const authEmail = document.getElementById('auth-email');
         const authPassword = document.getElementById('auth-password');
-        
+
         if (authEmail) {
             authEmail.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
@@ -114,13 +126,12 @@ class AuthUIService {
                 }
             });
         }
-        
+
         if (authPassword) {
             authPassword.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    const loginTab = document.getElementById('login-tab');
-                    if (loginTab && loginTab.classList.contains('border-blue-500')) {
+                    if (this.isLoginTabActive()) {
                         this.handleLogin();
                     } else {
                         const registerBtn = document.getElementById('register-submit');
@@ -196,7 +207,7 @@ class AuthUIService {
             this.setLoginButtonLoading(true);
 
             setTimeout(() => {
-                this.notificationService.success('试用模式登录成功');
+                this.notificationService.show('试用模式登录成功', 'success');
                 
                 // 试用模式下设置一个登录时间标记，防止被会话检查踢出去
                 localStorage.setItem('sb-login-time', Date.now().toString());
@@ -217,14 +228,14 @@ class AuthUIService {
 
         this.authService.login(email, password)
             .then((data) => {
-                this.notificationService.success('登录成功');
+                this.notificationService.show('登录成功', 'success');
                 requestAnimationFrame(() => {
                     this.hideAuthModal();
                     this.resetAuthUI();
                 });
             })
             .catch((error) => {
-                this.utils.handleError(error, '登录失败', true);
+                registry.get('errorHandlerService').handleError(error, '登录失败', true);
                 this.resetAuthUI();
             });
     }
@@ -237,13 +248,13 @@ class AuthUIService {
         const password = this.elements.authPassword ? this.elements.authPassword.value : '';
 
         if (password.length < 6) {
-            this.notificationService.error('密码应至少包含6个字符');
+            this.notificationService.show('密码应至少包含6个字符', 'error');
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            this.notificationService.error('邮箱无效');
+            this.notificationService.show('邮箱无效', 'error');
             return;
         }
 
@@ -252,7 +263,7 @@ class AuthUIService {
 
         this.authService.register(email, password)
             .then((data) => {
-                this.notificationService.info('注册成功！请前往邮箱验证', 8000);
+                this.notificationService.show('注册成功！请前往邮箱验证', 'info', 8000);
                 
                 document.getElementById('auth-email').value = '';
                 document.getElementById('auth-password').value = '';
@@ -266,7 +277,7 @@ class AuthUIService {
                 }, 500);
             })
             .catch((error) => {
-                this.utils.handleError(error, '注册失败', true);
+                registry.get('errorHandlerService').handleError(error, '注册失败', true);
                 this.resetAuthUI();
             });
     }
@@ -451,8 +462,9 @@ class AuthUIService {
             this.elements.logoutBtn.classList.add('hidden');
         }
 
-        if (this.originalSaveData) this.utils.saveData = this.originalSaveData;
-        if (this.originalLoadData) this.utils.loadData = this.originalLoadData;
+        if (this.loadSystemService) {
+            this.loadSystemService.exitTrialMode();
+        }
 
         const authModal = this.elements.authModal;
         if (authModal && authModal.style.display !== 'flex') {
@@ -522,11 +534,11 @@ class AuthUIService {
 
                         document.body.style.opacity = '1';
                         this.updateUIForUnauth();
-                        this.notificationService.success('登出成功');
+                        this.notificationService.show('登出成功', 'success');
                     })
                     .catch((error) => {
                         console.error('登出失败:', error);
-                        this.notificationService.error('登出失败: ' + error.message);
+                        this.notificationService.show('登出失败: ' + error.message, 'error');
                     });
             } else {
                 this.serverStatusService.stopMonitoring();
@@ -538,7 +550,7 @@ class AuthUIService {
 
                 document.body.style.opacity = '1';
                 this.updateUIForUnauth();
-                this.notificationService.success('登出成功');
+                this.notificationService.show('登出成功', 'success');
             }
         }, 'confirm');
     }
@@ -558,14 +570,6 @@ class AuthUIService {
     }
 
     /**
-     * 设置原始方法引用
-     */
-    setOriginalMethods(saveData, loadData) {
-        this.originalSaveData = saveData;
-        this.originalLoadData = loadData;
-    }
-
-    /**
      * 设置系统加载服务引用
      */
     setLoadSystemService(loadSystemService) {
@@ -576,18 +580,14 @@ class AuthUIService {
      * 进入试用模式
      */
     enterTrialMode() {
-        if (this.serverStatusService && this.serverStatusService.setTrialMode) {
-            this.serverStatusService.setTrialMode(true);
-        }
+        this.serverStatusService.setTrialMode(true);
     }
 
     /**
      * 退出试用模式
      */
     exitTrialMode() {
-        if (this.serverStatusService && this.serverStatusService.setTrialMode) {
-            this.serverStatusService.setTrialMode(false);
-        }
+        this.serverStatusService.setTrialMode(false);
     }
 }
 

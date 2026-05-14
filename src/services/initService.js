@@ -16,7 +16,6 @@ class InitService {
         this.loadSystemService = loadSystemService;
         this.elements = elements;
         this.authStateChangeTimer = null;
-        this.loginSnapshotCreated = false;
     }
 
     /**
@@ -75,7 +74,7 @@ class InitService {
                             }
                         }
                     } catch (error) {
-                        this.utils.handleError(error, '获取会话失败');
+                        registry.get('errorHandlerService').handleError(error, '获取会话失败');
                         if (retries > 0) {
                             return new Promise(resolve => {
                                 setTimeout(() => resolve(checkAuthStatus(retries - 1)), 300);
@@ -92,7 +91,9 @@ class InitService {
                 this.authUIService.updateUIForUnauth();
 
                 // 然后在后台进行认证检查，最多重试2次
-                checkAuthStatus();
+                checkAuthStatus().catch(error => {
+                    registry.get('errorHandlerService').handleError(error, '认证检查失败');
+                });
 
                 // 设置认证状态变化监听器
                 this._authSubscription = auth.onAuthStateChange((event, session) => {
@@ -123,7 +124,7 @@ class InitService {
                             }, 500); // 防抖
                         }
                     } catch (error) {
-                        this.utils.handleError(error, '处理认证状态变化失败');
+                        registry.get('errorHandlerService').handleError(error, '处理认证状态变化失败');
                     }
                 });
 
@@ -140,7 +141,7 @@ class InitService {
                             this._sessionCheckInterval = null;
                         }
                     } else {
-                        if (!this._sessionCheckInterval && !(this.serverStatusService && this.serverStatusService.isTrialMode)) {
+                        if (!this._sessionCheckInterval && !this.serverStatusService.isTrialMode) {
                             this._sessionCheckInterval = setInterval(() => {
                                 this._checkSession(auth);
                             }, 60 * 1000);
@@ -161,7 +162,7 @@ class InitService {
                 this.authUIService.updateUIForUnauth();
             }
         } catch (error) {
-            this.utils.handleError(error, '初始化应用失败', true);
+            registry.get('errorHandlerService').handleError(error, '初始化应用失败', true);
             // 即使初始化失败，也要显示登录框
             this.authUIService.updateUIForUnauth();
         }
@@ -175,48 +176,34 @@ class InitService {
         // 页面不可见时暂停检查
         if (document.hidden) return;
         // 如果是试用模式，跳过会话检查
-        if (this.serverStatusService && this.serverStatusService.isTrialMode) {
+        if (this.serverStatusService.isTrialMode) {
             return;
         }
 
-        try {
-            auth.getSession().then(({ data: { session } }) => {
-                if (!session) {
-                    // 清理会话相关数据
-                    localStorage.removeItem('sb-login-time');
-                    this.authUIService.updateUIForUnauth();
-                } else {
-                    // 检查登录时间，超过24小时自动登出
-                    const loginTime = localStorage.getItem('sb-login-time');
-                    if (loginTime) {
-                        const now = Date.now();
-                        const loginTimestamp = parseInt(loginTime);
-                        const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
-                        if (hoursSinceLogin > 24) {
-                            auth.signOut().then(() => {
-                                localStorage.removeItem('sb-login-time');
-                                this.authUIService.updateUIForUnauth();
-                                this.notificationService.show('登录时间已超过24小时，请重新登录', 'info');
-                            });
-                        }
+        auth.getSession().then(({ data: { session } }) => {
+            if (!session) {
+                localStorage.removeItem('sb-login-time');
+                this.authUIService.updateUIForUnauth();
+            } else {
+                const loginTime = localStorage.getItem('sb-login-time');
+                if (loginTime) {
+                    const now = Date.now();
+                    const loginTimestamp = parseInt(loginTime);
+                    const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
+                    if (hoursSinceLogin > 24) {
+                        auth.signOut().then(() => {
+                            localStorage.removeItem('sb-login-time');
+                            this.authUIService.updateUIForUnauth();
+                            this.notificationService.show('登录时间已超过24小时，请重新登录', 'info');
+                        }).catch(error => {
+                            registry.get('errorHandlerService').handleError(error, '自动登出失败');
+                        });
                     }
                 }
-            });
-        } catch (error) {
-            console.error('定期检查会话状态失败:', error);
-        }
-    }
-
-    /**
-     * 显示系统框架
-     */
-    showSystemFrame() {
-        const body = document.body;
-        if (body && this.elements.nav && this.elements.main) {
-            body.style.opacity = '1';
-            this.elements.nav.style.display = 'block';
-            this.elements.main.style.display = 'block';
-        }
+            }
+        }).catch(error => {
+            registry.get('errorHandlerService').handleError(error, '定期检查会话状态失败');
+        });
     }
 
     _cleanup() {

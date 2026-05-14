@@ -51,7 +51,7 @@ export class ColorPickerModal {
 
         this.modal.showNested(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
                 document.querySelectorAll('.color-picker-item:not([disabled])').forEach(btn => {
                     btn.addEventListener('click', () => {
                         if (onSelect && typeof onSelect === 'function') onSelect(btn.dataset.color);

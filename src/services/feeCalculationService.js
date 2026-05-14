@@ -13,7 +13,7 @@ export class FeeCalculationService {
      * 根据课程时长计算费用
      * @param {Object} utils - 工具函数对象
      */
-    calculateFee(utils) {
+    calculateFee() {
         // 检查当前课型
         const lessonType = document.querySelector('input[name="course-lesson-type"]:checked')?.value;
         if (lessonType !== '一对一') return; // 只对一对一课程计算费用
@@ -30,7 +30,7 @@ export class FeeCalculationService {
         // 使用 Math.max 确保分母永远至少是 1，防止 Infinity 错误
         const rawDuration = studentFees['一对一_duration'] || 120;
         const baseDuration = Math.max(1, rawDuration);
-        const actualDuration = utils.calculateDuration();
+        const actualDuration = this._getActualDuration();
 
         // 按学生预设时长的价格计算实际费用
         const calculatedFee = (baseFee / baseDuration) * actualDuration;
@@ -39,6 +39,17 @@ export class FeeCalculationService {
         if (feeInput) {
             feeInput.value = calculatedFee.toFixed(2);
         }
+    }
+
+    _getActualDuration() {
+        const durationInput = document.getElementById('course-duration');
+        if (durationInput) {
+            const inputValue = parseInt(durationInput.value);
+            if (!isNaN(inputValue) && inputValue > 0 && inputValue <= 240) {
+                return inputValue;
+            }
+        }
+        return 120; // 默认2小时
     }
 
     /**

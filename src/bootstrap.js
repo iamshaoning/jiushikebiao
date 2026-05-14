@@ -142,35 +142,13 @@ const utils = {
     timeToMins: dateUtils.timeToMins, formatLocalTime: dateUtils.formatLocalTime,
     getTimestamp: dateUtils.getTimestamp, calculateEndTime: dateUtils.calculateEndTime,
     calculateEndTimeFromDuration: dateUtils.calculateEndTimeFromDuration,
-    calculateDuration: dateUtils.calculateDuration, adjustTime: dateUtils.adjustTime,
+    calculateDuration: dateUtils.calculateDuration,
     createSnapshot: snapshotUtils.createSnapshot, getSnapshots: snapshotUtils.getSnapshots,
     restoreSnapshot: snapshotUtils.restoreSnapshot, deleteSnapshot: snapshotUtils.deleteSnapshot,
     startAutoSnapshotTimer: snapshotUtils.startAutoSnapshotTimer,
     copyCourses: clipboardUtils.copyCourses, pasteCourses: clipboardUtils.pasteCourses,
     saveData: stateUtils.saveData, syncToServer: stateUtils.syncToServer,
-
-    handleError: (error, context, showNotification = false) => {
-        const msg = typeof error === 'string' ? error : error.message || '未知错误';
-        if (import.meta.env?.DEV) console.error(`${context}:`, error);
-        if (showNotification) registry.get('notificationService').show(msg, 'error');
-    },
-    showModal: (modalElement, containerElement, displayType = 'flex') => {
-        if (!modalElement || !containerElement) return;
-        modalElement.style.pointerEvents = 'auto'; modalElement.style.opacity = '0';
-        containerElement.classList.remove('scale-100', 'opacity-100'); containerElement.classList.add('scale-95', 'opacity-0');
-        modalElement.style.display = displayType; modalElement.offsetHeight; modalElement.style.opacity = '1';
-        containerElement.classList.remove('scale-95', 'opacity-0'); containerElement.classList.add('scale-100', 'opacity-100');
-    },
-    hideModal: (modalElement, containerElement, animationDuration = 300) => {
-        if (!modalElement || !containerElement) return;
-        modalElement.style.opacity = '0'; containerElement.classList.remove('scale-100', 'opacity-100');
-        containerElement.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => { modalElement.style.display = 'none'; }, animationDuration);
-    },
-    withTimeout: async (promiseFn, timeout = 10000, timeoutMessage = '操作超时') => {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error(timeoutMessage)), timeout));
-        return Promise.race([promiseFn(), timeoutPromise]);
-    },
+    withTimeout: coreUtils.withTimeout,
     generateColor, removeColorAssignment, reassignColors, getUsedColors, setColor,
     getColorPalette, initColorsFromState, isLightColor,
     compareLocalAndServerData: async () => {
@@ -189,7 +167,7 @@ const utils = {
     stopServerStatusMonitor: () => registry.get('serverStatusService').stopMonitoring(),
 
     checkTimeConflict: (newCourse) => conflictCheckService.checkTimeConflict(newCourse, utils),
-    calculateFee: () => feeCalculationService.calculateFee(utils),
+    calculateFee: () => feeCalculationService.calculateFee(),
     toggleTimePicker: datePickerService.toggleTimePicker.bind(datePickerService),
     toggleDatePicker: datePickerService.toggleDatePicker.bind(datePickerService),
     closeAllSelectDropdowns: customSelectService.closeAllSelectDropdowns.bind(customSelectService),
@@ -204,9 +182,9 @@ const utils = {
     updateStateFromData: (data, useDefaults = true) => registry.get('stateService').updateStateFromData(data, useDefaults),
     refreshAllViews: viewRefreshService.refreshAllViews.bind(viewRefreshService),
     getCourseFee: function(course, student, index) { return feeCalculationService.getCourseFee(course, student, index); },
-    debouncedSaveData: null, debouncedSyncToServer: null,
+    debouncedSaveData: null,
     loadData: null,
-    initDebouncedSave: function() { this.debouncedSaveData = this.debounce(this.saveData, 2000); this.debouncedSyncToServer = this.debounce(this.syncToServer, 3000); },
+    initDebouncedSave: function() { this.debouncedSaveData = this.debounce(this.saveData, 2000); },
     exportStatisticsData: (year, month, organization = '') => registry.get('exportService').exportStatisticsData(year, month, organization),
 };
 
@@ -224,7 +202,6 @@ registry.set('loadSystemService', loadSystemService);
 
 const authUIService = new AuthUIService(elements, utils, notificationService, authService, modalService, serverStatusService);
 registry.set('authUIService', authUIService);
-authUIService.setOriginalMethods(utils.saveData, utils.loadData);
 authUIService.setLoadSystemService(loadSystemService);
 
 loadSystemService.init(state, elements, utils, render, themeService, authUIService, serverStatusService, notificationService);

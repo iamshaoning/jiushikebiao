@@ -123,7 +123,7 @@ class DatePickerService {
             
             const currentPage = window.location.hash.slice(1) || '/';
             if (currentPage === '/') {
-                if (typeof registry.get('render')?.calendar === 'function') {
+                if (typeof registry.get('render').calendar === 'function') {
                     registry.get('render').calendar();
                     setTimeout(updateCalendarSelection, 100);
                 }

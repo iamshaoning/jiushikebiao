@@ -85,7 +85,7 @@ const dateUtils = {
                     endTimeInput.value = '00:00';
                     
                     // 显示通知
-                    if (typeof registry.get('notificationService') !== 'undefined') {
+                    if (registry.get('notificationService')) {
                         registry.get('notificationService').show('只能在当天排课', 'warning');
                     }
                     
@@ -102,11 +102,9 @@ const dateUtils = {
                 }
                 
                 // 触发费用计算
-                setTimeout(() => {
-                    if (typeof registry.get('utils')?.calculateFee === 'function') {
-                        registry.get('utils').calculateFee();
-                    }
-                }, 10);
+                if (registry.get('utils')?.calculateFee) {
+                    registry.get('utils').calculateFee();
+                }
             }
         }
     },
@@ -137,44 +135,6 @@ const dateUtils = {
             }
         }
         return 120; // 默认2小时
-    },
-    
-    adjustTime: (timeId, minutesToAdd) => {
-        const timeInput = document.getElementById(timeId);
-        if (timeInput) {
-            const time = timeInput.value;
-            if (time) {
-                let [hours, minutes] = time.split(':').map(Number);
-                
-                // 处理00:00（表示24:00）的情况
-                if (time === '00:00') {
-                    hours = 24;
-                    minutes = 0;
-                }
-                
-                let totalMinutes = hours * 60 + minutes + minutesToAdd;
-                
-                // 限制总分钟数在有效范围内（0-1440）
-                totalMinutes = Math.max(0, Math.min(totalMinutes, 1440));
-                
-                if (totalMinutes === 1440) {
-                    // 达到24:00，使用00:00表示
-                    timeInput.value = '00:00';
-                } else {
-                    const endHours = Math.floor(totalMinutes / 60);
-                    const endMinutes = totalMinutes % 60;
-                    const formattedTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-                    timeInput.value = formattedTime;
-                }
-                
-                // 触发费用计算
-                setTimeout(() => {
-                    if (typeof registry.get('utils')?.calculateFee === 'function') {
-                        registry.get('utils').calculateFee();
-                    }
-                }, 10);
-            }
-        }
     }
 };
 

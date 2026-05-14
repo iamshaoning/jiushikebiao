@@ -87,7 +87,7 @@ class ThemeService {
      * 重新渲染统计页面图表
      */
     reRenderStatistics() {
-        if (typeof this.render !== 'undefined' && this.render.statistics) {
+        if (this.render?.statistics) {
             const currentPage = document.querySelector('.page.active');
             if (currentPage === this.elements.statisticsPage) {
                 const { year, month, organization } = this.utils.getStatisticsParams();

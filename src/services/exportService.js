@@ -51,6 +51,7 @@ class ExportService {
 
         let totalCourseCount = 0, totalFee = 0, totalStudents = 0;
         if (sections.org.length > 0) {
+            // 机构详细数据行格式: 日期=机构名称, 时间=课节数, 学生姓名=课时费, 所属机构=学生数, 年级=占比
             totalCourseCount = sections.org.reduce((s, r) => s + (parseInt(r.时间) || 0), 0);
             totalFee = sections.org.reduce((s, r) => s + (parseFloat(r.学生姓名) || 0), 0);
             totalStudents = sections.org.reduce((s, r) => s + (parseInt(r.所属机构) || 0), 0);
@@ -116,7 +117,7 @@ class ExportService {
                     const student = state.students.find(s => s.id === studentId);
                     if (!student) return;
                     if (organizationFilter && student.organization !== organizationFilter) return;
-                    const studentFee = registry.get('utils')?.getCourseFee ? registry.get('utils').getCourseFee(course, student, index) : (course.fees?.[index] ?? student?.fees?.['一对一'] ?? 0);
+                    const studentFee = registry.get('utils').getCourseFee ? registry.get('utils').getCourseFee(course, student, index) : (course.fees?.[index] ?? student?.fees?.['一对一'] ?? 0);
                     exportData.push({
                         日期: course.date, 时间: `${course.startTime} - ${endTime}`,
                         学生姓名: student.name, 所属机构: student.organization,
@@ -165,14 +166,14 @@ class ExportService {
 
     exportStatisticsData(year, month, organization = '') {
         const state = registry.get('state'), ns = this.notificationService || registry.get('notificationService');
-        const calc = registry.get('statisticsCalculatorService');
+        const statisticsCalc = registry.get('statisticsCalculatorService');
         const utils = registry.get('utils');
 
         const filteredCourses = state.courses.filter(c => { const cd = new Date(c.date); return cd.getFullYear() === year && cd.getMonth() === month; });
         const exportData = this._buildDetailRows(filteredCourses, state, organization);
 
-        if (calc && utils) {
-            const stats = calc.calculateStatistics(year, month, organization, utils);
+        if (statisticsCalc && utils) {
+            const stats = statisticsCalc.calculateStatistics(year, month, organization, utils);
 
             const organizationStats = {};
             Object.entries(stats.byOrganization).forEach(([org, s]) => {

@@ -48,7 +48,7 @@ export class ManagementModal {
                         </div>
                     </div>
                     <div class="flex justify-end mt-6">
-                        <button type="button" class="close-modal text-white px-4 py-2 rounded-lg" style="background-color: var(--color-secondary);">关闭</button>
+                        <button type="button" class="close-modal text-white px-4 py-2 rounded-lg" style="background-color: var(--color-danger);">关闭</button>
                     </div>
                 </div>
             </div>
@@ -58,7 +58,7 @@ export class ManagementModal {
 
         this.modal.show(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
 
                 document.querySelectorAll(`.${itemName}-name.color-picker-trigger`).forEach(trigger => {
                     trigger.addEventListener('click', (e) => {

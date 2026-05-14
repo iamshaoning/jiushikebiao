@@ -44,7 +44,7 @@ class TimelineService {
      */
     async reloadTimelineForUser() {
         // 检查是否处于试用模式，如果是则清空时间轴
-        const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
+        const isTrialMode = registry.get('serverStatusService').isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
             this.timeline = [];
@@ -166,7 +166,7 @@ class TimelineService {
     generateCourseTag(course, changes = []) {
         if (!course) return '';
 
-        const escapeHtml = (str) => registry.get('utils')?.escapeHtml?.(str) || '';
+        const escapeHtml = (str) => registry.get('utils').escapeHtml(str) || '';
 
         const primaryColor = course.colors && course.colors[0] ? course.colors[0] : 'var(--color-secondary)';
         const studentNames = course.studentNames || [];
@@ -229,7 +229,7 @@ class TimelineService {
      */
     async ensureUserInitialized() {
         // 检查是否处于试用模式，如果是则不初始化时间轴
-        const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
+        const isTrialMode = registry.get('serverStatusService').isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
             this.timeline = [];
@@ -483,14 +483,16 @@ class TimelineService {
     undoUpdateCourse(action) {
         if (!registry.get('state')) return false;
 
+        let found = false;
         registry.get('setState')(draft => {
             const index = draft.courses.findIndex(c => c.id === action.newCourse.id);
             if (index !== -1) {
                 draft.courses[index] = { ...action.oldCourse };
+                found = true;
             }
         }, ['courses', 'calendar']);
 
-        return true;
+        return found;
     }
 
     /**
@@ -592,14 +594,16 @@ class TimelineService {
     redoUpdateCourse(action) {
         if (!registry.get('state')) return false;
 
+        let found = false;
         registry.get('setState')(draft => {
             const index = draft.courses.findIndex(c => c.id === action.oldCourse.id);
             if (index !== -1) {
                 draft.courses[index] = { ...action.newCourse };
+                found = true;
             }
         }, ['courses', 'calendar']);
 
-        return true;
+        return found;
     }
 
     /**

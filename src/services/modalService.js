@@ -71,8 +71,10 @@ class ModalService {
 
         if (this.nestedContainer && this.nestedContainer.style.display === 'flex') this.hideNested();
 
-        this.eventListeners.forEach(({ element, type, listener }) => element.removeEventListener(type, listener));
+        // 清理之前的事件监听器，避免重复绑定
+        this.eventListeners.forEach(({ element, type, listener }) => { if (element) element.removeEventListener(type, listener); });
         this.eventListeners = [];
+        if (this._boundKeydownHandler) { document.removeEventListener('keydown', this._boundKeydownHandler); this._boundKeydownHandler = null; }
 
         if (this.setTimeoutId) { clearTimeout(this.setTimeoutId); this.setTimeoutId = null; }
         if (this._hideTimer) { clearTimeout(this._hideTimer); this._hideTimer = null; }
@@ -98,18 +100,19 @@ class ModalService {
         });
 
         const actionListener = (e) => {
+            if (e.target.closest('.close-modal')) { this.hide(); return; }
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const action = btn.dataset.action;
             switch (action) {
-                case 'toggle-date-picker': if (typeof registry.get('utils').toggleDatePicker === 'function') registry.get('utils').toggleDatePicker(btn.dataset.target); break;
-                case 'change-date-month': if (typeof registry.get('utils').changeDateMonth === 'function') registry.get('utils').changeDateMonth(btn.dataset.target, parseInt(btn.dataset.delta)); break;
-                case 'adjust-time': if (typeof registry.get('utils').adjustTime === 'function') registry.get('utils').adjustTime(btn.dataset.target, parseInt(btn.dataset.delta)); break;
+                case 'toggle-date-picker': registry.get('utils').toggleDatePicker(btn.dataset.target); break;
+                case 'change-date-month': registry.get('utils').changeDateMonth(btn.dataset.target, parseInt(btn.dataset.delta)); break;
                 case 'close-picker': { const el = document.getElementById(btn.dataset.target); registry.get('utils').safeAddClass(el, 'hidden'); break; }
-                case 'toggle-time-picker': if (typeof registry.get('utils').toggleTimePicker === 'function') registry.get('utils').toggleTimePicker(btn.dataset.target); break;
+                case 'toggle-time-picker': registry.get('utils').toggleTimePicker(btn.dataset.target); break;
                 case 'select-time-hour': this._handleTimeSelect(btn, 'hour'); break;
                 case 'select-time-minute': this._handleTimeSelect(btn, 'minute'); break;
                 case 'select-duration': this._handleDurationSelect(btn); break;
+                case 'close-modal': this.hide(); break;
                 default: break;
             }
         };
@@ -146,8 +149,8 @@ class ModalService {
         if (btn.dataset.inputId === 'course-start-time') {
             registry.get('utils').safeAddClass(document.getElementById('start-time-container'), 'hidden');
         }
-        if (typeof registry.get('utils').calculateFee === 'function') registry.get('utils').calculateFee();
-        if (btn.dataset.inputId === 'course-start-time' && typeof registry.get('utils').calculateEndTime === 'function') {
+        registry.get('utils').calculateFee();
+        if (btn.dataset.inputId === 'course-start-time') {
             const d = document.getElementById('course-duration');
             registry.get('utils').calculateEndTime('course-start-time', 'course-end-time', d ? parseInt(d.value) || 120 : 120);
         }
@@ -158,8 +161,8 @@ class ModalService {
         if (!d) return;
         d.value = btn.dataset.duration;
         registry.get('utils').safeAddClass(document.getElementById('duration-dropdown'), 'hidden');
-        if (typeof registry.get('utils').calculateEndTime === 'function') registry.get('utils').calculateEndTime('course-start-time', 'course-end-time', parseInt(btn.dataset.duration));
-        if (typeof registry.get('utils').calculateFee === 'function') registry.get('utils').calculateFee();
+        registry.get('utils').calculateEndTime('course-start-time', 'course-end-time', parseInt(btn.dataset.duration));
+        registry.get('utils').calculateFee();
     }
 
     handleKeydown(e) { if (e.key === 'Escape') this.hide(); }
@@ -191,6 +194,12 @@ class ModalService {
     showNested(content, options = {}) {
         if (this._nestedHideTimer) { clearTimeout(this._nestedHideTimer); this._nestedHideTimer = null; }
         if (!this.nestedContainer || !this.nestedContent) this.init();
+
+        // 移除之前可能存在的事件监听器，避免重复绑定
+        if (this.nestedContainer._keydownHandler) {
+            document.removeEventListener('keydown', this.nestedContainer._keydownHandler);
+            this.nestedContainer._keydownHandler = null;
+        }
 
         document.body.style.position = 'fixed';
         document.body.style.top = `-${window.scrollY}px`;
@@ -246,11 +255,12 @@ class ModalService {
 
         this.show(content, {
             onShow: () => {
-                if (registry.get('lucide')) lucide.createIcons();
-                const cancelHandler = () => this.hide();
-                const acceptHandler = () => { onConfirm(); this.hide(); };
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
                 const cancelBtn = document.getElementById('cancel-confirm');
                 const acceptBtn = document.getElementById('accept-confirm');
+                if (!cancelBtn || !acceptBtn) return;
+                const cancelHandler = () => this.hide();
+                const acceptHandler = () => { onConfirm(); this.hide(); };
                 cancelBtn.addEventListener('click', cancelHandler);
                 acceptBtn.addEventListener('click', acceptHandler);
                 this.eventListeners.push({ element: cancelBtn, type: 'click', listener: cancelHandler }, { element: acceptBtn, type: 'click', listener: acceptHandler });

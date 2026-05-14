@@ -76,18 +76,7 @@ export class ListRenderService {
             this._lastSearchTerm = searchTerm;
         } else {
             // 使用缓存的结果
-            filteredStudents = searchTerm ? 
-                this.state.students.filter(student => {
-                    const lowerSearchTerm = searchTerm.toLowerCase();
-                    const nameMatch = student.name && student.name.toLowerCase().includes(lowerSearchTerm);
-                    const orgMatch = student.organization && student.organization.toLowerCase().includes(lowerSearchTerm);
-                    return nameMatch || orgMatch;
-                }).sort((a, b) => {
-                    const nameA = a.name || '';
-                    const nameB = b.name || '';
-                    return nameA.localeCompare(nameB);
-                }) : 
-                this._cachedStudents;
+            filteredStudents = this._cachedStudents;
         }
         
         // 渲染学生列表
@@ -110,7 +99,8 @@ export class ListRenderService {
             `;
             return;
         }
-        if (typeof VirtualList !== 'undefined' && filteredStudents.length > 50) {
+        const VirtualList = registry.get('VirtualList');
+        if (VirtualList && filteredStudents.length > 50) {
             // 对于大型列表使用虚拟滚动 — 不能在 tbody 中使用 div 定位，改用独立容器
             const tableEl = studentsList.closest('table');
             if (tableEl) tableEl.style.display = 'none';
@@ -208,7 +198,7 @@ export class ListRenderService {
 
         // 重新初始化 Lucide 图标
         if (registry.get('lucide')) {
-            lucide.createIcons();
+            registry.get('lucide').createIcons();
         }
     }
 

@@ -1,8 +1,7 @@
+@import url("https://unpkg.com/@chinese-fonts/lxgwwenkaibright@latest/dist/LXGWBright-Medium/result.css");
 /* ------------------------------
    1. 字体引入与动画定义
    ------------------------------ */
-
-@import url("https://unpkg.com/@chinese-fonts/lxgwwenkaibright@latest/dist/LXGWBright-Medium/result.css");
 
 @font-face {
     font-family: 'MaoZedong';

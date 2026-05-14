@@ -58,42 +58,42 @@ export class SnapshotModal {
         const content = `<div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);"><div class="p-6"><div class="mb-6"><h3 class="text-lg font-semibold" style="color: var(--text-primary);">快照管理</h3></div><div class="max-h-[75vh] overflow-y-auto">${generateSnapshotHtml(loginSnapshots, '登录快照', 'login', false)}${generateSnapshotHtml(autoSnapshots, '自动快照 (每15分钟)', 'auto', false)}${generateManualHtml(manualSnapshots)}</div></div></div>`;
 
         this.modal.show(content, {
-            onShow: () => { if (registry.get('lucide')) lucide.createIcons(); }
+            onShow: () => {
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
+
+                document.querySelectorAll('[data-action="create-manual-snapshot"]').forEach(div => {
+                    div.addEventListener('click', async () => {
+                        await registry.get('utils').createSnapshot('manual');
+                        setTimeout(() => this.show(), 500);
+                    });
+                });
+
+                document.querySelectorAll('.restore-snapshot').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const snapshotId = e.target.getAttribute('data-id');
+                        this.modal.showConfirm('确定要恢复此快照吗？<br>这将覆盖当前数据。', async () => {
+                            await registry.get('utils').restoreSnapshot(snapshotId);
+                            this.modal.hide();
+                        }, 'warning');
+                    });
+                });
+
+                document.querySelectorAll('.overwrite-snapshot').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const snapshotId = e.target.getAttribute('data-id');
+                        this.modal.showConfirm('确定要覆盖此快照吗？', async () => {
+                            try {
+                                await registry.get('utils').deleteSnapshot(snapshotId, false);
+                                await registry.get('utils').createSnapshot('manual', false);
+                                registry.get('notificationService').show('快照覆盖成功', 'success');
+                                setTimeout(() => this.show(), 500);
+                            } catch (error) {
+                                registry.get('notificationService').show('快照覆盖失败', 'error');
+                            }
+                        }, 'warning');
+                    });
+                });
+            }
         });
-
-        setTimeout(() => {
-            document.querySelectorAll('[data-action="create-manual-snapshot"]').forEach(div => {
-                div.addEventListener('click', async () => {
-                    await registry.get('utils').createSnapshot('manual');
-                    setTimeout(() => this.show(), 500);
-                });
-            });
-
-            document.querySelectorAll('.restore-snapshot').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const snapshotId = e.target.getAttribute('data-id');
-                    this.modal.showConfirm('确定要恢复此快照吗？<br>这将覆盖当前数据。', async () => {
-                        await registry.get('utils').restoreSnapshot(snapshotId);
-                        this.modal.hide();
-                    }, 'warning');
-                });
-            });
-
-            document.querySelectorAll('.overwrite-snapshot').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const snapshotId = e.target.getAttribute('data-id');
-                    this.modal.showConfirm('确定要覆盖此快照吗？', async () => {
-                        try {
-                            await registry.get('utils').deleteSnapshot(snapshotId, false);
-                            await registry.get('utils').createSnapshot('manual', false);
-                            registry.get('notificationService').show('快照覆盖成功', 'success');
-                            setTimeout(() => this.show(), 500);
-                        } catch (error) {
-                            registry.get('notificationService').show('快照覆盖失败', 'error');
-                        }
-                    }, 'warning');
-                });
-            });
-        }, 0);
     }
 }

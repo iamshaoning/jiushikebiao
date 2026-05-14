@@ -132,9 +132,7 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                     
                     if (isEdit) {
                         setTimeout(() => {
-                            if (typeof registry.get('utils').calculateFee === 'function') {
-                                registry.get('utils').calculateFee();
-                            }
+                            registry.get('utils').calculateFee();
                         }, 10);
                     } else {
                         const durationInput = document.getElementById('course-duration');
@@ -142,7 +140,8 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                         const studentFees = registry.get('state').students.find(s => s.id === btn.dataset.id)?.fees || {};
                         const studentBaseFee = studentFees['一对一'] || parseFloat(btn.dataset.fee) || 0;
                         const studentBaseDuration = studentFees['一对一_duration'] || 120;
-                        const calculatedFee = (studentBaseFee / studentBaseDuration) * actualDuration;
+                        const divisor = Math.max(1, studentBaseDuration || 120);
+                        const calculatedFee = (studentBaseFee / divisor) * actualDuration;
                         const feeInput = document.getElementById('course-fee');
                         if (feeInput) {
                             feeInput.value = calculatedFee.toFixed(2);
@@ -165,13 +164,9 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                     });
                     
                     if (!organizationMatch) {
-                        if (typeof registry.get('notificationService') !== 'undefined') {
-                            registry.get('notificationService').show('多人课只能选择同一机构的学生', 'warning');
-                        }
+                        registry.get('notificationService').show('多人课只能选择同一机构的学生', 'warning');
                     } else if (!gradeMatch) {
-                        if (typeof registry.get('notificationService') !== 'undefined') {
-                            registry.get('notificationService').show('多人课只能选择同一年级的学生', 'warning');
-                        }
+                        registry.get('notificationService').show('多人课只能选择同一年级的学生', 'warning');
                     } else {
                         btn.classList.toggle('selected');
                         btn.classList.toggle('bg-opacity-40');
@@ -229,12 +224,10 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                 return;
             }
             const startTime = document.getElementById('course-start-time')?.value;
-            if (startTime && typeof registry.get('utils').calculateEndTime === 'function') {
+            if (startTime) {
                 registry.get('utils').calculateEndTime('course-start-time', 'course-end-time', duration);
             }
-            if (typeof registry.get('utils').calculateFee === 'function') {
-                registry.get('utils').calculateFee();
-            }
+            registry.get('utils').calculateFee();
         });
     }
     
