@@ -34,29 +34,20 @@ class DataService {
             return true;
         }
 
-        const localStats = {
-            students: localData?.students?.length || 0,
-            courses: localData?.courses?.length || 0,
-            organizations: localData?.organizations?.length || 0,
-            grades: localData?.grades?.length || 0
-        };
-
-        const serverStats = {
-            students: serverData?.students?.length || 0,
-            courses: serverData?.courses?.length || 0,
-            organizations: serverData?.organizations?.length || 0,
-            grades: serverData?.grades?.length || 0
-        };
-
-        if (localStats.students !== serverStats.students) return true;
-        if (localStats.courses !== serverStats.courses) return true;
-        if (localStats.organizations !== serverStats.organizations) return true;
-        if (localStats.grades !== serverStats.grades) return true;
+        if (localData.students?.length !== serverData.students?.length) return true;
+        if (localData.courses?.length !== serverData.courses?.length) return true;
+        if (localData.organizations?.length !== serverData.organizations?.length) return true;
+        if (localData.grades?.length !== serverData.grades?.length) return true;
 
         if (JSON.stringify(localData.organizationColors) !== JSON.stringify(serverData.organizationColors)) return true;
         if (JSON.stringify(localData.gradeColors) !== JSON.stringify(serverData.gradeColors)) return true;
 
         if (localData.lastupdated !== serverData.lastupdated) return true;
+
+        if (JSON.stringify(localData.students) !== JSON.stringify(serverData.students)) return true;
+        if (JSON.stringify(localData.courses) !== JSON.stringify(serverData.courses)) return true;
+        if (JSON.stringify(localData.organizations) !== JSON.stringify(serverData.organizations)) return true;
+        if (JSON.stringify(localData.grades) !== JSON.stringify(serverData.grades)) return true;
 
         return false;
     }

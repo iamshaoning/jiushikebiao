@@ -75,21 +75,16 @@ class EventBindingService {
      * 绑定时间轴按钮事件
      */
     bindTimelineButtonEvent() {
-        const timelineBtn = document.getElementById('timeline-btn');
-        if (timelineBtn) {
-            timelineBtn.addEventListener('click', () => {
+        if (this.elements.timelineBtn) {
+            this.elements.timelineBtn.addEventListener('click', () => {
                 this.modalService.showTimeline();
             });
         }
     }
 
-    /**
-     * 绑定快照按钮事件
-     */
     bindSnapshotButtonEvent() {
-        const snapshotBtn = document.getElementById('snapshot-btn');
-        if (snapshotBtn) {
-            snapshotBtn.addEventListener('click', () => {
+        if (this.elements.snapshotBtn) {
+            this.elements.snapshotBtn.addEventListener('click', () => {
                 this.modalService.showSnapshotManager();
             });
         }
@@ -101,9 +96,15 @@ class EventBindingService {
     bindSyncStatusEvent() {
         if (!this.elements.syncStatus) return;
 
-        this.elements.syncStatus.addEventListener('click', () => {
+        this.elements.syncStatus.addEventListener('click', async () => {
             if (this.utils.compareLocalAndServerData) {
-                this.utils.compareLocalAndServerData();
+                const hasDiff = await this.utils.compareLocalAndServerData();
+                if (hasDiff) {
+                    this.notificationService.show('本地数据与服务器数据存在差异，已开始同步', 'info');
+                    await this.utils.syncToServer();
+                } else {
+                    this.notificationService.show('数据已是最新状态', 'success');
+                }
             } else {
                 this.notificationService.show('数据比较服务未初始化', 'warning');
             }

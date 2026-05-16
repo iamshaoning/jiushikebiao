@@ -7,10 +7,14 @@
 import { registry } from '../core/registry.js';
 
 const dateUtils = {
-    timeToMins: (timeStr, duration = 0) => {
-        if (!timeStr) return 0;
-        const [h, m] = timeStr.split(':').map(Number);
-        return h * 60 + m + Number(duration);
+    timeToMins: (timeStr) => {
+        if (!timeStr || typeof timeStr !== 'string') return 0;
+        const parts = timeStr.split(':');
+        if (parts.length < 2) return 0;
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        if (isNaN(h) || isNaN(m)) return 0;
+        return h * 60 + m;
     },
     
     formatLocalTime: (timeInput) => {
@@ -41,6 +45,16 @@ const dateUtils = {
         });
     },
     
+    formatDate: (date) => {
+        if (!date) return '';
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '';
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    },
+    
     getTimestamp: (timestamp) => {
         if (!timestamp) return 0;
         let date;
@@ -51,8 +65,7 @@ const dateUtils = {
             if (timestamp.includes(' ') && timestamp.includes(':') && timestamp.includes('/')) {
                 // 本地时间格式，解析为本地时间
                 date = new Date(timestamp);
-            } else if (timestamp.includes('T') && !timestamp.endsWith('Z')) {
-                // 如果没有Z标识，手动添加，确保解析为UTC时间
+            } else if (timestamp.includes('T') && !timestamp.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(timestamp)) {
                 date = new Date(timestamp + 'Z');
             } else {
                 // 其他格式，尝试解析
@@ -74,34 +87,21 @@ const dateUtils = {
             const startTime = startTimeInput.value;
             if (startTime) {
                 const [hours, minutes] = startTime.split(':').map(Number);
-                const totalMinutes = hours * 60 + minutes + minutesToAdd;
-                
-                // 限制结束时间不超过24:00
-                const maxMinutes = 24 * 60; // 1440分钟
+                const totalMinutes = hours * 60 + minutes + (minutesToAdd || 0);
+                const maxMinutes = 24 * 60;
                 const finalMinutes = Math.min(totalMinutes, maxMinutes);
                 
-                if (finalMinutes === maxMinutes) {
-                    // 达到24:00，使用00:00表示
-                    endTimeInput.value = '00:00';
-                    
-                    // 显示通知
+                const formatted = dateUtils.calculateEndTimeFromDuration(startTime, (minutesToAdd || 0));
+                endTimeInput.value = formatted;
+                
+                if (finalMinutes === maxMinutes && durationInput) {
+                    const availableDuration = maxMinutes - (hours * 60 + minutes);
+                    durationInput.value = availableDuration;
                     if (registry.get('notificationService')) {
                         registry.get('notificationService').show('只能在当天排课', 'warning');
                     }
-                    
-                    // 计算可设置的时长并自动填写
-                    if (durationInput) {
-                        const availableDuration = maxMinutes - (hours * 60 + minutes);
-                        durationInput.value = availableDuration;
-                    }
-                } else {
-                    const endHours = Math.floor(finalMinutes / 60);
-                    const endMinutes = finalMinutes % 60;
-                    const formattedEndTime = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-                    endTimeInput.value = formattedEndTime;
                 }
                 
-                // 触发费用计算
                 if (registry.get('utils')?.calculateFee) {
                     registry.get('utils').calculateFee();
                 }
@@ -110,9 +110,14 @@ const dateUtils = {
     },
     
     calculateEndTimeFromDuration: (startTime, duration) => {
-        if (!startTime || !duration) return '00:00';
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + duration;
+        if (!startTime || typeof startTime !== 'string') return '';
+        const actualDuration = duration ?? 60;
+        const parts = startTime.split(':');
+        if (parts.length < 2) return '';
+        const hours = parseInt(parts[0], 10);
+        const minutes = parseInt(parts[1], 10);
+        if (isNaN(hours) || isNaN(minutes)) return '';
+        const totalMinutes = hours * 60 + minutes + actualDuration;
         const maxMinutes = 24 * 60; // 1440分钟
         const finalMinutes = Math.min(totalMinutes, maxMinutes);
         
@@ -126,7 +131,6 @@ const dateUtils = {
     },
     
     calculateDuration: (startTime, endTime) => {
-        // 优先从课程时长输入框获取（如果有的话）
         const durationInput = document.getElementById('course-duration');
         if (durationInput) {
             const inputValue = parseInt(durationInput.value);
@@ -134,7 +138,12 @@ const dateUtils = {
                 return inputValue;
             }
         }
-        return 120; // 默认2小时
+        if (startTime && endTime) {
+            const startMins = dateUtils.timeToMins(startTime);
+            const endMins = dateUtils.timeToMins(endTime);
+            if (endMins > startMins) return endMins - startMins;
+        }
+        return 120;
     }
 };
 

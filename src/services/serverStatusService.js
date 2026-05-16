@@ -218,18 +218,15 @@ class ServerStatusService {
      * @param {string} status - 服务器状态：online(绿色-正常), offline(红色-断开), loggedout(灰色-未登录), trial(试用模式)
      */
     updateServerStatus(status) {
-        // 保存之前的状态
         const oldStatus = this.previousStatus;
         this.previousStatus = status;
 
-        // 更新UI
-        const elements = {
-            syncStatus: document.getElementById('sync-status'),
-            syncIcon: document.getElementById('sync-icon'),
-            syncTitle: document.getElementById('sync-title')
-        };
+        const elements = registry.get('elements');
+        const syncStatus = elements?.syncStatus;
+        const syncIcon = elements?.syncIcon;
+        const syncTitle = elements?.syncTitle;
 
-        if (elements.syncStatus && elements.syncIcon) {
+        if (syncStatus && syncIcon) {
             const statusConfig = {
                 online: { 
                     cardClass: 'sync-success',
@@ -290,28 +287,23 @@ class ServerStatusService {
      * 设置同步中状态
      */
     setSyncing() {
-        // 试用模式下不设置同步中状态
         if (this.isTrialMode) {
             return;
         }
 
-        const elements = {
-            syncStatus: document.getElementById('sync-status'),
-            syncIcon: document.getElementById('sync-icon'),
-            syncTitle: document.getElementById('sync-title')
-        };
+        const elements = registry.get('elements');
+        const syncStatus = elements?.syncStatus;
+        const syncIcon = elements?.syncIcon;
+        const syncTitle = elements?.syncTitle;
 
-        if (elements.syncStatus && elements.syncIcon) {
-            // 移除所有卡片状态类并添加syncing类
-            registry.get('utils').safeRemoveClass(elements.syncStatus, ['sync-success', 'sync-error', 'sync-syncing']);
-            registry.get('utils').safeAddClass(elements.syncStatus, 'sync-syncing');
+        if (syncStatus && syncIcon) {
+            registry.get('utils').safeRemoveClass(syncStatus, ['sync-success', 'sync-error', 'sync-syncing']);
+            registry.get('utils').safeAddClass(syncStatus, 'sync-syncing');
 
-            // 更新图标为加载状态
-            elements.syncIcon.innerHTML = '<div class="sync-loader"></div>';
+            syncIcon.innerHTML = '<div class="sync-loader"></div>';
 
-            // 更新标题文字
-            if (elements.syncTitle) {
-                elements.syncTitle.textContent = '同步中...';
+            if (syncTitle) {
+                syncTitle.textContent = '同步中...';
             }
         }
     }
@@ -320,13 +312,7 @@ class ServerStatusService {
      * 带超时的Promise包装
      */
     withTimeout(fn, timeout, errorMessage) {
-        if (registry.get('coreUtils').withTimeout) {
-            return registry.get('coreUtils').withTimeout(fn, timeout, errorMessage);
-        }
-        return new Promise((resolve, reject) => {
-            const timer = setTimeout(() => reject(new Error(errorMessage)), timeout);
-            fn().then(resolve, reject).finally(() => clearTimeout(timer));
-        });
+        return registry.get('coreUtils').withTimeout(fn, timeout, errorMessage);
     }
 }
 

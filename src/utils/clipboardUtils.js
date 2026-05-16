@@ -43,12 +43,14 @@ const clipboardUtils = {
                             return false;
                         }
                         
-                        if (existingCourse.studentIds.length !== course.studentIds.length) {
+                        const existingIds = Array.isArray(existingCourse.studentIds) ? existingCourse.studentIds : [];
+                        const courseIds = Array.isArray(course.studentIds) ? course.studentIds : [];
+                        if (existingIds.length !== courseIds.length) {
                             return false;
                         }
                         
-                        return course.studentIds.every(studentId => 
-                            existingCourse.studentIds.includes(studentId)
+                        return courseIds.every(studentId => 
+                            existingIds.includes(studentId)
                         );
                     }) || coursesToAdd.some(addedCourse => {
                         if (addedCourse.startTime !== course.startTime || 
@@ -57,12 +59,14 @@ const clipboardUtils = {
                             return false;
                         }
                         
-                        if (addedCourse.studentIds.length !== course.studentIds.length) {
+                        const addedIds = Array.isArray(addedCourse.studentIds) ? addedCourse.studentIds : [];
+                        const courseIds = Array.isArray(course.studentIds) ? course.studentIds : [];
+                        if (addedIds.length !== courseIds.length) {
                             return false;
                         }
                         
-                        return course.studentIds.every(studentId => 
-                            addedCourse.studentIds.includes(studentId)
+                        return courseIds.every(studentId => 
+                            addedIds.includes(studentId)
                         );
                     });
                     
@@ -71,7 +75,8 @@ const clipboardUtils = {
                             ...course,
                             id: registry.get('utils').generateId(),
                             date: dateStr,
-                            createdAt: new Date().toISOString()
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
                         };
                         
                         let hasConflict = false;

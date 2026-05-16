@@ -216,12 +216,7 @@ class TimelineService {
      * 计算结束时间
      */
     calculateEndTime(startTime, duration) {
-        if (!startTime) return '';
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const totalMinutes = hours * 60 + minutes + (duration || 60);
-        const endHours = Math.floor(totalMinutes / 60);
-        const endMinutes = totalMinutes % 60;
-        return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
+        return registry.get('dateUtils').calculateEndTimeFromDuration(startTime, duration);
     }
 
     /**
@@ -473,7 +468,8 @@ class TimelineService {
 
         if (!coursesToRemove.length) return false;
 
-        registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !coursesToRemove.includes(c.id)), ['courses', 'calendar']);
+        const removeSet = new Set(coursesToRemove);
+        registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !removeSet.has(c.id)), ['courses', 'calendar']);
         return true;
     }
 
@@ -483,16 +479,18 @@ class TimelineService {
     undoUpdateCourse(action) {
         if (!registry.get('state')) return false;
 
-        let found = false;
+        const state = registry.get('state');
+        const index = state.courses.findIndex(c => c.id === action.newCourse.id);
+        if (index === -1) return false;
+
         registry.get('setState')(draft => {
-            const index = draft.courses.findIndex(c => c.id === action.newCourse.id);
-            if (index !== -1) {
-                draft.courses[index] = { ...action.oldCourse };
-                found = true;
+            const idx = draft.courses.findIndex(c => c.id === action.newCourse.id);
+            if (idx !== -1) {
+                draft.courses[idx] = { ...action.oldCourse };
             }
         }, ['courses', 'calendar']);
 
-        return found;
+        return true;
     }
 
     /**
@@ -594,16 +592,18 @@ class TimelineService {
     redoUpdateCourse(action) {
         if (!registry.get('state')) return false;
 
-        let found = false;
+        const state = registry.get('state');
+        const index = state.courses.findIndex(c => c.id === action.oldCourse.id);
+        if (index === -1) return false;
+
         registry.get('setState')(draft => {
-            const index = draft.courses.findIndex(c => c.id === action.oldCourse.id);
-            if (index !== -1) {
-                draft.courses[index] = { ...action.newCourse };
-                found = true;
+            const idx = draft.courses.findIndex(c => c.id === action.oldCourse.id);
+            if (idx !== -1) {
+                draft.courses[idx] = { ...action.newCourse };
             }
         }, ['courses', 'calendar']);
 
-        return found;
+        return true;
     }
 
     /**
@@ -622,7 +622,8 @@ class TimelineService {
 
         if (!coursesToRemove.length) return false;
 
-        registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !coursesToRemove.includes(c.id)), ['courses', 'calendar']);
+        const removeSet = new Set(coursesToRemove);
+        registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !removeSet.has(c.id)), ['courses', 'calendar']);
 
         return true;
     }

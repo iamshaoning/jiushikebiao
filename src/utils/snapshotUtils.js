@@ -171,7 +171,9 @@ const snapshotUtils = {
                 snapshotId: snapshotId,
                 description: `恢复了 ${typeLabels[snapshot.type]} (${formattedDate})`
             };
-            registry.get('timelineService').addToTimeline(restoreRecord);
+            registry.get('timelineService').addToTimeline(restoreRecord).catch(err => {
+                console.error('记录快照恢复至时间轴失败:', err);
+            });
         }
         
         // 更新快照数据的时间戳，确保服务器接受新数据

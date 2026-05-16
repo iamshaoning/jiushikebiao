@@ -12,10 +12,11 @@ export class CalendarRenderService {
         this.utils = utils;
         this.lucide = registry.get('lucide') || null;
         this.getCourseTagHTML = (course) => {
-            const primaryColor = course.colors[0] || 'var(--color-secondary)';
+            const primaryColor = course.colors?.[0] || 'var(--color-secondary)';
             const fee = course.fees?.[0] ?? 0;
             const feeHtml = fee > 0 ? `<span style="color: var(--text-primary);">¥${fee}</span>` : '';
-            return `<div class="course-tag-item course-item mt-1 rounded text-xs relative z-10" data-action="course-click" data-course-id="${course.id}" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);"><div class="tag-content p-1"><div class="flex flex-wrap gap-1 mb-1">${course.studentNames.map((name, index) => { const color = course.colors[index] || 'var(--color-secondary)'; return `<span class="px-1 py-0.5 rounded text-xs" style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${this.utils.escapeHtml(name)}</span>`; }).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime} - ${this.utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</span>${feeHtml}</div>${course.note ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${this.utils.escapeHtml(course.note)}</div>` : ''}</div></div>`;
+            const studentNames = Array.isArray(course.studentNames) ? course.studentNames : [];
+            return `<div class="course-tag-item course-item mt-1 rounded text-xs relative z-10" data-action="course-click" data-course-id="${course.id}" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);"><div class="tag-content p-1"><div class="flex flex-wrap gap-1 mb-1">${studentNames.map((name, index) => { const color = course.colors?.[index] || 'var(--color-secondary)'; return `<span class="px-1 py-0.5 rounded text-xs" style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${this.utils.escapeHtml(name)}</span>`; }).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime || ''} - ${this.utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</span>${feeHtml}</div>${course.note ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${this.utils.escapeHtml(course.note)}</div>` : ''}</div></div>`;
         };
     }
 
@@ -112,7 +113,7 @@ export class CalendarRenderService {
     updateDayCell(cell, courses) {
         const cc = cell.querySelector('.course-container');
         if (!cc) return;
-        cc.innerHTML = courses.length ? [...courses].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(c => this.getCourseTagHTML(c)).join('') : '';
+        cc.innerHTML = courses.length ? [...courses].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')).map(c => this.getCourseTagHTML(c)).join('') : '';
     }
 
     getDateInfo(dateStr) {
@@ -151,7 +152,7 @@ export class CalendarRenderService {
         cell.style.color = isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)';
         cell.tabIndex = 0; cell.dataset.date = dateStr;
 
-        const coursesHTML = courses.length ? [...courses].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(c => this.getCourseTagHTML(c)).join('') : '';
+        const coursesHTML = courses.length ? [...courses].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')).map(c => this.getCourseTagHTML(c)).join('') : '';
         cell.innerHTML = `<div class="text-right ${isCurrentMonth ? (isToday ? 'font-bold' : '') : ''} flex items-center justify-end flex-wrap" style="color: ${isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)'};"><div class="flex items-center justify-end w-full">${this._getHolidayTag(dateInfo)}${isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-danger); color: white;">今</span>' : ''}${this._getScheduleTag(dateInfo, dateStr)}${day}</div></div><div class="course-container mt-1 space-y-1 max-h-[calc(100%-1rem)] overflow-y-auto overflow-x-hidden">${coursesHTML}</div>`;
         return cell;
     }

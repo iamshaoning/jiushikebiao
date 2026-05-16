@@ -132,25 +132,31 @@ export class StatisticsCalculatorService {
 
                 // 机构统计（多人课的费用已经在上面统一计算了）
                 if (!stats.byOrganization[student.organization]) {
-                    stats.byOrganization[student.organization] = { fee: 0, courses: 0, students: new Set() };
+                    if (!isGroupLesson) {
+                        stats.byOrganization[student.organization] = { fee: 0, courses: 0, students: new Set() };
+                    }
                 }
-                // 一对一课程计算机构费用，多人课不重复计算
-                if (!isGroupLesson) {
-                    stats.byOrganization[student.organization].fee += fee;
+                if (stats.byOrganization[student.organization]) {
+                    if (!isGroupLesson) {
+                        stats.byOrganization[student.organization].fee += fee;
+                    }
+                    stats.byOrganization[student.organization].courses += isGroupLesson ? 0 : 1;
+                    stats.byOrganization[student.organization].students.add(studentId);
                 }
-                stats.byOrganization[student.organization].courses += isGroupLesson ? 0 : 1;
-                stats.byOrganization[student.organization].students.add(studentId);
 
                 // 课型统计（多人课的费用已经在上面统一计算了）
                 if (!stats.byLessonType[courseLessonType]) {
-                    stats.byLessonType[courseLessonType] = { fee: 0, courses: 0, students: new Set() };
+                    if (!isGroupLesson) {
+                        stats.byLessonType[courseLessonType] = { fee: 0, courses: 0, students: new Set() };
+                    }
                 }
-                // 一对一课程计算课型费用，多人课不重复计算
-                if (!isGroupLesson) {
-                    stats.byLessonType[courseLessonType].fee += fee;
+                if (stats.byLessonType[courseLessonType]) {
+                    if (!isGroupLesson) {
+                        stats.byLessonType[courseLessonType].fee += fee;
+                    }
+                    stats.byLessonType[courseLessonType].courses += isGroupLesson ? 0 : 1;
+                    stats.byLessonType[courseLessonType].students.add(studentId);
                 }
-                stats.byLessonType[courseLessonType].courses += isGroupLesson ? 0 : 1;
-                stats.byLessonType[courseLessonType].students.add(studentId);
 
                 // 详细统计：按课型、年级、机构、人数
                 if (courseLessonType === '一对一') {

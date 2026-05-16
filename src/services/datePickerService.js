@@ -61,25 +61,23 @@ class DatePickerService {
     }
 
     toggleTimePicker(containerId) {
-        // 如果已存在旧的 closeListener，先移除它
         if (this._timePickerCloseListener) {
             document.removeEventListener('click', this._timePickerCloseListener);
         }
 
-        // 创建新的 closeListener 并保存引用
         this._timePickerCloseListener = (event) => {
-            const startContainer = document.getElementById('start-time-container');
-            const startTimeInput = document.querySelector('[data-action="toggle-time-picker"][data-target="start-time-container"]');
+            const targetContainer = document.getElementById(containerId);
+            const trigger = document.querySelector(`[data-action="toggle-time-picker"][data-target="${containerId}"]`);
 
-            if (startContainer && !startContainer.contains(event.target) && (!startTimeInput || !startTimeInput.contains(event.target))) {
-                startContainer.classList.add('hidden');
+            if (targetContainer && !targetContainer.contains(event.target) && (!trigger || !trigger.contains(event.target))) {
+                targetContainer.classList.add('hidden');
                 document.removeEventListener('click', this._timePickerCloseListener);
                 this._timePickerCloseListener = null;
             }
         };
         this.togglePicker(
             containerId,
-            ['start-time-container', 'course-date-container', 'duration-dropdown'],
+            [containerId, 'course-date-container', 'duration-dropdown'],
             this._timePickerCloseListener
         );
     }

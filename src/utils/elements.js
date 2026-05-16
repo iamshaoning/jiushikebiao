@@ -15,6 +15,7 @@ const elements = {
     exportStatisticsBtn: null,
     syncStatus: null,
     syncIcon: null,
+    syncTitle: null,
     logoutBtn: null,
     settingsBtn: null,
     settingsDropdown: null,
@@ -29,7 +30,6 @@ const elements = {
     calendarMonthTrigger: null,
     calendarMonthWrapper: null,
     calendarYearWrapper: null,
-    userInfo: null,
     statisticsYearOptions: null,
     statisticsYearTrigger: null,
     statisticsMonthWrapper: null,
@@ -67,7 +67,9 @@ const elements = {
     durationDropdown: null,
     organizationTable: null,
     detailedTypeTableContainer: null,
-    studentDataContainer: null
+    studentDataContainer: null,
+    timelineBtn: null,
+    snapshotBtn: null
 };
 
 function initElements() {
@@ -81,6 +83,7 @@ function initElements() {
     elements.exportStatisticsBtn = document.getElementById('export-statistics');
     elements.syncStatus = document.getElementById('sync-status');
     elements.syncIcon = document.getElementById('sync-icon');
+    elements.syncTitle = document.getElementById('sync-title');
     elements.logoutBtn = document.getElementById('logout-btn');
     elements.settingsBtn = document.getElementById('settings-btn');
     elements.settingsDropdown = document.getElementById('settings-dropdown');
@@ -95,7 +98,6 @@ function initElements() {
     elements.calendarMonthTrigger = document.querySelector('#calendar-month-wrapper .custom-select-trigger span');
     elements.calendarMonthWrapper = document.getElementById('calendar-month-wrapper');
     elements.calendarYearWrapper = document.getElementById('calendar-year-wrapper');
-    elements.userInfo = document.getElementById('user-info');
     elements.statisticsYearOptions = document.getElementById('statistics-year-options');
     elements.statisticsYearTrigger = document.querySelector('#statistics-year-wrapper .custom-select-trigger span');
     elements.statisticsMonthWrapper = document.getElementById('statistics-month-wrapper');
@@ -134,6 +136,8 @@ function initElements() {
     elements.organizationTable = document.getElementById('organization-table');
     elements.detailedTypeTableContainer = document.getElementById('detailed-type-table-container');
     elements.studentDataContainer = document.getElementById('student-data-container');
+    elements.timelineBtn = document.getElementById('timeline-btn');
+    elements.snapshotBtn = document.getElementById('snapshot-btn');
 
     return elements;
 }

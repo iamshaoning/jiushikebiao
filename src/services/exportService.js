@@ -8,8 +8,7 @@ import { registry } from '../core/registry.js';
 const MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
 class ExportService {
-    constructor() { this.notificationService = null; }
-    init(ns) { this.notificationService = ns; }
+    constructor() {}
     escapeHtml(text) { if (text == null) return ''; return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
     generateHTMLContent(data, filename, year, month, organization, utils = null) {
@@ -96,7 +95,7 @@ class ExportService {
     }
 
     exportHTML(data, filename, year, month, organization) {
-        const utils = typeof window !== 'undefined' && registry.get('utils');
+        const utils = registry.get('utils');
         const htmlContent = this.generateHTMLContent(data, filename, year, month, organization, utils);
         const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -165,11 +164,11 @@ class ExportService {
     }
 
     exportStatisticsData(year, month, organization = '') {
-        const state = registry.get('state'), ns = this.notificationService || registry.get('notificationService');
+        const state = registry.get('state'), ns = registry.get('notificationService');
         const statisticsCalc = registry.get('statisticsCalculatorService');
         const utils = registry.get('utils');
 
-        const filteredCourses = state.courses.filter(c => { const cd = new Date(c.date); return cd.getFullYear() === year && cd.getMonth() === month; });
+        const filteredCourses = state.courses.filter(c => { const [courseYear, courseMonth] = c.date.split('-').map(Number); return courseYear === year && courseMonth === month + 1; });
         const exportData = this._buildDetailRows(filteredCourses, state, organization);
 
         if (statisticsCalc && utils) {

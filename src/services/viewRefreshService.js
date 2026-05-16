@@ -20,12 +20,6 @@ class ViewRefreshService {
      * @param {string|Array|Object|null|boolean} scope - 作用域：'students', 'courses', 'organizations', 'grades', 'calendar', 'statistics', 或数组/null/true表示全部，或对象表示更细粒度的更新
      */
     refreshAllViews(scope = null) {
-        // 如果是 calendar-cell 类型的细粒度更新，直接执行不需要防抖
-        if (typeof scope === 'object' && scope !== null && scope.type === 'calendar-cell') {
-            this._doRefresh(scope);
-            return;
-        }
-
         if (this._debounceTimer) {
             clearTimeout(this._debounceTimer);
         }
@@ -35,31 +29,6 @@ class ViewRefreshService {
     }
 
     _doRefresh(scope) {
-        if (typeof scope === 'object' && scope !== null && scope.type) {
-            switch (scope.type) {
-                case 'calendar-cell':
-                    if (scope.dates && Array.isArray(scope.dates)) {
-                        scope.dates.forEach(dateStr => {
-                            const cell = document.querySelector(`.calendar-cell[data-date="${dateStr}"]`);
-                            if (cell) {
-                                const courses = this.state.courses.filter(course => course.date === dateStr);
-                                const newCell = this.render.createDayCell(
-                                    parseInt(dateStr.split('-')[2]),
-                                    dateStr,
-                                    courses,
-                                    true,
-                                    false
-                                );
-                                cell.replaceWith(newCell);
-                            }
-                        });
-                    }
-                    return;
-                default:
-                    break;
-            }
-        }
-
         let scopes;
         if (scope === null || scope === undefined || scope === true) {
             scopes = ['students', 'courses', 'organizations', 'grades', 'calendar'];
@@ -71,26 +40,30 @@ class ViewRefreshService {
             scopes = ['students', 'courses', 'organizations', 'grades', 'calendar'];
         }
 
-        if (scopes.includes('courses')) {
+        if (scopes.includes('courses') || scopes.includes('organizations') || scopes.includes('grades')) {
             registry.get('utils').generateYearDropdowns();
+        }
+
+        if (scopes.includes('organizations') || scopes.includes('grades')) {
+            registry.get('eventBindingService').refreshOrganizationOptions();
         }
 
         const currentPage = document.querySelector('.page.active');
 
-        if (scopes.includes('students')) {
+        if (scopes.includes('students') || scopes.includes('organizations') || scopes.includes('grades')) {
             registry.get('listRenderService').resetStudentCache();
         }
 
-        if (currentPage === this.elements.studentsPage && scopes.includes('students')) {
+        if (currentPage === this.elements.studentsPage && (scopes.includes('students') || scopes.includes('organizations') || scopes.includes('grades'))) {
             this.render.students();
         }
         if (currentPage === this.elements.calendarPage) {
-            if (scopes.includes('calendar') || scopes.includes('courses')) {
+            if (scopes.includes('calendar') || scopes.includes('courses') || scopes.includes('organizations') || scopes.includes('grades')) {
                 this.render.calendar();
             }
         }
         if (currentPage === this.elements.statisticsPage) {
-            if (scopes.includes('statistics') || scopes.includes('courses')) {
+            if (scopes.includes('statistics') || scopes.includes('courses') || scopes.includes('students') || scopes.includes('organizations') || scopes.includes('grades')) {
                 const params = registry.get('utils').getStatisticsParams();
                 this.render.statistics(params.year, params.month, params.organization);
             }

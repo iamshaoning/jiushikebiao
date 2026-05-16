@@ -70,7 +70,7 @@ export class SnapshotModal {
 
                 document.querySelectorAll('.restore-snapshot').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
-                        const snapshotId = e.target.getAttribute('data-id');
+                        const snapshotId = btn.getAttribute('data-id');
                         this.modal.showConfirm('确定要恢复此快照吗？<br>这将覆盖当前数据。', async () => {
                             await registry.get('utils').restoreSnapshot(snapshotId);
                             this.modal.hide();
@@ -80,7 +80,7 @@ export class SnapshotModal {
 
                 document.querySelectorAll('.overwrite-snapshot').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
-                        const snapshotId = e.target.getAttribute('data-id');
+                        const snapshotId = btn.getAttribute('data-id');
                         this.modal.showConfirm('确定要覆盖此快照吗？', async () => {
                             try {
                                 await registry.get('utils').deleteSnapshot(snapshotId, false);

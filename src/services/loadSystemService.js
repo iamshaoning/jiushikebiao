@@ -43,6 +43,8 @@ class LoadSystemService {
      * @param {boolean} isTrialMode - 是否为试用模式
      */
     async loadSystem(isTrialMode = false) {
+        if (this.systemLoaded) return;
+
         if (registry.get('lucide')) {
             registry.get('lucide').createIcons();
         }

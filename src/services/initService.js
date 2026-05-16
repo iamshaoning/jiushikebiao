@@ -129,9 +129,11 @@ class InitService {
                 });
 
                 // 定期检查会话状态，确保会话有效（仅在非试用模式下启动）
-                this._sessionCheckInterval = setInterval(() => {
-                    this._checkSession(auth);
-                }, 60 * 1000); // 每60秒检查一次
+                if (!this.serverStatusService.isTrialMode) {
+                    this._sessionCheckInterval = setInterval(() => {
+                        this._checkSession(auth);
+                    }, 60 * 1000); // 每60秒检查一次
+                }
 
                 // 页面可见性变化监听
                 this._visibilityHandler = () => {

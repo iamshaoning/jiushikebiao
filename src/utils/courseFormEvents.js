@@ -197,20 +197,10 @@ export function initCourseFormEvents(isEdit, courseData = null) {
             durationInput.value = courseDuration;
             
             if (startTimeInput.value) {
-                const [hours, minutes] = startTimeInput.value.split(':').map(Number);
-                const startTotalMinutes = hours * 60 + minutes;
-                let endTotalMinutes = startTotalMinutes + courseDuration;
-                
-                const maxMinutes = 24 * 60;
-                endTotalMinutes = Math.min(endTotalMinutes, maxMinutes);
-                
-                if (endTotalMinutes === maxMinutes) {
-                    endTimeInput.value = '00:00';
-                } else {
-                    const endHours = Math.floor(endTotalMinutes / 60);
-                    const endMinutes = endTotalMinutes % 60;
-                    endTimeInput.value = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-                }
+                endTimeInput.value = registry.get('utils').calculateEndTimeFromDuration(
+                    startTimeInput.value,
+                    courseDuration
+                );
             }
         }
     }, 50);
@@ -253,12 +243,6 @@ export function initCourseFormEvents(isEdit, courseData = null) {
         courseStartTime.addEventListener('change', registry.get('utils').calculateFee);
     }
     
-    const courseEndTime = document.getElementById('course-end-time');
-    if (courseEndTime) {
-        courseEndTime.addEventListener('change', registry.get('utils').calculateFee);
-    }
-    
-    // 绑定费用输入框事件
     const courseFee = document.getElementById('course-fee');
     if (courseFee) {
         // 阻止回车键冒泡，避免触发表单提交

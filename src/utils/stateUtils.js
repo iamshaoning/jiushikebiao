@@ -9,11 +9,8 @@ import { registry } from '../core/registry.js';
 const LOCAL_STORAGE_KEY = 'coursemanagerdata';
 
 const CONSTANTS = {
-    DEBOUNCE_SAVE_DELAY: 2000,
     SESSION_TIMEOUT: 5000,
-    SYNC_TIMEOUT: 10000,
-    DEFAULT_DURATION: 120,
-    MAX_DURATION_MINUTES: 1440
+    SYNC_TIMEOUT: 10000
 };
 
 const stateUtils = {

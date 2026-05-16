@@ -28,11 +28,12 @@ export class CourseFormModal {
                 if (freshForm) {
                     freshForm.addEventListener('submit', async (e) => {
                         e.preventDefault();
-                        const courseDate = document.getElementById('course-date').value;
-                        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
+                        const courseDate = document.getElementById('course-date')?.value;
+                        const lessonTypeEl = document.querySelector('input[name="course-lesson-type"]:checked');
+                        const lessonType = lessonTypeEl?.value;
                         const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
-                        const startTime = document.getElementById('course-start-time').value;
-                        const note = registry.get('utils').escapeHtml(document.getElementById('course-note').value);
+                        const startTime = document.getElementById('course-start-time')?.value;
+                        const note = document.getElementById('course-note')?.value || '';
 
                         if (!courseDate) { registry.get('notificationService').show('请选择日期', 'warning'); return; }
                         if (!lessonType) { registry.get('notificationService').show('请选择课型', 'warning'); return; }
@@ -100,12 +101,13 @@ export class CourseFormModal {
                             saveCourseBtn.innerHTML = '<i data-lucide="loader-circle" class="inline-block animate-spin mr-2" style="width: 16px; height: 16px;"></i>保存中...';
                         }
 
-                        const courseId = document.getElementById('edit-course-id').value;
-                        const courseDate = document.getElementById('course-date').value;
-                        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked').value;
+                        const courseId = document.getElementById('edit-course-id')?.value;
+                        const courseDate = document.getElementById('course-date')?.value;
+                        const lessonTypeEl = document.querySelector('input[name="course-lesson-type"]:checked');
+                        const lessonType = lessonTypeEl?.value;
                         const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
-                        const startTime = document.getElementById('course-start-time').value;
-                        const note = registry.get('utils').escapeHtml(document.getElementById('course-note').value);
+                        const startTime = document.getElementById('course-start-time')?.value;
+                        const note = document.getElementById('course-note')?.value || '';
 
                         if (!courseDate) return fail('请选择日期');
                         if (!lessonType) return fail('请选择课型');
@@ -124,6 +126,7 @@ export class CourseFormModal {
                             colors: selectedStudents.map(s => s.dataset.color || 'var(--color-secondary)'),
                             startTime, duration,
                             fees: [fee], note,
+                            createdAt: course.createdAt || new Date().toISOString(),
                             updatedAt: new Date().toISOString()
                         };
 

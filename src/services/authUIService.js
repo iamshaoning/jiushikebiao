@@ -81,19 +81,14 @@ class AuthUIService {
      * 设置登录按钮
      */
     setupLoginButton() {
-        const loginSubmit = document.getElementById('login-submit');
-        if (loginSubmit) {
-            loginSubmit.addEventListener('click', () => this.handleLogin());
+        if (this.elements.loginSubmit) {
+            this.elements.loginSubmit.addEventListener('click', () => this.handleLogin());
         }
     }
 
-    /**
-     * 设置注册按钮
-     */
     setupRegisterButton() {
-        const registerSubmit = document.getElementById('register-submit');
-        if (registerSubmit) {
-            registerSubmit.addEventListener('click', () => this.handleRegister());
+        if (this.elements.registerSubmit) {
+            this.elements.registerSubmit.addEventListener('click', () => this.handleRegister());
         }
     }
 
@@ -104,9 +99,8 @@ class AuthUIService {
         if (this.elements.loginBtnContainer && this.elements.registerBtnContainer) {
             return this.elements.loginBtnContainer.style.opacity === '1';
         }
-        const loginTab = document.getElementById('login-tab');
-        if (loginTab) {
-            return loginTab.style.borderColor !== 'transparent';
+        if (this.elements.loginTab) {
+            return this.elements.loginTab.style.borderColor !== 'transparent';
         }
         return true;
     }
@@ -115,27 +109,23 @@ class AuthUIService {
      * 设置回车键支持
      */
     setupEnterKey() {
-        const authEmail = document.getElementById('auth-email');
-        const authPassword = document.getElementById('auth-password');
-
-        if (authEmail) {
-            authEmail.addEventListener('keypress', (event) => {
+        if (this.elements.authEmail) {
+            this.elements.authEmail.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    if (authPassword) authPassword.focus();
+                    if (this.elements.authPassword) this.elements.authPassword.focus();
                 }
             });
         }
 
-        if (authPassword) {
-            authPassword.addEventListener('keypress', (event) => {
+        if (this.elements.authPassword) {
+            this.elements.authPassword.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     if (this.isLoginTabActive()) {
                         this.handleLogin();
                     } else {
-                        const registerBtn = document.getElementById('register-submit');
-                        if (registerBtn) registerBtn.click();
+                        if (this.elements.registerSubmit) this.elements.registerSubmit.click();
                     }
                 }
             });
@@ -265,8 +255,8 @@ class AuthUIService {
             .then((data) => {
                 this.notificationService.show('注册成功！请前往邮箱验证', 'info', 8000);
                 
-                document.getElementById('auth-email').value = '';
-                document.getElementById('auth-password').value = '';
+                if (this.elements.authEmail) this.elements.authEmail.value = '';
+                if (this.elements.authPassword) this.elements.authPassword.value = '';
                 
                 this.resetAuthUI();
 
@@ -289,18 +279,15 @@ class AuthUIService {
         if (this.elements.loginTab) this.elements.loginTab.style.pointerEvents = 'none';
         if (this.elements.registerTab) this.elements.registerTab.style.pointerEvents = 'none';
         
-        const loginSubmit = document.getElementById('login-submit');
-        const registerSubmit = document.getElementById('register-submit');
-        
-        if (loginSubmit) {
-            loginSubmit.disabled = true;  loginSubmit.classList.add('cursor-not-allowed');
-            loginSubmit.style.opacity = '0.8';
+        if (this.elements.loginSubmit) {
+            this.elements.loginSubmit.disabled = true; this.elements.loginSubmit.classList.add('cursor-not-allowed');
+            this.elements.loginSubmit.style.opacity = '0.8';
         }
         
-        if (registerSubmit) {
-            registerSubmit.disabled = true;
-            registerSubmit.classList.add('cursor-not-allowed');
-            registerSubmit.style.opacity = '0.8';
+        if (this.elements.registerSubmit) {
+            this.elements.registerSubmit.disabled = true;
+            this.elements.registerSubmit.classList.add('cursor-not-allowed');
+            this.elements.registerSubmit.style.opacity = '0.8';
         }
     }
 
@@ -349,10 +336,9 @@ class AuthUIService {
         this.utils.safeSet(this.elements.loginSubmit, 'disabled', false);
         this.utils.safeRemoveClass(this.elements.loginSubmit, 'cursor-not-allowed');
         
-        const loginSubmit = document.getElementById('login-submit');
-        if (loginSubmit) {
-            loginSubmit.style.opacity = '1';
-            loginSubmit.style.pointerEvents = '';
+        if (this.elements.loginSubmit) {
+            this.elements.loginSubmit.style.opacity = '1';
+            this.elements.loginSubmit.style.pointerEvents = '';
         }
 
         this.utils.safeSet(this.elements.registerBtnText, 'textContent', '注 册');
@@ -360,10 +346,9 @@ class AuthUIService {
         this.utils.safeSet(this.elements.registerSubmit, 'disabled', false);
         this.utils.safeRemoveClass(this.elements.registerSubmit, 'cursor-not-allowed');
         
-        const registerSubmit = document.getElementById('register-submit');
-        if (registerSubmit) {
-            registerSubmit.style.opacity = '1';
-            registerSubmit.style.pointerEvents = '';
+        if (this.elements.registerSubmit) {
+            this.elements.registerSubmit.style.opacity = '1';
+            this.elements.registerSubmit.style.pointerEvents = '';
         }
 
         if (this.elements.loginTab) {
@@ -408,9 +393,6 @@ class AuthUIService {
      * 更新已登录用户的UI
      */
     updateUIForAuth(user) {
-        if (this.elements.userInfo) {
-            this.elements.userInfo.textContent = `${user.email} `;
-        }
         if (this.elements.settingsUserName) {
             this.elements.settingsUserName.textContent = user.email;
         }
@@ -426,9 +408,6 @@ class AuthUIService {
      * 更新试用用户UI
      */
     updateUIForTrialUser() {
-        if (this.elements.userInfo) {
-            this.elements.userInfo.textContent = '试用用户 ';
-        }
         if (this.elements.settingsUserName) {
             this.elements.settingsUserName.textContent = '试用用户';
         }
@@ -452,10 +431,6 @@ class AuthUIService {
         const body = document.body;
         if (body) {
             body.style.opacity = '1';
-        }
-
-        if (this.elements.userInfo) {
-            this.elements.userInfo.textContent = '';
         }
 
         if (this.elements.logoutBtn) {
@@ -521,6 +496,9 @@ class AuthUIService {
      */
     logout() {
         this.modalService.showConfirm('确定要登出吗？', () => {
+            if (this.loadSystemService) {
+                this.loadSystemService.systemLoaded = false;
+            }
             if (registry.get('supabaseAuth')) {
                 this.authService.logout()
                     .then(() => {

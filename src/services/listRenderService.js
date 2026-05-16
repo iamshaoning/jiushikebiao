@@ -33,10 +33,9 @@ export class ListRenderService {
             
             // 1. 先过滤（减少数据量）
             if (searchTerm) {
-                const lowerSearchTerm = searchTerm.toLowerCase();
                 filteredStudents = filteredStudents.filter(student => {
-                    const nameMatch = student.name && student.name.toLowerCase().includes(lowerSearchTerm);
-                    const orgMatch = student.organization && student.organization.toLowerCase().includes(lowerSearchTerm);
+                    const nameMatch = student.name && student.name.toLowerCase().includes(searchTerm);
+                    const orgMatch = student.organization && student.organization.toLowerCase().includes(searchTerm);
                     return nameMatch || orgMatch;
                 });
                 

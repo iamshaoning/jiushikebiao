@@ -84,7 +84,7 @@ export class ChartService {
                 datasets: [{
                     data: values,
                     backgroundColor: colors,
-                    borderColor: colors.map(c => c),
+                    borderColor: colors,
                     borderWidth: 2
                 }]
             },

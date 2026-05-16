@@ -77,14 +77,16 @@ export class ManagementModal {
                                 trigger.dataset.color = newColor;
 
                                 if (colorType === 'organization') {
-                                    registry.get('state').courses.forEach(course => {
-                                        if (Array.isArray(course.organizations)) {
-                                            course.organizations.forEach((org, idx) => {
-                                                if (org === item && course.colors && course.colors[idx]) {
-                                                    course.colors[idx] = newColor;
-                                                }
-                                            });
-                                        }
+                                    registry.get('setState')(draft => {
+                                        draft.courses.forEach(course => {
+                                            if (Array.isArray(course.organizations)) {
+                                                course.organizations.forEach((org, idx) => {
+                                                    if (org === item && course.colors && course.colors[idx]) {
+                                                        course.colors[idx] = newColor;
+                                                    }
+                                                });
+                                            }
+                                        });
                                     });
                                 }
                                 registry.get('utils').saveData();
@@ -131,10 +133,6 @@ export class ManagementModal {
 
                 registry.get('setState')(draft => {
                     draft[stateList][index] = newVal;
-                    draft.students.forEach(student => {
-                        const field = itemName === '机构' ? 'organization' : 'grade';
-                        if (student[field] === oldVal) student[field] = newVal;
-                    });
                     if (itemName === '机构') {
                         draft.courses.forEach(course => {
                             if (!course.colors) course.colors = [];
@@ -146,11 +144,15 @@ export class ManagementModal {
                             } else if (course.studentIds) {
                                 course.studentIds.forEach((studentId, idx) => {
                                     const student = draft.students.find(s => s.id === studentId);
-                                    if (student && student.organization === oldVal) { student.organization = newVal; course.colors[idx] = newColor; }
+                                    if (student && student.organization === oldVal) { course.colors[idx] = newColor; }
                                 });
                             }
                         });
                     }
+                    draft.students.forEach(student => {
+                        const field = itemName === '机构' ? 'organization' : 'grade';
+                        if (student[field] === oldVal) student[field] = newVal;
+                    });
                 });
                 this._config.items[index] = newVal;
 
@@ -168,7 +170,13 @@ export class ManagementModal {
             },
             deleteItem: (val) => {
                 const idx = registry.get('state')[stateList].indexOf(val);
-                if (idx !== -1) { registry.get('setState')(draft => { draft[stateList].splice(idx, 1); }); this._config.items = registry.get('state')[stateList]; }
+                if (idx !== -1) {
+                    registry.get('utils').removeColorAssignment(val, attrKey);
+                    registry.get('setState')(draft => {
+                        draft[stateList].splice(idx, 1);
+                    });
+                    this._config.items = registry.get('state')[stateList];
+                }
             },
             onDelete: (val) => {
                 const field = itemName === '机构' ? 'organization' : 'grade';

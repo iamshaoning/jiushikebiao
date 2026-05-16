@@ -29,21 +29,15 @@ class AuthService {
             throw new Error('认证服务未初始化');
         }
 
-        try {
-            const { data, error } = await this.supabaseAuth.signInWithPassword({ email, password });
+        const { data, error } = await this.supabaseAuth.signInWithPassword({ email, password });
 
-            if (error) {
-                throw error;
-            }
-
-            // 存储登录时间
-            this.setLoginTime();
-
-            return data;
-        } catch (error) {
-            // 不在 service 层记录日志，让调用层处理错误显示
+        if (error) {
             throw error;
         }
+
+        this.setLoginTime();
+
+        return data;
     }
 
     /**
@@ -57,18 +51,13 @@ class AuthService {
             throw new Error('认证服务未初始化');
         }
 
-        try {
-            const { data, error } = await this.supabaseAuth.signUp({ email, password });
+        const { data, error } = await this.supabaseAuth.signUp({ email, password });
 
-            if (error) {
-                throw error;
-            }
-
-            return data;
-        } catch (error) {
-            // 不在 service 层记录日志，让调用层处理错误显示
+        if (error) {
             throw error;
         }
+
+        return data;
     }
 
     /**
@@ -80,14 +69,8 @@ class AuthService {
             throw new Error('认证服务未初始化');
         }
 
-        try {
-            await this.supabaseAuth.signOut();
-            // 清除登录时间
-            this.clearLoginTime();
-        } catch (error) {
-            // 不在 service 层记录日志，让调用层处理错误显示
-            throw error;
-        }
+        await this.supabaseAuth.signOut();
+        this.clearLoginTime();
     }
 
     /**
@@ -99,13 +82,8 @@ class AuthService {
             throw new Error('认证服务未初始化');
         }
 
-        try {
-            const { data } = await this.supabaseAuth.getSession();
-            return data.session;
-        } catch (error) {
-            // 不在 service 层记录日志，让调用层处理错误显示
-            throw error;
-        }
+        const { data } = await this.supabaseAuth.getSession();
+        return data.session;
     }
 
     /**

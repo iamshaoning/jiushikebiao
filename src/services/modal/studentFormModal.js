@@ -141,7 +141,6 @@ export class StudentFormModal {
                     }
                     const studentIndex = registry.get('state').students.findIndex(s => s.id === studentId);
                     if (studentIndex === -1) { registry.get('notificationService').show('学生不存在', 'error'); return; }
-                    const oldName = registry.get('state').students[studentIndex].name;
 
                     registry.get('setState')(draft => {
                         draft.students[studentIndex] = {
@@ -151,9 +150,13 @@ export class StudentFormModal {
                             updatedAt: new Date().toISOString()
                         };
                         draft.courses.forEach(course => {
-                            if (course.studentNames && course.studentNames.includes(oldName)) {
-                                const idx = course.studentNames.indexOf(oldName);
-                                if (idx !== -1) course.studentNames[idx] = name;
+                            if (course.studentIds) {
+                                const idx = course.studentIds.indexOf(studentId);
+                                if (idx !== -1) {
+                                    if (course.studentNames) course.studentNames[idx] = name;
+                                    if (course.organizations) course.organizations[idx] = organization;
+                                    if (course.colors) course.colors[idx] = registry.get('utils').generateColor(organization, 'organization');
+                                }
                             }
                         });
                     });

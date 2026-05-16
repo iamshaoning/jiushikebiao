@@ -257,8 +257,7 @@ Object.assign(render, {
             'statistics-page': () => { const { year, month, organization } = utils.getStatisticsParams(); render.statistics(year, month, organization); }
         };
         renderMap[pageId]?.();
-    },
-    handleCourseClick: (element, courseId, event) => calendarRenderService.handleCourseClick(element, courseId, event)
+    }
 });
 
 routerService.init();
