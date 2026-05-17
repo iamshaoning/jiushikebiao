@@ -54,5 +54,4 @@ class RouterService {
 
 const routerService = new RouterService();
 
-export { RouterService, routerService };
 export default routerService;

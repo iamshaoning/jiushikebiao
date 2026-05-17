@@ -38,11 +38,12 @@ const stateUtils = {
                 console.error('[存储] 本地存储保存失败:', error);
             }
             
-            const status = registry.get('serverStatusService').previousStatus;
+            const sss = registry.get('serverStatusService');
+            const status = sss ? sss.previousStatus : null;
             const isOffline = !status || status === 'offline' || status === 'loggedout';
             
-            if (!isOffline && registry.get('serverStatusService')) {
-                registry.get('serverStatusService').setSyncing();
+            if (!isOffline && sss) {
+                sss.setSyncing();
                 
                 const auth = registry.get('supabaseAuth');
                 
@@ -98,21 +99,21 @@ const stateUtils = {
                                         localData.userid = userId;
                                         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(localData));
                                     }
-                                    registry.get('serverStatusService').updateServerStatus('online');
+                                    registry.get('serverStatusService')?.updateServerStatus('online');
                                 }
                             } catch (syncError) {
                                 registry.get('errorHandlerService').handleError(syncError, '同步数据到服务器失败', true);
-                                registry.get('serverStatusService').updateServerStatus('offline');
+                                registry.get('serverStatusService')?.updateServerStatus('offline');
                             }
                         } else {
-                            registry.get('serverStatusService').updateServerStatus('loggedout');
+                            registry.get('serverStatusService')?.updateServerStatus('loggedout');
                         }
                     } catch (error) {
                         registry.get('errorHandlerService').handleError(error, '获取 session 失败', true);
-                        registry.get('serverStatusService').updateServerStatus('loggedout');
+                        registry.get('serverStatusService')?.updateServerStatus('loggedout');
                     }
                 } else {
-                    registry.get('serverStatusService').updateServerStatus('loggedout');
+                    registry.get('serverStatusService')?.updateServerStatus('loggedout');
                 }
             }
         } catch (error) {
@@ -141,7 +142,7 @@ const stateUtils = {
     syncToServer: async () => {
         const auth = registry.get('supabaseAuth');
         if (!registry.get('supabaseClient') || !auth) {
-            registry.get('serverStatusService').updateServerStatus('loggedout');
+            registry.get('serverStatusService')?.updateServerStatus('loggedout');
             return false;
         }
         
@@ -154,7 +155,7 @@ const stateUtils = {
             const session = sessionData.session;
             
             if (!session) {
-                registry.get('serverStatusService').updateServerStatus('loggedout');
+                registry.get('serverStatusService')?.updateServerStatus('loggedout');
                 return false;
             }
             
@@ -162,7 +163,7 @@ const stateUtils = {
             const localDataStr = localStorage.getItem(LOCAL_STORAGE_KEY);
             
             if (!localDataStr) {
-                registry.get('serverStatusService').updateServerStatus('online');
+                registry.get('serverStatusService')?.updateServerStatus('online');
                 return true;
             }
             
@@ -191,11 +192,11 @@ const stateUtils = {
                 throw error;
             }
             
-            registry.get('serverStatusService').updateServerStatus('online');
+            registry.get('serverStatusService')?.updateServerStatus('online');
             return true;
         } catch (error) {
             registry.get('errorHandlerService').handleError(error, '同步到服务器失败', true);
-            registry.get('serverStatusService').updateServerStatus('offline');
+            registry.get('serverStatusService')?.updateServerStatus('offline');
             return false;
         }
     }

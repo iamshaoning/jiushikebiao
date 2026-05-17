@@ -73,11 +73,6 @@ class VirtualList {
         });
     }
 
-    setItems(items) {
-        this.items = items;
-        if (this.content) this.update();
-    }
-    
     destroy() {
         if (this._rafId) {
             cancelAnimationFrame(this._rafId);

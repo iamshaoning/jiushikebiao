@@ -17,58 +17,16 @@ const dateUtils = {
         return h * 60 + m;
     },
     
-    formatLocalTime: (timeInput) => {
-        if (!timeInput) return '无数据';
-        
-        let date;
-        if (typeof timeInput === 'string') {
-            // 安全检查：如果包含 T，且没有 Z，且不包含 +08:00 这种时区后缀，才安全地加上 Z
-            if (timeInput.includes('T') && !timeInput.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(timeInput)) {
-                timeInput += 'Z';
-            }
-            date = new Date(timeInput);
-        } else {
-            date = new Date(timeInput);
-        }
-
-        if (isNaN(date.getTime())) return timeInput;
-
-        // 关键：利用浏览器原生的 toLocaleString，它会自动把 UTC 转为当前系统时区
-        return date.toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-        });
-    },
-    
-    formatDate: (date) => {
-        if (!date) return '';
-        const d = new Date(date);
-        if (isNaN(d.getTime())) return '';
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    },
-    
     getTimestamp: (timestamp) => {
         if (!timestamp) return 0;
         let date;
         
-        // 确保时间戳被正确解析
         if (typeof timestamp === 'string') {
-            // 检查是否是YYYY/MM/DD HH:mm:ss格式的本地时间字符串
             if (timestamp.includes(' ') && timestamp.includes(':') && timestamp.includes('/')) {
-                // 本地时间格式，解析为本地时间
                 date = new Date(timestamp);
             } else if (timestamp.includes('T') && !timestamp.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(timestamp)) {
                 date = new Date(timestamp + 'Z');
             } else {
-                // 其他格式，尝试解析
                 date = new Date(timestamp);
             }
         } else {
@@ -111,7 +69,7 @@ const dateUtils = {
     
     calculateEndTimeFromDuration: (startTime, duration) => {
         if (!startTime || typeof startTime !== 'string') return '';
-        const actualDuration = duration ?? 60;
+        const actualDuration = duration ?? 120;
         const parts = startTime.split(':');
         if (parts.length < 2) return '';
         const hours = parseInt(parts[0], 10);
@@ -128,24 +86,7 @@ const dateUtils = {
             const endMinutes = finalMinutes % 60;
             return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
         }
-    },
-    
-    calculateDuration: (startTime, endTime) => {
-        const durationInput = document.getElementById('course-duration');
-        if (durationInput) {
-            const inputValue = parseInt(durationInput.value);
-            if (!isNaN(inputValue) && inputValue > 0 && inputValue <= 240) {
-                return inputValue;
-            }
-        }
-        if (startTime && endTime) {
-            const startMins = dateUtils.timeToMins(startTime);
-            const endMins = dateUtils.timeToMins(endTime);
-            if (endMins > startMins) return endMins - startMins;
-        }
-        return 120;
     }
 };
 
-export { dateUtils };
 export default dateUtils;

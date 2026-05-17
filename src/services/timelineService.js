@@ -29,22 +29,8 @@ class TimelineService {
         return null;
     }
 
-    /**
-     * 初始化服务 - 必须在登录后调用
-     */
-    async init() {
-        this.currentUserId = await this.getUserIdDirectly();
-        if (this.currentUserId) {
-            this.loadTimeline();
-        }
-    }
-
-    /**
-     * 重新加载当前用户的时间轴
-     */
     async reloadTimelineForUser() {
-        // 检查是否处于试用模式，如果是则清空时间轴
-        const isTrialMode = registry.get('serverStatusService').isTrialMode || false;
+        const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
             this.timeline = [];
@@ -128,21 +114,9 @@ class TimelineService {
      * 生成唯一ID
      */
     generateId() {
-        return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
+        return registry.get('utils').generateId();
     }
 
-    /**
-     * 获取学生信息
-     */
-    getStudentInfo(studentId) {
-        if (!registry.get('state')) return { name: '未知学生' };
-        const student = registry.get('state').students.find(s => s.id === studentId);
-        return student || { name: '未知学生' };
-    }
-
-    /**
-     * 格式化时间显示
-     */
     formatTime(timeStr) {
         if (!timeStr) return '';
         const [hour, minute] = timeStr.split(':');
@@ -216,7 +190,7 @@ class TimelineService {
      * 计算结束时间
      */
     calculateEndTime(startTime, duration) {
-        return registry.get('dateUtils').calculateEndTimeFromDuration(startTime, duration);
+        return registry.get('dateUtils')?.calculateEndTimeFromDuration(startTime, duration);
     }
 
     /**
@@ -224,7 +198,7 @@ class TimelineService {
      */
     async ensureUserInitialized() {
         // 检查是否处于试用模式，如果是则不初始化时间轴
-        const isTrialMode = registry.get('serverStatusService').isTrialMode || false;
+        const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
             this.timeline = [];
@@ -252,7 +226,7 @@ class TimelineService {
             type: 'add-course',
             timestamp: new Date().toISOString(),
             isPaste,
-            course: { ...course },
+            course: JSON.parse(JSON.stringify(course)),
             description: `添加：`
         };
 
@@ -271,7 +245,7 @@ class TimelineService {
             id: this.generateId(),
             type: 'paste-courses',
             timestamp: new Date().toISOString(),
-            courses: courses.map(c => ({ ...c })),
+            courses: courses.map(c => JSON.parse(JSON.stringify(c))),
             expanded: false,
             description: `粘贴：`
         };
@@ -348,8 +322,8 @@ class TimelineService {
             id: this.generateId(),
             type: 'update-course',
             timestamp: new Date().toISOString(),
-            oldCourse: { ...oldCourse },
-            newCourse: { ...newCourse },
+            oldCourse: JSON.parse(JSON.stringify(oldCourse)),
+            newCourse: JSON.parse(JSON.stringify(newCourse)),
             changes: changes,
             reason: reason,
             description: `修改：`
@@ -370,7 +344,7 @@ class TimelineService {
             id: this.generateId(),
             type: 'delete-course',
             timestamp: new Date().toISOString(),
-            course: { ...course },
+            course: JSON.parse(JSON.stringify(course)),
             description: `删除：`
         };
 
@@ -390,7 +364,7 @@ class TimelineService {
             type: 'delete-day-courses',
             timestamp: new Date().toISOString(),
             date: date,
-            courses: courses.map(c => ({ ...c })),
+            courses: courses.map(c => JSON.parse(JSON.stringify(c))),
             expanded: false,
             description: `删除：`
         };
@@ -486,7 +460,7 @@ class TimelineService {
         registry.get('setState')(draft => {
             const idx = draft.courses.findIndex(c => c.id === action.newCourse.id);
             if (idx !== -1) {
-                draft.courses[idx] = { ...action.oldCourse };
+                draft.courses[idx] = JSON.parse(JSON.stringify(action.oldCourse));
             }
         }, ['courses', 'calendar']);
 
@@ -513,7 +487,7 @@ class TimelineService {
             coursesToRestore.forEach(course => {
                 const exists = draft.courses.find(c => c.id === course.id);
                 if (!exists) {
-                    draft.courses.push({ ...course });
+                    draft.courses.push(JSON.parse(JSON.stringify(course)));
                 }
             });
         }, ['courses', 'calendar']);
@@ -578,7 +552,7 @@ class TimelineService {
             coursesToAdd.forEach(course => {
                 const exists = draft.courses.find(c => c.id === course.id);
                 if (!exists) {
-                    draft.courses.push({ ...course });
+                    draft.courses.push(JSON.parse(JSON.stringify(course)));
                 }
             });
         }, ['courses', 'calendar']);
@@ -599,7 +573,7 @@ class TimelineService {
         registry.get('setState')(draft => {
             const idx = draft.courses.findIndex(c => c.id === action.oldCourse.id);
             if (idx !== -1) {
-                draft.courses[idx] = { ...action.newCourse };
+                draft.courses[idx] = JSON.parse(JSON.stringify(action.newCourse));
             }
         }, ['courses', 'calendar']);
 

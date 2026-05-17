@@ -23,12 +23,12 @@ export class ConflictCheckService {
 
         // 2. 计算新课程的绝对开始和结束分钟数
         const newStartMins = utils.timeToMins(newCourse.startTime);
-        const newEndMins = newStartMins + Number(newCourse.duration || 120);
+        const newEndMins = newStartMins + Number(newCourse.duration ?? 120);
 
         // 3. 遍历检测重叠：Max(开始A, 开始B) < Min(结束A, 结束B) 则代表有交集
         return sameDayCourses.some(course => {
             const courseStartMins = utils.timeToMins(course.startTime);
-            const courseEndMins = courseStartMins + Number(course.duration || 120);
+            const courseEndMins = courseStartMins + Number(course.duration ?? 120);
 
             return Math.max(newStartMins, courseStartMins) < Math.min(newEndMins, courseEndMins);
         });

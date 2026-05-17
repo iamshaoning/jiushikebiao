@@ -81,8 +81,8 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                                     isSelected = courseData.studentIds.includes(student.id);
                                 }
                                 const color = registry.get('utils').generateColor(student.organization);
-                                const studentFees = student.fees || { '一对一': 0 };
-                                const fee = lessonType === '一对一' ? (studentFees['一对一'] || 0) : 0;
+                                const studentFees = student.fees ?? { '一对一': 0 };
+                                const fee = lessonType === '一对一' ? (studentFees['一对一'] ?? 0) : 0;
                                 return `
                                     <button type="button" class="student-btn px-3 py-1 rounded-full text-sm border-2 transition-all duration-200 ${isSelected ? 'selected bg-opacity-40' : ''}" 
                                             data-id="${student.id}" 
@@ -137,10 +137,10 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                     } else {
                         const durationInput = document.getElementById('course-duration');
                         const actualDuration = durationInput ? (parseInt(durationInput.value) || 120) : 120;
-                        const studentFees = registry.get('state').students.find(s => s.id === btn.dataset.id)?.fees || {};
-                        const studentBaseFee = studentFees['一对一'] || parseFloat(btn.dataset.fee) || 0;
-                        const studentBaseDuration = studentFees['一对一_duration'] || 120;
-                        const divisor = Math.max(1, studentBaseDuration || 120);
+                        const studentFees = registry.get('state').students.find(s => s.id === btn.dataset.id)?.fees ?? {};
+                        const studentBaseFee = studentFees['一对一'] ?? parseFloat(btn.dataset.fee) ?? 0;
+                        const studentBaseDuration = studentFees['一对一_duration'] ?? 120;
+                        const divisor = Math.max(1, studentBaseDuration);
                         const calculatedFee = (studentBaseFee / divisor) * actualDuration;
                         const feeInput = document.getElementById('course-fee');
                         if (feeInput) {
@@ -191,7 +191,7 @@ export function initCourseFormEvents(isEdit, courseData = null) {
         if (durationInput && startTimeInput && endTimeInput) {
             let courseDuration = 120;
             if (isEdit && courseData) {
-                courseDuration = courseData.duration || 120;
+                courseDuration = courseData.duration ?? 120;
             }
             
             durationInput.value = courseDuration;
@@ -238,11 +238,6 @@ export function initCourseFormEvents(isEdit, courseData = null) {
     }
     
     // 绑定时间输入框事件
-    const courseStartTime = document.getElementById('course-start-time');
-    if (courseStartTime) {
-        courseStartTime.addEventListener('change', registry.get('utils').calculateFee);
-    }
-    
     const courseFee = document.getElementById('course-fee');
     if (courseFee) {
         // 阻止回车键冒泡，避免触发表单提交

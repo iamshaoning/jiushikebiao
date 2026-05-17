@@ -45,30 +45,6 @@ class PageRenderService {
         }
     }
 
-    /**
-     * 显示指定页面
-     * @param {string} pageId - 页面ID
-     */
-    showPage(pageId) {
-        const page = document.getElementById(pageId);
-        if (page) {
-            page.classList.remove('hidden');
-            void page.offsetWidth;
-            page.classList.add('active');
-        }
-    }
-
-    /**
-     * 隐藏指定页面
-     * @param {string} pageId - 页面ID
-     */
-    hidePage(pageId) {
-        const page = document.getElementById(pageId);
-        if (page) {
-            page.classList.remove('active');
-            page.classList.add('hidden');
-        }
-    }
 }
 
 export default PageRenderService;

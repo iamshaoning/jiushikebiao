@@ -143,7 +143,7 @@ class CustomSelectService {
         if (!container) return;
 
         const trigger = container.querySelector('.custom-select-trigger');
-        const option = container.querySelector(`.custom-option[data-value="${value}"]`);
+        const option = container.querySelector(`.custom-option[data-value="${CSS.escape(value)}"]`);
 
         if (trigger && option) {
             // 更新触发器文本
@@ -173,16 +173,6 @@ class CustomSelectService {
                 trigger.classList.remove('active');
             }
         });
-    }
-
-    /**
-     * 销毁服务，清理所有事件监听器
-     */
-    destroy() {
-        if (this.closeListener) {
-            document.removeEventListener('click', this.closeListener);
-            this.closeListener = null;
-        }
     }
 
 }

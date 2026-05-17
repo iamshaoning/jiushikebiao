@@ -11,7 +11,13 @@ export class SnapshotModal {
     }
 
     async show() {
-        const snapshots = await registry.get('utils').getSnapshots();
+        let snapshots;
+        try {
+            snapshots = await registry.get('utils').getSnapshots();
+        } catch (error) {
+            registry.get('errorHandlerService').log('error', '获取快照失败', error);
+            snapshots = [];
+        }
         const loginSnapshots = snapshots.filter(s => s.type === 'login');
         const autoSnapshots = snapshots.filter(s => s.type === 'auto');
         const manualSnapshots = snapshots.filter(s => s.type === 'manual');
@@ -63,7 +69,13 @@ export class SnapshotModal {
 
                 document.querySelectorAll('[data-action="create-manual-snapshot"]').forEach(div => {
                     div.addEventListener('click', async () => {
-                        await registry.get('utils').createSnapshot('manual');
+                        try {
+                            await registry.get('utils').createSnapshot('manual');
+                        } catch (error) {
+                            registry.get('errorHandlerService').log('error', '创建快照失败', error);
+                            registry.get('notificationService').show('创建快照失败', 'error');
+                            return;
+                        }
                         setTimeout(() => this.show(), 500);
                     });
                 });

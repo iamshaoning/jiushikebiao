@@ -99,5 +99,4 @@ class EventDispatcherService {
 
 const eventDispatcherService = new EventDispatcherService();
 
-export { EventDispatcherService, eventDispatcherService };
 export default eventDispatcherService;

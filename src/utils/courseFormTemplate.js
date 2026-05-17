@@ -74,7 +74,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
                             <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">时长</label>
                             <div class="relative">
                                 <div class="relative border rounded-md overflow-hidden" data-action="toggle-duration-dropdown" style="border-color: var(--border-color); background-color: var(--bg-input);">
-                                    <input type="number" id="course-duration" min="1" value="${data.duration || 120}" class="w-full px-3 py-2 border-0 pr-16 cursor-pointer" style="background-color: var(--bg-input); color: var(--text-primary);">
+                                    <input type="number" id="course-duration" min="1" value="${data.duration ?? 120}" class="w-full px-3 py-2 border-0 pr-16 cursor-pointer" style="background-color: var(--bg-input); color: var(--text-primary);">
                                     <span class="absolute right-2 top-0 h-full flex items-center" style="color: var(--text-secondary);">分钟</span>
                                 </div>
                                 <div id="duration-dropdown" class="absolute z-50 mt-1 w-full border rounded-md shadow-lg hidden" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
@@ -98,7 +98,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">备注</label>
-                        <textarea id="course-note" rows="2" class="w-full px-3 py-2 border rounded-md" style="border-color: var(--border-color); background-color: var(--bg-input); color: var(--text-primary);">${noteVal}</textarea>
+                        <textarea id="course-note" rows="2" class="w-full px-3 py-2 border rounded-md" style="border-color: var(--border-color); background-color: var(--bg-input); color: var(--text-primary);">${registry.get('utils').escapeHtml(noteVal)}</textarea>
                     </div>
                     <div class="flex justify-end">
                         <button type="button" class="close-modal px-4 py-2 rounded-lg mr-2" style="background-color: var(--color-danger); color: white;">关闭</button>

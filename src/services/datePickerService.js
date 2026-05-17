@@ -137,26 +137,27 @@ class DatePickerService {
     changeDateMonth(inputId, delta) {
         const container = document.getElementById('course-date-container');
         const currentMonthElement = container ? container.querySelector('#current-date-month') : null;
-        let currentDate;
+        let year, month;
         
         if (currentMonthElement) {
             const monthText = currentMonthElement.textContent;
             const match = monthText.match(/(\d+)年(\d+)月/);
             if (match) {
-                const year = parseInt(match[1]);
-                const month = parseInt(match[2]) - 1;
-                currentDate = new Date(year, month, 1);
+                year = parseInt(match[1]);
+                month = parseInt(match[2]) - 1 + delta;
             } else {
-                currentDate = new Date();
+                const now = new Date();
+                year = now.getFullYear();
+                month = now.getMonth() + delta;
             }
         } else {
             const input = document.getElementById(inputId);
-            currentDate = input && input.value ? new Date(input.value) : new Date();
+            const d = input && input.value ? new Date(input.value) : new Date();
+            year = d.getFullYear();
+            month = d.getMonth() + delta;
         }
         
-        currentDate.setDate(1);
-        currentDate.setMonth(currentDate.getMonth() + delta);
-        this.renderDatePicker('course-date-container', inputId, currentDate);
+        this.renderDatePicker('course-date-container', inputId, new Date(year, month, 1));
     }
 
     renderDatePicker(containerId, inputId, date = new Date()) {
@@ -267,19 +268,6 @@ class DatePickerService {
         }
     }
 
-    destroy() {
-        if (this._dateGridClickHandler) {
-            const dateGrid = document.getElementById('date-grid');
-            if (dateGrid) {
-                dateGrid.removeEventListener('click', this._dateGridClickHandler);
-            }
-            this._dateGridClickHandler = null;
-        }
-        if (this._timePickerCloseListener) {
-            document.removeEventListener('click', this._timePickerCloseListener);
-            this._timePickerCloseListener = null;
-        }
-    }
 }
 
 export default DatePickerService;

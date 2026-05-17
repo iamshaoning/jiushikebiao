@@ -32,13 +32,13 @@ export class ManagementModal {
                             ${items.map(item => {
                                 const bgColor = registry.get('utils').generateColor(item, colorType);
                                 return `
-                                <div class="flex items-center justify-between p-2 rounded" style="background-color: var(--bg-secondary);" data-${itemName}="${item}">
-                                    <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bgColor} 20%, transparent); color: ${bgColor};" data-item="${item}" data-item-name="${itemName}" data-color="${bgColor}">${registry.get('utils').escapeHtml(item)}</button>
+                                <div class="flex items-center justify-between p-2 rounded" style="background-color: var(--bg-secondary);" data-${itemName}="${registry.get('utils').escapeHtml(item)}">
+                                    <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bgColor} 20%, transparent); color: ${bgColor};" data-item="${registry.get('utils').escapeHtml(item)}" data-item-name="${itemName}" data-color="${bgColor}">${registry.get('utils').escapeHtml(item)}</button>
                                     <div class="flex items-center">
-                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${item}">
+                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(item)}">
                                             <i data-lucide="square-pen" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
                                         </button>
-                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${item}">
+                                        <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(item)}">
                                             <i data-lucide="trash-2" class="text-lg inline-block" style="width: 18px; height: 18px; color: var(--color-danger);"></i>
                                         </button>
                                     </div>
@@ -87,9 +87,9 @@ export class ManagementModal {
                                                 });
                                             }
                                         });
-                                    });
+                                    }, ['courses', 'organizationColors']);
                                 }
-                                registry.get('utils').saveData();
+                                registry.get('utils').saveData().catch(err => { registry.get('errorHandlerService').log('error', '颜色保存失败', err); });
                                 if (updateUI) updateUI();
                             }
                         });
@@ -121,7 +121,7 @@ export class ManagementModal {
         return {
             title, items, itemName,
             addItem: (val) => {
-                registry.get('setState')(draft => { draft[stateList].push(val); });
+                registry.get('setState')(draft => { draft[stateList].push(val); }, [stateList, attrKey]);
                 this._config.items = registry.get('state')[stateList];
                 return true;
             },
@@ -153,10 +153,10 @@ export class ManagementModal {
                         const field = itemName === '机构' ? 'organization' : 'grade';
                         if (student[field] === oldVal) student[field] = newVal;
                     });
-                });
+                }, itemName === '机构' ? ['organizations', 'courses', 'students', 'organizationColors'] : ['grades', 'students', 'gradeColors']);
                 this._config.items[index] = newVal;
 
-                const el = document.querySelector(`[data-${itemName}="${oldVal}"]`);
+                const el = document.querySelector(`[data-${CSS.escape(itemName)}="${CSS.escape(oldVal)}"]`);
                 if (el) {
                     const span = el.querySelector(`.${itemName}-name`);
                     if (span) { span.textContent = newVal; span.style.backgroundColor = `color-mix(in srgb, ${newColor} 20%, transparent)`; span.style.color = newColor; }
@@ -174,7 +174,7 @@ export class ManagementModal {
                     registry.get('utils').removeColorAssignment(val, attrKey);
                     registry.get('setState')(draft => {
                         draft[stateList].splice(idx, 1);
-                    });
+                    }, [stateList, attrKey]);
                     this._config.items = registry.get('state')[stateList];
                 }
             },

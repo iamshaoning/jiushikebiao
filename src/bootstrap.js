@@ -48,7 +48,7 @@ import InitService from './services/initService.js';
 import EventBindingService from './services/eventBindingService.js';
 import LoadSystemService from './services/loadSystemService.js';
 
-import { generateColor, removeColorAssignment, reassignColors, getUsedColors, setColor, getColorPalette, initColorsFromState, isLightColor } from './utils/colorUtils.js';
+import { generateColor, removeColorAssignment, getUsedColors, setColor, getColorPalette, initColorsFromState, isLightColor } from './utils/colorUtils.js';
 
 export function bootstrap() {
 
@@ -139,17 +139,16 @@ const utils = {
     generateId: coreUtils.generateId, escapeHtml: coreUtils.escapeHtml,
     debounce: coreUtils.debounce, safe: coreUtils.safe, safeSet: coreUtils.safeSet,
     safeAddClass: coreUtils.safeAddClass, safeRemoveClass: coreUtils.safeRemoveClass,
-    timeToMins: dateUtils.timeToMins, formatLocalTime: dateUtils.formatLocalTime,
+    timeToMins: dateUtils.timeToMins,
     getTimestamp: dateUtils.getTimestamp, calculateEndTime: dateUtils.calculateEndTime,
     calculateEndTimeFromDuration: dateUtils.calculateEndTimeFromDuration,
-    calculateDuration: dateUtils.calculateDuration,
     createSnapshot: snapshotUtils.createSnapshot, getSnapshots: snapshotUtils.getSnapshots,
     restoreSnapshot: snapshotUtils.restoreSnapshot, deleteSnapshot: snapshotUtils.deleteSnapshot,
     startAutoSnapshotTimer: snapshotUtils.startAutoSnapshotTimer,
     copyCourses: clipboardUtils.copyCourses, pasteCourses: clipboardUtils.pasteCourses,
     saveData: stateUtils.saveData, syncToServer: stateUtils.syncToServer,
     withTimeout: coreUtils.withTimeout,
-    generateColor, removeColorAssignment, reassignColors, getUsedColors, setColor,
+    generateColor, removeColorAssignment, getUsedColors, setColor,
     getColorPalette, initColorsFromState, isLightColor,
     compareLocalAndServerData: async () => {
         const localData = dataService.getLocalData();
@@ -232,8 +231,6 @@ utils.generateYearDropdowns = (up = utils) => statisticsRenderService.generateYe
 utils.generateMonthDropdowns = (up = utils) => statisticsRenderService.generateMonthDropdowns(up);
 utils.getStatisticsParams = (up = utils) => statisticsRenderService.getStatisticsParams(up);
 utils.handleCourseClick = (element, courseId, event) => calendarRenderService.handleCourseClick(element, courseId, event);
-utils.showActionButtons = (element, courseId) => calendarRenderService.showActionButtons(element, courseId);
-utils.hideActionButtons = (element) => calendarRenderService.hideActionButtons(element);
 utils.createDatePickerTemplate = (id, inputId) => datePickerService.createDatePickerTemplate(id, inputId);
 utils.createTimePickerTemplate = (id, inputId) => datePickerService.createTimePickerTemplate(id, inputId);
 

@@ -11,7 +11,13 @@ export class TimelineModal {
     }
 
     async show() {
-        const timeline = await registry.get('timelineService').getTimeline();
+        let timeline;
+        try {
+            timeline = await registry.get('timelineService').getTimeline();
+        } catch (error) {
+            registry.get('errorHandlerService').log('error', '获取操作历史失败', error);
+            timeline = [];
+        }
         const formatTimestamp = (ts) => {
             const d = new Date(ts);
             return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -68,6 +74,7 @@ export class TimelineModal {
 
                 const undoBtns = document.querySelectorAll('[data-action="undo-timeline-action"]');
                 undoBtns.forEach(btn => btn.addEventListener('click', async () => {
+                    try {
                     const id = btn.dataset.id;
                     const success = await registry.get('timelineService').undoAction(id);
                     if (success) {
@@ -78,10 +85,12 @@ export class TimelineModal {
                     } else {
                         registry.get('notificationService').show('撤销失败', 'error');
                     }
+                    } catch (error) { registry.get('errorHandlerService').log('error', '撤销操作失败', error); registry.get('notificationService').show('撤销操作失败', 'error'); }
                 }));
 
                 const redoBtns = document.querySelectorAll('[data-action="redo-timeline-action"]');
                 redoBtns.forEach(btn => btn.addEventListener('click', async () => {
+                    try {
                     const id = btn.dataset.id;
                     const success = await registry.get('timelineService').redoAction(id);
                     if (success) {
@@ -92,6 +101,7 @@ export class TimelineModal {
                     } else {
                         registry.get('notificationService').show('重做失败', 'error');
                     }
+                    } catch (error) { registry.get('errorHandlerService').log('error', '重做操作失败', error); registry.get('notificationService').show('重做操作失败', 'error'); }
                 }));
 
                 const expandBtns = document.querySelectorAll('[data-action="toggle-timeline-expand"]');
@@ -130,8 +140,13 @@ export class TimelineModal {
                 const clearBtn = document.getElementById('clear-timeline-btn');
                 if (clearBtn) clearBtn.addEventListener('click', () => {
                     this.modal.showConfirm('确定要清空所有操作历史吗？', async () => {
-                        await registry.get('timelineService').clearTimeline();
-                        registry.get('notificationService').show('历史已清空', 'success');
+                        try {
+                            await registry.get('timelineService').clearTimeline();
+                            registry.get('notificationService').show('历史已清空', 'success');
+                        } catch (error) {
+                            registry.get('errorHandlerService').log('error', '清空历史失败', error);
+                            registry.get('notificationService').show('清空历史失败', 'error');
+                        }
                         this.modal.hide();
                     }, 'delete');
                 });

@@ -146,12 +146,11 @@ export class ListRenderService {
                 // 确保所有字段都有默认值
                 const name = student.name || '未命名';
                 const organization = student.organization || '未分配';
-                const fees = student.fees || { '一对一': 0 };
+                const fees = student.fees ?? { '一对一': 0 };
                 const id = student.id || '';
                 
-                // 生成一对一课时费显示HTML，格式为"多少元/多少分钟"，不显示小数
-                const oneOnOneFee = fees['一对一'] || 0;
-                const oneOnOneDuration = fees['一对一_duration'] || 120;
+                const oneOnOneFee = fees['一对一'] ?? 0;
+                const oneOnOneDuration = fees['一对一_duration'] ?? 120;
                 const feeDisplay = `<div class="text-sm" style="color: var(--text-secondary);">${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟</div>`;
                 const orgColor = this.utils.generateColor(organization, 'organization');
                 const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');
@@ -204,9 +203,9 @@ export class ListRenderService {
     _renderStudentItem(student) {
         const name = student.name || '未命名';
         const organization = student.organization || '未分配';
-        const fees = student.fees || { '一对一': 0 };
-        const oneOnOneFee = fees['一对一'] || 0;
-        const oneOnOneDuration = fees['一对一_duration'] || 120;
+        const fees = student.fees ?? { '一对一': 0 };
+        const oneOnOneFee = fees['一对一'] ?? 0;
+        const oneOnOneDuration = fees['一对一_duration'] ?? 120;
         const feeDisplay = `${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟`;
         const orgColor = this.utils.generateColor(organization, 'organization');
         const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');

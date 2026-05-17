@@ -33,13 +33,6 @@ export class CalendarRenderService {
         setTimeout(() => { btnGroup.style.transform = 'translateX(0)'; btnGroup.style.opacity = '1'; }, 10);
     }
 
-    hideActionButtons(element) {
-        element.classList.remove('is-selected');
-        const g = element.querySelector('.course-action-group');
-        if (!g) return; g.style.transform = 'translateX(100%)'; g.style.opacity = '0';
-        setTimeout(() => g.remove(), 300);
-    }
-
     _buildCoursesByDate() {
         const map = new Map();
         this.state.courses.forEach(c => { const a = map.get(c.date) || []; a.push(c); map.set(c.date, a); });

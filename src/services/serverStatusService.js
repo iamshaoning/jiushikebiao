@@ -312,7 +312,7 @@ class ServerStatusService {
      * 带超时的Promise包装
      */
     withTimeout(fn, timeout, errorMessage) {
-        return registry.get('coreUtils').withTimeout(fn, timeout, errorMessage);
+        return registry.get('coreUtils')?.withTimeout(fn, timeout, errorMessage);
     }
 }
 

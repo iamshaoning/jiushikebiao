@@ -100,19 +100,19 @@ class ModalService {
         });
 
         const actionListener = (e) => {
-            if (e.target.closest('.close-modal')) { this.hide(); return; }
+            if (e.target.closest('.close-modal')) { this.hide(); e.stopPropagation(); return; }
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const action = btn.dataset.action;
             switch (action) {
-                case 'toggle-date-picker': registry.get('utils').toggleDatePicker(btn.dataset.target); break;
-                case 'change-date-month': registry.get('utils').changeDateMonth(btn.dataset.target, parseInt(btn.dataset.delta)); break;
-                case 'close-picker': { const el = document.getElementById(btn.dataset.target); registry.get('utils').safeAddClass(el, 'hidden'); break; }
-                case 'toggle-time-picker': registry.get('utils').toggleTimePicker(btn.dataset.target); break;
-                case 'select-time-hour': this._handleTimeSelect(btn, 'hour'); break;
-                case 'select-time-minute': this._handleTimeSelect(btn, 'minute'); break;
-                case 'select-duration': this._handleDurationSelect(btn); break;
-                case 'close-modal': this.hide(); break;
+                case 'toggle-date-picker': registry.get('utils').toggleDatePicker(btn.dataset.target); e.stopPropagation(); break;
+                case 'change-date-month': registry.get('utils').changeDateMonth(btn.dataset.target, parseInt(btn.dataset.delta)); e.stopPropagation(); break;
+                case 'close-picker': { const el = document.getElementById(btn.dataset.target); registry.get('utils').safeAddClass(el, 'hidden'); e.stopPropagation(); break; }
+                case 'toggle-time-picker': registry.get('utils').toggleTimePicker(btn.dataset.target); e.stopPropagation(); break;
+                case 'select-time-hour': this._handleTimeSelect(btn, 'hour'); e.stopPropagation(); break;
+                case 'select-time-minute': this._handleTimeSelect(btn, 'minute'); e.stopPropagation(); break;
+                case 'select-duration': this._handleDurationSelect(btn); e.stopPropagation(); break;
+                case 'close-modal': this.hide(); e.stopPropagation(); break;
                 default: break;
             }
         };
@@ -260,7 +260,7 @@ class ModalService {
                 const acceptBtn = document.getElementById('accept-confirm');
                 if (!cancelBtn || !acceptBtn) return;
                 const cancelHandler = () => this.hide();
-                const acceptHandler = () => { onConfirm(); this.hide(); };
+                const acceptHandler = async () => { acceptBtn.disabled = true; try { await onConfirm(); } catch (error) { registry.get('errorHandlerService').log('error', '操作失败', error); registry.get('notificationService').show('操作失败', 'error'); } this.hide(); };
                 cancelBtn.addEventListener('click', cancelHandler);
                 acceptBtn.addEventListener('click', acceptHandler);
                 this.eventListeners.push({ element: cancelBtn, type: 'click', listener: cancelHandler }, { element: acceptBtn, type: 'click', listener: acceptHandler });

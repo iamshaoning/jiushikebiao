@@ -23,8 +23,6 @@ class DataLoadService {
         return deviceId;
     }
 
-    setDeviceId(deviceId) { this.currentDeviceId = deviceId; }
-
     async _getSession() {
         const auth = registry.get('supabaseAuth');
         if (!auth) return { isLoggedIn: false, session: null };
@@ -53,6 +51,8 @@ class DataLoadService {
         this.state.courses = [];
         this.state.organizations = [];
         this.state.grades = [];
+        this.state.organizationColors = {};
+        this.state.gradeColors = {};
     }
 
     _setupRealtimeChannel(userId) {
@@ -92,7 +92,7 @@ class DataLoadService {
             this.serverStatusService.updateServerStatus('offline');
             return;
         }
-        this._compareAndSync(localData, serverData, userId);
+        await this._compareAndSync(localData, serverData, userId);
     }
 
     async _createDefaultDataOnServer(userId) {
@@ -111,18 +111,18 @@ class DataLoadService {
         }
     }
 
-    _compareAndSync(localData, serverData, userId) {
+    async _compareAndSync(localData, serverData, userId) {
         const localTs = this.utils.getTimestamp(localData?.lastupdated);
         if (!serverData) {
-            if (localData) { this._uploadToServer(localData, userId); this.utils.updateStateFromData(localData); }
-            else this._initEmptyOnServer(userId);
+            if (localData) { await this._uploadToServer(localData, userId); this.utils.updateStateFromData(localData); }
+            else await this._initEmptyOnServer(userId);
             this.utils.refreshAllViews(true);
             return;
         }
         const serverTs = this.utils.getTimestamp(serverData.lastupdated);
         if (localData) {
             if (serverTs > localTs) { this.utils.updateStateFromData(serverData, false); localStorage.setItem('coursemanagerdata', JSON.stringify(serverData)); this.serverStatusService.updateServerStatus('online'); }
-            else if (localTs > serverTs) { this._uploadToServer(localData, userId); this.serverStatusService.updateServerStatus('online'); }
+            else if (localTs > serverTs) { await this._uploadToServer(localData, userId); this.serverStatusService.updateServerStatus('online'); }
             else { this.serverStatusService.updateServerStatus('online'); }
         } else { this.utils.updateStateFromData(serverData, false); localStorage.setItem('coursemanagerdata', JSON.stringify(serverData)); this.serverStatusService.updateServerStatus('online'); }
         this.utils.refreshAllViews(true);
@@ -160,7 +160,7 @@ class DataLoadService {
             const localData = this._getLocalData();
 
             if (this._shouldCreateLoginSnapshot(localData, isLoggedIn, currentUserId)) {
-                await registry.get('snapshotUtils').createSnapshot('login', false);
+                await registry.get('snapshotUtils')?.createSnapshot('login', false);
             }
             if (this._isOtherAccount(localData, currentUserId)) {
                 localStorage.removeItem('coursemanagerdata');
@@ -187,7 +187,8 @@ class DataLoadService {
                 }
             } else { this._handleOffline(localData, isLoggedIn); }
 
-            if (registry.get('timelineService').reloadTimelineForUser) await registry.get('timelineService').reloadTimelineForUser();
+            const ts = registry.get('timelineService');
+            if (ts?.reloadTimelineForUser) await ts.reloadTimelineForUser();
         } catch (error) {
             registry.get('errorHandlerService').handleError(error, '加载数据失败', true);
             this.utils.updateStateFromData({});

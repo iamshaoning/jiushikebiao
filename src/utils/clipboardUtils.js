@@ -16,7 +16,7 @@ const clipboardUtils = {
         }
     },
     
-    pasteCourses: (dateStr) => {
+    pasteCourses: async (dateStr) => {
         const copiedCourses = localStorage.getItem('copiedCourses');
         if (copiedCourses) {
             try {
@@ -72,7 +72,7 @@ const clipboardUtils = {
                     
                     if (!isDuplicate) {
                         const newCourse = {
-                            ...course,
+                            ...JSON.parse(JSON.stringify(course)),
                             id: registry.get('utils').generateId(),
                             date: dateStr,
                             createdAt: new Date().toISOString(),
@@ -83,10 +83,10 @@ const clipboardUtils = {
                         
                         for (const existingCourse of targetDateCourses) {
                             const newStartMins = registry.get('utils').timeToMins(newCourse.startTime);
-                            const newEndMins = newStartMins + Number(newCourse.duration || 120);
+                            const newEndMins = newStartMins + Number(newCourse.duration ?? 120);
 
                             const existingStartMins = registry.get('utils').timeToMins(existingCourse.startTime);
-                            const existingEndMins = existingStartMins + Number(existingCourse.duration || 120);
+                            const existingEndMins = existingStartMins + Number(existingCourse.duration ?? 120);
                             
                             if (Math.max(newStartMins, existingStartMins) < Math.min(newEndMins, existingEndMins)) {
                                 hasConflict = true;
@@ -97,10 +97,10 @@ const clipboardUtils = {
                         if (!hasConflict) {
                             for (const addedCourse of coursesToAdd) {
                                 const newStartMins = registry.get('utils').timeToMins(newCourse.startTime);
-                                const newEndMins = newStartMins + Number(newCourse.duration || 120);
+                                const newEndMins = newStartMins + Number(newCourse.duration ?? 120);
 
                                 const addedStartMins = registry.get('utils').timeToMins(addedCourse.startTime);
-                                const addedEndMins = addedStartMins + Number(addedCourse.duration || 120);
+                                const addedEndMins = addedStartMins + Number(addedCourse.duration ?? 120);
                                 
                                 if (Math.max(newStartMins, addedStartMins) < Math.min(newEndMins, addedEndMins)) {
                                     hasConflict = true;
@@ -122,8 +122,8 @@ const clipboardUtils = {
                 
                 if (coursesToAdd.length > 0) {
                     registry.get('setState')(draft => draft.courses.push(...coursesToAdd), 'courses');
+                    await registry.get('utils').saveData();
                     
-                    // 记录到时间轴
                     if (registry.get('timelineService')) {
                         registry.get('timelineService').recordPasteCourses(coursesToAdd);
                     }

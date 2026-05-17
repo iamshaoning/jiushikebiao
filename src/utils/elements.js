@@ -41,11 +41,9 @@ const elements = {
     totalFee: null,
     totalStudents: null,
     authModal: null,
-    authBackground: null,
     authContainer: null,
     loginTab: null,
     registerTab: null,
-    authForm: null,
     authEmail: null,
     authPassword: null,
     loginBtnContainer: null,
@@ -109,11 +107,9 @@ function initElements() {
     elements.totalFee = document.getElementById('total-fee');
     elements.totalStudents = document.getElementById('total-students');
     elements.authModal = document.getElementById('auth-modal');
-    elements.authBackground = document.getElementById('auth-background');
     elements.authContainer = document.getElementById('auth-container');
     elements.loginTab = document.getElementById('login-tab');
     elements.registerTab = document.getElementById('register-tab');
-    elements.authForm = document.getElementById('auth-form');
     elements.authEmail = document.getElementById('auth-email');
     elements.authPassword = document.getElementById('auth-password');
     elements.loginBtnContainer = document.getElementById('login-btn-container');

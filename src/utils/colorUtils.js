@@ -48,16 +48,6 @@ export function removeColorAssignment(text, type) {
     }
 }
 
-export function reassignColors(type, items) {
-    if (colorAssignments[type]) {
-        colorAssignments[type].clear();
-        nextColorIndex[type] = 0;
-        items.forEach(item => {
-            generateColor(item, type);
-        });
-    }
-}
-
 export function getUsedColors(type) {
     const validType = colorAssignments[type] ? type : 'organization';
     return Array.from(colorAssignments[validType].values());

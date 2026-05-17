@@ -121,7 +121,6 @@ export class StatisticsCalculatorService {
                     stats.byStudent[studentId] = {
                         name: student.name,
                         organization: student.organization,
-                        lessonTypes: student.lessonTypes || (student.lessonType ? [student.lessonType] : []),
                         fee: 0,
                         courses: 0
                     };

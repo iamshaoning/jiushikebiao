@@ -86,52 +86,14 @@ class AuthService {
         return data.session;
     }
 
-    /**
-     * 检查用户是否已登录
-     * @returns {Promise<boolean>} 是否已登录
-     */
-    async isLoggedIn() {
-        try {
-            const session = await this.getSession();
-            return !!session;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    /**
-     * 设置登录时间
-     */
     setLoginTime() {
         localStorage.setItem(this.loginTimeKey, Date.now().toString());
     }
 
-    /**
-     * 清除登录时间
-     */
     clearLoginTime() {
         localStorage.removeItem(this.loginTimeKey);
     }
 
-    /**
-     * 检查登录时间是否超过24小时
-     * @returns {boolean} 是否已超过24小时
-     */
-    isLoginTimeExpired() {
-        const loginTime = localStorage.getItem(this.loginTimeKey);
-        if (!loginTime) return true;
-
-        const now = Date.now();
-        const loginTimestamp = parseInt(loginTime);
-        const hoursSinceLogin = (now - loginTimestamp) / (1000 * 60 * 60);
-        return hoursSinceLogin > 24;
-    }
-
-    /**
-     * 设置认证状态变化监听器
-     * @param {Function} callback - 回调函数
-     * @returns {Function} 取消监听器的函数
-     */
     onAuthStateChange(callback) {
         if (!this.supabaseAuth) {
             throw new Error('认证服务未初始化');

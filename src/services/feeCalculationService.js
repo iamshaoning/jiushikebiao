@@ -25,10 +25,9 @@ export class FeeCalculationService {
         const student = this.state.students.find(s => s.id === studentId);
         if (!student) return;
 
-        const studentFees = student.fees || {};
-        const baseFee = studentFees['一对一'] || 0;
-        // 使用 Math.max 确保分母永远至少是 1，防止 Infinity 错误
-        const rawDuration = studentFees['一对一_duration'] || 120;
+        const studentFees = student.fees ?? {};
+        const baseFee = studentFees['一对一'] ?? 0;
+        const rawDuration = studentFees['一对一_duration'] ?? 120;
         const baseDuration = Math.max(1, rawDuration);
         const actualDuration = this._getActualDuration();
 
@@ -65,6 +64,6 @@ export class FeeCalculationService {
             return course.fees[index];
         }
         // 否则使用学生的"一对一"费用或默认费用
-        return student?.fees?.['一对一'] || 0;
+        return student?.fees?.['一对一'] ?? 0;
     }
 }

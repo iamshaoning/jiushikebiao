@@ -66,7 +66,7 @@ class NotificationService {
         notificationEl.style.backgroundColor = 'var(--bg-primary)';
 
         // 构建通知内容
-        const safeMessage = String(message).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeMessage = String(message).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const content = `
             <div class="flex items-center">
                 <div class="flex-shrink-0" style="color: ${config.color};">
@@ -106,43 +106,7 @@ class NotificationService {
         }, duration);
     }
 
-    /**
-     * 显示信息通知
-     * @param {string} message - 通知消息
-     * @param {number} duration - 显示时长（毫秒）
-     */
-    info(message, duration) {
-        this.show(message, 'info', duration);
-    }
-
-    /**
-     * 显示成功通知
-     * @param {string} message - 通知消息
-     * @param {number} duration - 显示时长（毫秒）
-     */
-    success(message, duration) {
-        this.show(message, 'success', duration);
-    }
-
-    /**
-     * 显示错误通知
-     * @param {string} message - 通知消息
-     * @param {number} duration - 显示时长（毫秒）
-     */
-    error(message, duration) {
-        this.show(message, 'error', duration);
-    }
-
-    /**
-     * 显示警告通知
-     * @param {string} message - 通知消息
-     * @param {number} duration - 显示时长（毫秒）
-     */
-    warning(message, duration) {
-        this.show(message, 'warning', duration);
-    }
 }
 
-// 导出单例实例
 const notificationService = new NotificationService();
 export default notificationService;

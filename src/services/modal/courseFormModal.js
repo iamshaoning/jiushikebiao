@@ -28,6 +28,10 @@ export class CourseFormModal {
                 if (freshForm) {
                     freshForm.addEventListener('submit', async (e) => {
                         e.preventDefault();
+                        const saveCourseBtn = document.getElementById('add-course-save');
+                        const resetSaveBtn = () => { if (saveCourseBtn) { saveCourseBtn.disabled = false; saveCourseBtn.textContent = '保存'; } };
+                        if (saveCourseBtn?.disabled) return;
+                        if (saveCourseBtn) { saveCourseBtn.disabled = true; saveCourseBtn.textContent = '保存中...'; }
                         const courseDate = document.getElementById('course-date')?.value;
                         const lessonTypeEl = document.querySelector('input[name="course-lesson-type"]:checked');
                         const lessonType = lessonTypeEl?.value;
@@ -35,14 +39,14 @@ export class CourseFormModal {
                         const startTime = document.getElementById('course-start-time')?.value;
                         const note = document.getElementById('course-note')?.value || '';
 
-                        if (!courseDate) { registry.get('notificationService').show('请选择日期', 'warning'); return; }
-                        if (!lessonType) { registry.get('notificationService').show('请选择课型', 'warning'); return; }
-                        if (selectedStudents.length === 0) { registry.get('notificationService').show('请选择学生', 'warning'); return; }
-                        if (!startTime) { registry.get('notificationService').show('请选择开始时间', 'warning'); return; }
+                        if (!courseDate) { registry.get('notificationService').show('请选择日期', 'warning'); resetSaveBtn(); return; }
+                        if (!lessonType) { registry.get('notificationService').show('请选择课型', 'warning'); resetSaveBtn(); return; }
+                        if (selectedStudents.length === 0) { registry.get('notificationService').show('请选择学生', 'warning'); resetSaveBtn(); return; }
+                        if (!startTime) { registry.get('notificationService').show('请选择开始时间', 'warning'); resetSaveBtn(); return; }
 
                         const duration = parseInt(document.getElementById('course-duration').value) || 120;
                         const feeInput = document.getElementById('course-fee');
-                        const fee = parseFloat(feeInput?.value) || 0;
+                        const fee = parseFloat(feeInput?.value) ?? 0;
 
                         const newCourse = {
                             id: registry.get('utils').generateId(),
@@ -59,14 +63,17 @@ export class CourseFormModal {
 
                         if (registry.get('utils').checkTimeConflict(newCourse)) {
                             registry.get('notificationService').show('该时间段已有课程安排', 'warning');
+                            resetSaveBtn();
                             return;
                         }
 
+                        try {
                         registry.get('setState')(draft => { draft.courses.push(newCourse); }, 'courses');
                         registry.get('timelineService').recordAddCourse(newCourse, false);
                         await registry.get('utils').saveData();
                         this.modal.hide();
                         registry.get('notificationService').show('课程添加成功', 'success');
+                        } catch (error) { registry.get('errorHandlerService').log('error', '课程添加失败', error); registry.get('notificationService').show('课程添加失败', 'error'); resetSaveBtn(); }
                     });
                 }
             }
@@ -93,7 +100,7 @@ export class CourseFormModal {
                         e.preventDefault();
                         const saveCourseBtn = document.getElementById('save-course');
                         const resetSaveBtn = () => {
-                            if (saveCourseBtn) { saveCourseBtn.disabled = false; saveCourseBtn.innerHTML = '保存'; }
+                            if (saveCourseBtn) { saveCourseBtn.disabled = false; saveCourseBtn.textContent = '保存'; }
                         };
                         const fail = (msg) => { registry.get('notificationService').show(msg, 'warning'); resetSaveBtn(); };
                         if (saveCourseBtn) {
@@ -116,7 +123,7 @@ export class CourseFormModal {
 
                         const duration = parseInt(document.getElementById('course-duration').value) || 120;
                         const feeInput = document.getElementById('course-fee');
-                        const fee = parseFloat(feeInput?.value) || 0;
+                        const fee = parseFloat(feeInput?.value) ?? 0;
 
                         const updatedCourse = {
                             id: courseId, date: courseDate, lessonType,
@@ -135,12 +142,14 @@ export class CourseFormModal {
                         const courseIndex = registry.get('state').courses.findIndex(c => c.id === courseId);
                         if (courseIndex === -1) { resetSaveBtn(); registry.get('notificationService').show('课程不存在', 'error'); return; }
 
-                        const oldCourse = { ...registry.get('state').courses[courseIndex] };
+                        try {
+                        const oldCourse = JSON.parse(JSON.stringify(registry.get('state').courses[courseIndex]));
                         registry.get('setState')(draft => { draft.courses[courseIndex] = updatedCourse; }, 'courses');
                         registry.get('timelineService').recordUpdateCourse(oldCourse, updatedCourse, '');
                         await registry.get('utils').saveData();
                         this.modal.hide();
                         registry.get('notificationService').show('课程编辑成功', 'success');
+                        } catch (error) { registry.get('errorHandlerService').log('error', '课程编辑失败', error); registry.get('notificationService').show('课程编辑失败', 'error'); resetSaveBtn(); }
                     });
                 }
             }
