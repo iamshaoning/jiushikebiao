@@ -146,9 +146,6 @@ class ModalService {
         const [hour, minute] = currentValue.split(':');
         input.value = part === 'hour' ? `${btn.dataset.hour}:${minute}` : `${hour}:${btn.dataset.minute}`;
 
-        if (btn.dataset.inputId === 'course-start-time') {
-            registry.get('utils').safeAddClass(document.getElementById('start-time-container'), 'hidden');
-        }
         registry.get('utils').calculateFee();
         if (btn.dataset.inputId === 'course-start-time') {
             const d = document.getElementById('course-duration');
@@ -269,10 +266,10 @@ class ModalService {
     }
 
     closeAllPopovers() {
-        document.querySelectorAll('.cell-action-group').forEach(el => el.remove());
-        document.querySelectorAll('.course-action-group').forEach(el => el.remove());
         document.querySelectorAll('.calendar-cell-selected').forEach(el => el.classList.remove('calendar-cell-selected'));
         document.querySelectorAll('.course-tag-item.is-selected').forEach(el => el.classList.remove('is-selected'));
+        const fab = document.getElementById('floating-action-bar');
+        if (fab) { fab.classList.remove('active'); }
     }
 
     showAddStudent() { this.studentForm.showAddStudent(); }

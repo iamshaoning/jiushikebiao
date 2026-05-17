@@ -23,14 +23,23 @@ export class CalendarRenderService {
     handleCourseClick(element, courseId, event) { if (event && event.button !== 0) return; element.classList.add('is-selected'); this.showActionButtons(element, courseId); }
 
     showActionButtons(element, courseId) {
-        if (element.querySelector('.course-action-group')) return;
-        const btnGroup = document.createElement('div');
-        btnGroup.className = 'course-action-group flex items-center space-x-1 transform translate-x-full opacity-0 transition-all duration-300';
-        btnGroup.style.cssText = 'position:absolute;right:4px;bottom:4px;z-index:10';
-        btnGroup.innerHTML = `<div data-action="edit-course" data-id="${this.utils.escapeHtml(courseId)}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-primary);"><i data-lucide="square-pen" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i></div><div data-action="copy-course" data-id="${this.utils.escapeHtml(courseId)}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-success);"><i data-lucide="copy" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i></div><div data-action="delete-course" data-id="${this.utils.escapeHtml(courseId)}" class="w-5 h-5 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg hover:scale-110 active:scale-95" style="background-color: var(--color-danger);"><i data-lucide="trash-2" class="text-[10px] pointer-events-none inline-block" style="width: 10px; height: 10px;"></i></div>`;
-        element.style.position = 'relative'; element.appendChild(btnGroup);
-        if (this.lucide) this.lucide.createIcons();
-        setTimeout(() => { btnGroup.style.transform = 'translateX(0)'; btnGroup.style.opacity = '1'; }, 10);
+        const fab = document.getElementById('floating-action-bar');
+        const fabContent = document.getElementById('floating-action-bar-content');
+        if (!fab || !fabContent) return;
+        const prevType = fabContent.dataset.type;
+        const isCrossType = prevType && prevType !== 'course';
+        const show = () => {
+            fabContent.innerHTML = registry.get('eventHandlerService')._renderCourseActionButtons(this.utils.escapeHtml(courseId));
+            fabContent.dataset.type = 'course';
+            fab.classList.add('active');
+            if (this.lucide) this.lucide.createIcons();
+        };
+        if (isCrossType) {
+            fab.classList.remove('active');
+            setTimeout(show, 180);
+        } else {
+            show();
+        }
     }
 
     _buildCoursesByDate() {
@@ -60,7 +69,8 @@ export class CalendarRenderService {
         this.utils.safeSet(this.elements.calendarMonthTrigger, 'textContent', `${month + 1}月`);
         this.utils.setCustomSelectValue('calendar-year-wrapper', year); this.utils.setCustomSelectValue('calendar-month-wrapper', month);
 
-        document.querySelectorAll('.course-action-group, .cell-action-group').forEach(g => { g.style.transition = 'none'; g.remove(); });
+        const fab = document.getElementById('floating-action-bar');
+        if (fab) { fab.classList.remove('active'); }
 
         const coursesByDate = this._buildCoursesByDate();
         const fragment = document.createDocumentFragment();

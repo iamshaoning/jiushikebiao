@@ -61,6 +61,11 @@ class DatePickerService {
     }
 
     toggleTimePicker(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        if (!container.classList.contains('hidden')) return;
+
         if (this._timePickerCloseListener) {
             document.removeEventListener('click', this._timePickerCloseListener);
         }
@@ -75,6 +80,7 @@ class DatePickerService {
                 this._timePickerCloseListener = null;
             }
         };
+
         this.togglePicker(
             containerId,
             [containerId, 'course-date-container', 'duration-dropdown'],

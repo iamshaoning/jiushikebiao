@@ -52,6 +52,7 @@ export class SnapshotModal {
                     <div class="flex space-x-2">
                         <button class="restore-snapshot px-2 py-1 rounded text-xs transition-colors" style="background-color: var(--color-success); color: white;" data-id="${s.id}">恢复</button>
                         <button class="overwrite-snapshot px-2 py-1 rounded text-xs transition-colors" style="background-color: var(--color-primary); color: white;" data-id="${s.id}">覆盖</button>
+                        <button class="delete-snapshot px-2 py-1 rounded text-xs transition-colors" style="background-color: var(--color-danger); color: white;" data-id="${s.id}">删除</button>
                     </div></div>`);
             }
             for (let i = list.length; i < 3; i++) {
@@ -103,6 +104,20 @@ export class SnapshotModal {
                                 registry.get('notificationService').show('快照覆盖失败', 'error');
                             }
                         }, 'warning');
+                    });
+                });
+
+                document.querySelectorAll('.delete-snapshot').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const snapshotId = btn.getAttribute('data-id');
+                        this.modal.showConfirm('确定要删除此快照吗？', async () => {
+                            try {
+                                await registry.get('utils').deleteSnapshot(snapshotId);
+                                setTimeout(() => this.show(), 500);
+                            } catch (error) {
+                                registry.get('notificationService').show('快照删除失败', 'error');
+                            }
+                        }, 'delete');
                     });
                 });
             }

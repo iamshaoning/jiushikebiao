@@ -4,6 +4,8 @@
  * @description 集中管理所有页面事件绑定：导航、搜索、下拉菜单、排序等
  * @module eventBindingService
  */
+import { registry } from '../core/registry.js';
+
 class EventBindingService {
     constructor(elements, state, utils, render, modalService, notificationService) {
         this.elements = elements;
@@ -55,8 +57,9 @@ class EventBindingService {
 
         if (this.elements.statisticsMonthWrapper) {
             this.elements.statisticsMonthWrapper.addEventListener('change', (e) => {
-                const month = parseInt(e.detail.value);
-                if (isNaN(month)) return;
+                const monthValue = e.detail.value;
+                const month = monthValue === 'all' ? 'all' : parseInt(monthValue);
+                if (month !== 'all' && isNaN(month)) return;
                 const { year, organization } = this.utils.getStatisticsParams();
                 this.render.statistics(year, month, organization);
             });
@@ -100,8 +103,15 @@ class EventBindingService {
             if (this.utils.compareLocalAndServerData) {
                 const hasDiff = await this.utils.compareLocalAndServerData();
                 if (hasDiff) {
+                    const serverStatusService = registry.get('serverStatusService');
+                    serverStatusService?.setSyncing();
                     this.notificationService.show('本地数据与服务器数据存在差异，已开始同步', 'info');
-                    await this.utils.syncToServer();
+                    const success = await this.utils.syncToServer();
+                    if (success) {
+                        this.notificationService.show('数据同步成功', 'success');
+                    } else {
+                        this.notificationService.show('数据同步失败，请检查网络连接', 'error');
+                    }
                 } else {
                     this.notificationService.show('数据已是最新状态', 'success');
                 }

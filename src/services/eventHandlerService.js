@@ -35,13 +35,236 @@ class EventHandlerService {
         'edit-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('modalService').showEditCourse(c); },
         'copy-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('utils').copyCourses([c]); },
         'delete-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); registry.get('modalService').showConfirm('确定要删除这节课程吗？', async () => { if (c) registry.get('timelineService').recordDeleteCourse(c); registry.get('setState')(d => { d.courses = d.courses.filter(co => co.id !== p.id); }, 'courses'); await registry.get('utils').saveData(); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
-        'course-click': (p, e) => { const ci = e.target.closest('.course-tag-item'); if (ci) { registry.get('modalService').closeAllPopovers(); registry.get('utils').handleCourseClick(ci, p.courseId, e); } },
+        'course-click': (p, e) => { 
+            const ci = e.target.closest('.course-tag-item'); 
+            if (!ci) return;
+            if (e && (e.ctrlKey || e.metaKey)) {
+                const wasSelected = ci.classList.contains('is-selected');
+                if (wasSelected) {
+                    ci.classList.remove('is-selected');
+                    const remaining = document.querySelectorAll('.course-tag-item.is-selected');
+                    if (remaining.length === 0) {
+                        registry.get('modalService').closeAllPopovers();
+                    } else if (remaining.length === 1) {
+                        const courseId = remaining[0].dataset.courseId || remaining[0].closest('[data-course-id]')?.dataset.courseId;
+                        if (courseId) {
+                            const fab = document.getElementById('floating-action-bar');
+                            const fabContent = document.getElementById('floating-action-bar-content');
+                            if (fab && fabContent) {
+                                fabContent.innerHTML = registry.get('eventHandlerService')._renderCourseActionButtons(registry.get('utils').escapeHtml(courseId));
+                                fabContent.dataset.type = 'course';
+                                fab.classList.add('active');
+                                if (registry.get('lucide')) registry.get('lucide').createIcons();
+                            }
+                        }
+                    } else {
+                        const courseIds = Array.from(remaining).map(el => el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId).filter(Boolean);
+                        const fab = document.getElementById('floating-action-bar');
+                        const fabContent = document.getElementById('floating-action-bar-content');
+                        if (fab && fabContent) {
+                            fabContent.innerHTML = registry.get('eventHandlerService')._renderMultiCourseActionButtons(courseIds);
+                            fabContent.dataset.type = 'course';
+                            fab.classList.add('active');
+                            if (registry.get('lucide')) registry.get('lucide').createIcons();
+                        }
+                    }
+                } else {
+                    ci.classList.add('is-selected');
+                    const selected = document.querySelectorAll('.course-tag-item.is-selected');
+                    if (selected.length === 1) {
+                        const fab = document.getElementById('floating-action-bar');
+                        const fabContent = document.getElementById('floating-action-bar-content');
+                        if (fab && fabContent) {
+                            fabContent.innerHTML = registry.get('eventHandlerService')._renderCourseActionButtons(registry.get('utils').escapeHtml(p.courseId));
+                            fabContent.dataset.type = 'course';
+                            fab.classList.add('active');
+                            if (registry.get('lucide')) registry.get('lucide').createIcons();
+                        }
+                    } else {
+                        const courseIds = Array.from(selected).map(el => el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId).filter(Boolean);
+                        const fab = document.getElementById('floating-action-bar');
+                        const fabContent = document.getElementById('floating-action-bar-content');
+                        if (fab && fabContent) {
+                            fabContent.innerHTML = registry.get('eventHandlerService')._renderMultiCourseActionButtons(courseIds);
+                            fabContent.dataset.type = 'course';
+                            fab.classList.add('active');
+                            if (registry.get('lucide')) registry.get('lucide').createIcons();
+                        }
+                    }
+                }
+            } else {
+                registry.get('modalService').closeAllPopovers();
+                registry.get('utils').handleCourseClick(ci, p.courseId, e);
+            }
+        },
         'add-course': (p) => { if (p.date) registry.get('modalService').showAddCourse(p.date); },
         'copy-date': (p) => { registry.get('utils').copyCourses(registry.get('state').courses.filter(c => c.date === p.date)); },
         'paste-to-date': (p) => { registry.get('utils').pasteCourses(p.date); },
         'delete-date-courses': (p) => { const cs = registry.get('state').courses.filter(c => c.date === p.date); if (!cs.length) { registry.get('notificationService').show('该日期没有课程可删除', 'warning'); return; } registry.get('modalService').showConfirm(`确定要删除 ${p.date} 的全部课程吗？`, async () => { registry.get('timelineService').recordDeleteDayCourses(p.date, [...cs]); const deleteIds = new Set(cs.map(c => c.id)); registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses'); await registry.get('utils').saveData(); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
         'course-time-change': () => { const u = registry.get('utils'); const d = document.getElementById('course-duration'); const dVal = d ? parseInt(d.value) || 120 : 120; u.calculateEndTime('course-start-time', 'course-end-time', dVal); u.calculateFee(); },
         'export-data': () => { registry.get('modalService').showConfirm('确定要导出课时统计数据吗？', () => { const u = registry.get('utils'); const { year, month, organization } = u.getStatisticsParams(); u.exportStatisticsData(year, month, organization); }, 'confirm'); },
+        'add-course-multi': (p) => {
+            const dates = p.dates ? p.dates.split(',') : [];
+            if (!dates.length) return;
+            const content = registry.get('utils').getCourseFormTemplate(false, { date: dates[0] });
+            registry.get('modalService').show(content, {
+                onShow: () => {
+                    if (registry.get('lucide')) registry.get('lucide').createIcons();
+                    const dateInput = document.getElementById('course-date');
+                    if (dateInput) { dateInput.value = dates.join(', '); dateInput.readOnly = true; dateInput.style.opacity = '0.6'; dateInput.style.cursor = 'not-allowed'; }
+                    const dpBtn = document.querySelector('[data-action="toggle-date-picker"]');
+                    if (dpBtn) { dpBtn.style.opacity = '0.5'; dpBtn.style.pointerEvents = 'none'; }
+                    const addCourseForm = document.getElementById('add-course-form');
+                    if (addCourseForm) addCourseForm.replaceWith(addCourseForm.cloneNode(true));
+                    registry.get('utils').initCourseFormEvents(false, { date: dates[0] });
+                    const freshForm = document.getElementById('add-course-form');
+                    if (freshForm) {
+                        freshForm.addEventListener('submit', async (e) => {
+                            e.preventDefault();
+                            const saveBtn = document.getElementById('add-course-save');
+                            const resetBtn = () => { if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '保存'; } };
+                            if (saveBtn?.disabled) return;
+                            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '保存中...'; }
+                            const lessonTypeEl = document.querySelector('input[name="course-lesson-type"]:checked');
+                            const lessonType = lessonTypeEl?.value;
+                            const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
+                            const startTime = document.getElementById('course-start-time')?.value;
+                            const note = document.getElementById('course-note')?.value || '';
+                            if (!lessonType) { registry.get('notificationService').show('请选择课型', 'warning'); resetBtn(); return; }
+                            if (selectedStudents.length === 0) { registry.get('notificationService').show('请选择学生', 'warning'); resetBtn(); return; }
+                            if (!startTime) { registry.get('notificationService').show('请选择开始时间', 'warning'); resetBtn(); return; }
+                            const duration = parseInt(document.getElementById('course-duration').value) || 120;
+                            const feeInput = document.getElementById('course-fee');
+                            const fee = parseFloat(feeInput?.value) ?? 0;
+                            const coursesToAdd = [];
+                            const conflictDates = [];
+                            dates.forEach(date => {
+                                const newCourse = {
+                                    id: registry.get('utils').generateId(), date, lessonType,
+                                    studentIds: selectedStudents.map(s => s.dataset.id),
+                                    studentNames: selectedStudents.map(s => s.dataset.name),
+                                    organizations: selectedStudents.map(s => s.dataset.organization),
+                                    colors: selectedStudents.map(s => s.dataset.color || 'var(--color-secondary)'),
+                                    startTime, duration, fees: [fee], note,
+                                    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+                                };
+                                if (registry.get('utils').checkTimeConflict(newCourse)) {
+                                    conflictDates.push(date);
+                                } else {
+                                    coursesToAdd.push(newCourse);
+                                }
+                            });
+                            if (coursesToAdd.length > 0) {
+                                try {
+                                    registry.get('setState')(draft => { draft.courses.push(...coursesToAdd); }, 'courses');
+                                    registry.get('timelineService').recordBatchAddCourses(coursesToAdd);
+                                    await registry.get('utils').saveData();
+                                    registry.get('modalService').hide();
+                                    const formatDate = (d) => d.replace(/-/g, '');
+                                    const successCount = coursesToAdd.length;
+                                    if (conflictDates.length > 0) {
+                                        registry.get('notificationService').show(`批量添加到${successCount}天成功`, 'success');
+                                        registry.get('notificationService').show(`添加到以下日期失败：${[...new Set(conflictDates)].map(formatDate).join('、')}`, 'error');
+                                    } else {
+                                        registry.get('notificationService').show(`批量添加到${successCount}天成功`, 'success');
+                                    }
+                                } catch (error) {
+                                    registry.get('errorHandlerService').log('error', '批量添加课程失败', error);
+                                    registry.get('notificationService').show('批量添加课程失败', 'error');
+                                    resetBtn();
+                                }
+                            } else {
+                                registry.get('notificationService').show(`所有日期均存在时间冲突，未能添加`, 'warning');
+                                resetBtn();
+                            }
+                        });
+                    }
+                }
+            });
+        },
+        'paste-to-dates': async (p) => {
+            const dates = p.dates ? p.dates.split(',') : [];
+            if (!dates.length) return;
+            const copiedCourses = localStorage.getItem('copiedCourses');
+            if (!copiedCourses) { registry.get('notificationService').show('没有可粘贴的课程', 'warning'); return; }
+            try {
+                const courses = JSON.parse(copiedCourses);
+                if (!courses || !courses.length) { registry.get('notificationService').show('没有可粘贴的课程', 'warning'); return; }
+                const allToAdd = [];
+                const results = [];
+                dates.forEach(date => {
+                    const targetDateCourses = registry.get('state').courses.filter(c => c.date === date);
+                    let added = 0, conflict = 0, dup = 0;
+                    const dateToAdd = [];
+                    courses.forEach(course => {
+                        const isDup = targetDateCourses.some(ec => ec.startTime === course.startTime && ec.duration === course.duration && ec.lessonType === course.lessonType && JSON.stringify((ec.studentIds || []).slice().sort()) === JSON.stringify((course.studentIds || []).slice().sort()));
+                        if (isDup) { dup++; return; }
+                        const newCourse = { ...JSON.parse(JSON.stringify(course)), id: registry.get('utils').generateId(), date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+                        let hasConflict = false;
+                        for (const ec of targetDateCourses) {
+                            const ns = registry.get('utils').timeToMins(newCourse.startTime), ne = ns + Number(newCourse.duration ?? 120);
+                            const es = registry.get('utils').timeToMins(ec.startTime), ee = es + Number(ec.duration ?? 120);
+                            if (Math.max(ns, es) < Math.min(ne, ee)) { hasConflict = true; break; }
+                        }
+                        if (!hasConflict) {
+                            for (const ac of dateToAdd) {
+                                const ns = registry.get('utils').timeToMins(newCourse.startTime), ne = ns + Number(newCourse.duration ?? 120);
+                                const as2 = registry.get('utils').timeToMins(ac.startTime), ae = as2 + Number(ac.duration ?? 120);
+                                if (Math.max(ns, as2) < Math.min(ne, ae)) { hasConflict = true; break; }
+                            }
+                        }
+                        if (hasConflict) { conflict++; } else { dateToAdd.push(newCourse); added++; }
+                    });
+                    allToAdd.push(...dateToAdd);
+                    results.push({ date, added, conflict, dup });
+                });
+                if (allToAdd.length > 0) {
+                    registry.get('setState')(draft => { draft.courses.push(...allToAdd); }, 'courses');
+                    if (registry.get('timelineService')) registry.get('timelineService').recordBatchPasteCourses(allToAdd);
+                    await registry.get('utils').saveData();
+                }
+                const successDates = results.filter(r => r.added > 0).map(r => r.date);
+                const failDates = results.filter(r => r.added === 0 || r.conflict > 0 || r.dup > 0).map(r => r.date);
+                const formatDate = (d) => d.replace(/-/g, '');
+                if (successDates.length === 0) {
+                    registry.get('notificationService').show('所有日期均未能粘贴', 'warning');
+                } else if (failDates.length > 0) {
+                    registry.get('notificationService').show(`批量粘贴到${successDates.length}天成功`, 'success');
+                    registry.get('notificationService').show(`粘贴到以下日期部分或全部失败：${failDates.map(formatDate).join('、')}`, 'error');
+                } else {
+                    registry.get('notificationService').show(`批量粘贴到${successDates.length}天成功`, 'success');
+                }
+            } catch (error) {
+                registry.get('notificationService').show('数据异常，操作失败', 'error');
+            }
+        },
+        'delete-date-courses-multi': (p) => {
+            const dates = p.dates ? p.dates.split(',') : [];
+            if (!dates.length) return;
+            const allCourses = [];
+            dates.forEach(date => { allCourses.push(...registry.get('state').courses.filter(c => c.date === date)); });
+            if (!allCourses.length) { registry.get('notificationService').show('选中日期没有课程可删除', 'warning'); return; }
+            registry.get('modalService').showConfirm(`确定要删除 ${dates.length} 天的全部课程（共 ${allCourses.length} 节）吗？`, async () => {
+                const deleteIds = new Set(allCourses.map(c => c.id));
+                registry.get('timelineService').recordBatchDeleteDayCourses(dates, allCourses);
+                registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses');
+                await registry.get('utils').saveData();
+                registry.get('notificationService').show(`已删除 ${dates.length} 天共 ${allCourses.length} 节课程`, 'success');
+            }, 'delete');
+        },
+        'delete-courses-multi': (p) => {
+            const ids = p.ids ? p.ids.split(',') : [];
+            if (!ids.length) return;
+            const courses = ids.map(id => registry.get('state').courses.find(c => c.id === id)).filter(Boolean);
+            if (!courses.length) { registry.get('notificationService').show('未找到要删除的课程', 'warning'); return; }
+            registry.get('modalService').showConfirm(`确定要删除选中的 ${courses.length} 节课程吗？`, async () => {
+                const deleteIds = new Set(ids);
+                registry.get('timelineService').recordBatchDeleteCourses(courses);
+                registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses');
+                await registry.get('utils').saveData();
+                registry.get('notificationService').show(`已删除 ${courses.length} 节课程`, 'success');
+            }, 'delete');
+        },
     };}
 
     _setupAuthHandlers() { return {
@@ -52,13 +275,29 @@ class EventHandlerService {
     };}
 
     _renderCellActionButtons(escapedDate) {
-        return `<div data-action="add-course" data-date="${escapedDate}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-primary)"><i data-lucide="plus" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div><div data-action="copy-date" data-date="${escapedDate}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-success)"><i data-lucide="copy" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div><div data-action="paste-to-date" data-date="${escapedDate}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-warning)"><i data-lucide="clipboard" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div><div data-action="delete-date-courses" data-date="${escapedDate}" class="w-8 h-8 rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg active:scale-95" style="background-color:var(--color-danger)"><i data-lucide="trash-2" class="text-base pointer-events-none inline-block" style="width:16px;height:16px"></i></div>`;
+        return `<div data-action="add-course" data-date="${escapedDate}" class="fab-btn" style="background-color:var(--color-primary)"><i data-lucide="plus" class="pointer-events-none inline-block"></i>添加</div><div data-action="copy-date" data-date="${escapedDate}" class="fab-btn" style="background-color:var(--color-success)"><i data-lucide="copy" class="pointer-events-none inline-block"></i>复制</div><div data-action="paste-to-date" data-date="${escapedDate}" class="fab-btn" style="background-color:var(--color-warning)"><i data-lucide="clipboard" class="pointer-events-none inline-block"></i>粘贴</div><div data-action="delete-date-courses" data-date="${escapedDate}" class="fab-btn" style="background-color:var(--color-danger)"><i data-lucide="trash-2" class="pointer-events-none inline-block"></i>删除</div>`;
+    }
+
+    _renderMultiCellActionButtons(dates) {
+        const datesAttr = dates.map(d => registry.get('utils').escapeHtml(d)).join(',');
+        return `<div data-action="add-course-multi" data-dates="${datesAttr}" class="fab-btn" style="background-color:var(--color-primary)"><i data-lucide="plus" class="pointer-events-none inline-block"></i>批量添加</div><div data-action="copy-date" data-date="" class="fab-btn" style="background-color:var(--color-success);opacity:0.5;pointer-events:none"><i data-lucide="copy" class="pointer-events-none inline-block"></i>复制</div><div data-action="paste-to-dates" data-dates="${datesAttr}" class="fab-btn" style="background-color:var(--color-warning)"><i data-lucide="clipboard" class="pointer-events-none inline-block"></i>批量粘贴</div><div data-action="delete-date-courses-multi" data-dates="${datesAttr}" class="fab-btn" style="background-color:var(--color-danger)"><i data-lucide="trash-2" class="pointer-events-none inline-block"></i>批量删除</div>`;
+    }
+
+    _renderCourseActionButtons(escapedCourseId) {
+        return `<div data-action="edit-course" data-id="${escapedCourseId}" class="fab-btn" style="background-color:var(--color-primary)"><i data-lucide="square-pen" class="pointer-events-none inline-block"></i>编辑</div><div data-action="copy-course" data-id="${escapedCourseId}" class="fab-btn" style="background-color:var(--color-success)"><i data-lucide="copy" class="pointer-events-none inline-block"></i>复制</div><div data-action="delete-course" data-id="${escapedCourseId}" class="fab-btn" style="background-color:var(--color-danger)"><i data-lucide="trash-2" class="pointer-events-none inline-block"></i>删除</div>`;
+    }
+
+    _renderMultiCourseActionButtons(courseIds) {
+        const idsAttr = courseIds.map(id => registry.get('utils').escapeHtml(id)).join(',');
+        return `<div data-action="edit-course" data-id="" class="fab-btn" style="background-color:var(--color-primary);opacity:0.5;pointer-events:none"><i data-lucide="square-pen" class="pointer-events-none inline-block"></i>编辑</div><div data-action="copy-course" data-id="" class="fab-btn" style="background-color:var(--color-success);opacity:0.5;pointer-events:none"><i data-lucide="copy" class="pointer-events-none inline-block"></i>复制</div><div data-action="delete-courses-multi" data-ids="${idsAttr}" class="fab-btn" style="background-color:var(--color-danger)"><i data-lucide="trash-2" class="pointer-events-none inline-block"></i>批量删除</div>`;
     }
 
     _setupCalendarHandlers() { return {
         'prev-month': () => { const d = registry.get('state').currentDate; registry.get('state').currentDate = new Date(d.getFullYear(), d.getMonth() - 1, 1); registry.get('utils').generateYearDropdowns(); registry.get('utils').generateMonthDropdowns(); registry.get('render').calendar(); },
         'next-month': () => { const d = registry.get('state').currentDate; registry.get('state').currentDate = new Date(d.getFullYear(), d.getMonth() + 1, 1); registry.get('utils').generateYearDropdowns(); registry.get('utils').generateMonthDropdowns(); registry.get('render').calendar(); },
-        'calendar-cell-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; if (e.target.closest('.cell-action-group')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; document.querySelectorAll('.cell-action-group').forEach(g => g.remove()); document.querySelectorAll('.calendar-cell-selected').forEach(c => c.classList.remove('calendar-cell-selected')); const ds = cell.dataset.date; cell.classList.add('calendar-cell-selected'); const bg = document.createElement('div'); bg.className = 'cell-action-group flex items-center space-x-2 transform translate-y-full opacity-0 transition-all duration-300'; bg.style.cssText = 'position:absolute;bottom:4px;left:50%;transform:translate(-50%,100%);z-index:10'; bg.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(ds)); cell.style.position = 'relative'; cell.appendChild(bg); if (registry.get('lucide')) registry.get('lucide').createIcons(); setTimeout(() => { const isCellVisible = (el) => { const style = window.getComputedStyle(el); return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null; }; if (isCellVisible(cell)) { bg.style.transform = 'translate(-50%,0)'; bg.style.opacity = '1'; } }, 50); },
+        'calendar-cell-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; if (e.target.closest('#floating-action-bar')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; document.querySelectorAll('.calendar-cell-selected').forEach(c => c.classList.remove('calendar-cell-selected')); const ds = cell.dataset.date; cell.classList.add('calendar-cell-selected'); const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (!fab || !fabContent) return; const prevType = fabContent.dataset.type; const isCrossType = prevType && prevType !== 'cell'; const showButtons = () => { fabContent.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(ds)); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); }; if (isCrossType) { setTimeout(showButtons, 180); } else { showButtons(); } },
+        'calendar-cell-ctrl-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; if (e.target.closest('#floating-action-bar')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; const wasSelected = cell.classList.contains('calendar-cell-selected'); if (wasSelected) { cell.classList.remove('calendar-cell-selected'); const remaining = document.querySelectorAll('.calendar-cell-selected'); if (remaining.length === 0) { registry.get('modalService').closeAllPopovers(); } else if (remaining.length === 1) { const ds = remaining[0].dataset.date; const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(ds)); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } else { const dates = Array.from(remaining).map(c => c.dataset.date); const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderMultiCellActionButtons(dates); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } } else { cell.classList.add('calendar-cell-selected'); const selected = document.querySelectorAll('.calendar-cell-selected'); if (selected.length === 1) { const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(cell.dataset.date)); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } else { const dates = Array.from(selected).map(c => c.dataset.date); const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderMultiCellActionButtons(dates); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } } },
+        'calendar-cells-selected': (p, e) => { const dates = p.dates; if (!dates || dates.length === 0) return; const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (!fab || !fabContent) return; fabContent.innerHTML = this._renderMultiCellActionButtons(dates); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); },
     };}
 
     _setupUIHandlers() { return {

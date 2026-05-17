@@ -28,7 +28,7 @@ export class StatisticsRenderService {
     generateMonthDropdowns(utils) {
         const currentMonth = new Date().getMonth(), monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
         const monthOptions = utils.safe(this.elements.statisticsMonthWrapper, 'querySelectorAll', '.custom-option'), monthTrigger = utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-select-trigger span');
-        if (monthOptions) monthOptions.forEach((opt, i) => { if (i === currentMonth) { opt.classList.add('selected'); utils.safeSet(monthTrigger, 'textContent', opt.textContent); } else opt.classList.remove('selected'); });
+        if (monthOptions) monthOptions.forEach((opt, i) => { if (opt.dataset.value === 'all') { opt.classList.remove('selected'); } else if (i - 1 === currentMonth) { opt.classList.add('selected'); utils.safeSet(monthTrigger, 'textContent', opt.textContent); } else opt.classList.remove('selected'); });
         utils.safeSet(this.elements.calendarMonthOptions, 'innerHTML', '');
         monthNames.forEach((mn, i) => { const od = document.createElement('div'); od.className = 'custom-option' + (i === this.state.currentDate.getMonth() ? ' selected' : ''); od.dataset.value = i; od.textContent = mn; utils.safe(this.elements.calendarMonthOptions, 'appendChild', od); });
         const ct = utils.safe(this.elements.calendarMonthWrapper, 'querySelector', '.custom-select-trigger span'); utils.safeSet(ct, 'textContent', monthNames[this.state.currentDate.getMonth()]);
@@ -36,7 +36,8 @@ export class StatisticsRenderService {
 
     getStatisticsParams(utils) {
         const year = parseInt(utils.safe(this.elements.statisticsYearWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getFullYear();
-        const month = parseInt(utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getMonth();
+        const monthValue = utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-option.selected')?.dataset.value;
+        const month = monthValue === 'all' ? 'all' : (parseInt(monthValue) || new Date().getMonth());
         const organization = utils.safe(this.elements.statisticsOrganizationWrapper, 'querySelector', '.custom-option.selected')?.dataset.value || '';
         return { year, month, organization };
     }

@@ -18,9 +18,10 @@ export class StatisticsCalculatorService {
      * @returns {Object} 统计数据
      */
     calculateStatistics(year, month, organization = '', utils) {
-        // 过滤当月课程
+        const isFullYear = month === 'all';
         const filteredCourses = this.state.courses.filter(course => {
             const [courseYear, courseMonth] = course.date.split('-').map(Number);
+            if (isFullYear) return courseYear === year;
             return courseYear === year && courseMonth === month + 1;
         });
 

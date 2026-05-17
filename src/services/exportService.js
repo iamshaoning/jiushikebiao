@@ -12,7 +12,9 @@ class ExportService {
     escapeHtml(text) { if (text == null) return ''; return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
     generateHTMLContent(data, filename, year, month, organization, utils = null) {
-        const title = `${year}年${MONTH_NAMES[month]}课时费统计`;
+        const monthLabel = month === 'all' ? '全年' : MONTH_NAMES[month];
+        const orgLabel = organization || '全部机构';
+        const title = `${year}年${monthLabel}${orgLabel}课时费统计`;
         const validUtils = utils || registry.get('utils');
 
         const getOrgBadge = (name) => {
@@ -168,7 +170,8 @@ class ExportService {
         const statisticsCalc = registry.get('statisticsCalculatorService');
         const utils = registry.get('utils');
 
-        const filteredCourses = state.courses.filter(c => { const [courseYear, courseMonth] = c.date.split('-').map(Number); return courseYear === year && courseMonth === month + 1; });
+        const isFullYear = month === 'all';
+        const filteredCourses = state.courses.filter(c => { const [courseYear, courseMonth] = c.date.split('-').map(Number); if (isFullYear) return courseYear === year; return courseYear === year && courseMonth === month + 1; });
         const exportData = this._buildDetailRows(filteredCourses, state, organization);
 
         if (statisticsCalc && utils) {
@@ -186,7 +189,7 @@ class ExportService {
             const rows = this._buildExportRows(organizationStats, studentStats, stats.detailedStats, state);
             const allData = [...exportData, ...rows];
 
-            if (allData.length > 0) { this.exportHTML(allData, `${year}年${MONTH_NAMES[month]}课时费统计.html`, year, month, organization); ns?.show('数据导出成功', 'success'); }
+            if (allData.length > 0) { const monthLabel = month === 'all' ? '全年' : MONTH_NAMES[month]; const orgLabel = organization || '全部机构'; this.exportHTML(allData, `${year}年${monthLabel}${orgLabel}课时费统计.html`, year, month, organization); ns?.show('数据导出成功', 'success'); }
             else ns?.show('暂无数据可导出', 'warning');
         } else {
             ns?.show('统计数据暂不可用', 'warning');

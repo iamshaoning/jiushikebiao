@@ -373,6 +373,67 @@ class TimelineService {
         return action;
     }
 
+    async recordBatchAddCourses(courses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !courses || courses.length === 0) return;
+        const action = {
+            id: this.generateId(),
+            type: 'batch-add-courses',
+            timestamp: new Date().toISOString(),
+            courses: courses.map(c => JSON.parse(JSON.stringify(c))),
+            expanded: false,
+            description: `批量添加 ${courses.length} 节课程：`
+        };
+        await this.addToTimeline(action);
+        return action;
+    }
+
+    async recordBatchDeleteCourses(courses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !courses || courses.length === 0) return;
+        const action = {
+            id: this.generateId(),
+            type: 'batch-delete-courses',
+            timestamp: new Date().toISOString(),
+            courses: courses.map(c => JSON.parse(JSON.stringify(c))),
+            expanded: false,
+            description: `批量删除 ${courses.length} 节课程：`
+        };
+        await this.addToTimeline(action);
+        return action;
+    }
+
+    async recordBatchDeleteDayCourses(dates, allCourses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !allCourses || allCourses.length === 0) return;
+        const action = {
+            id: this.generateId(),
+            type: 'batch-delete-day-courses',
+            timestamp: new Date().toISOString(),
+            dates: dates,
+            courses: allCourses.map(c => JSON.parse(JSON.stringify(c))),
+            expanded: false,
+            description: `批量删除 ${dates.length} 天共 ${allCourses.length} 节课程：`
+        };
+        await this.addToTimeline(action);
+        return action;
+    }
+
+    async recordBatchPasteCourses(courses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !courses || courses.length === 0) return;
+        const action = {
+            id: this.generateId(),
+            type: 'batch-paste-courses',
+            timestamp: new Date().toISOString(),
+            courses: courses.map(c => JSON.parse(JSON.stringify(c))),
+            expanded: false,
+            description: `批量粘贴 ${courses.length} 节课程：`
+        };
+        await this.addToTimeline(action);
+        return action;
+    }
+
     /**
      * 添加记录到时间轴
      */
@@ -405,6 +466,8 @@ class TimelineService {
         switch (action.type) {
             case 'add-course':
             case 'paste-courses':
+            case 'batch-add-courses':
+            case 'batch-paste-courses':
                 success = this.undoAddCourses(action);
                 break;
             case 'update-course':
@@ -412,6 +475,8 @@ class TimelineService {
                 break;
             case 'delete-course':
             case 'delete-day-courses':
+            case 'batch-delete-courses':
+            case 'batch-delete-day-courses':
                 success = this.undoDeleteCourses(action);
                 break;
             case 'restore-snapshot':
@@ -434,9 +499,9 @@ class TimelineService {
         
         let coursesToRemove = [];
         
-        if (action.type === 'paste-courses') {
+        if (action.courses && action.courses.length > 0) {
             coursesToRemove = action.courses.map(c => c.id);
-        } else {
+        } else if (action.course) {
             coursesToRemove = [action.course.id];
         }
 
@@ -475,9 +540,9 @@ class TimelineService {
         
         let coursesToRestore = [];
         
-        if (action.type === 'delete-day-courses') {
+        if (action.courses && action.courses.length > 0) {
             coursesToRestore = action.courses;
-        } else {
+        } else if (action.course) {
             coursesToRestore = [action.course];
         }
 
@@ -511,6 +576,8 @@ class TimelineService {
         switch (action.type) {
             case 'add-course':
             case 'paste-courses':
+            case 'batch-add-courses':
+            case 'batch-paste-courses':
                 success = this.redoAddCourses(action);
                 break;
             case 'update-course':
@@ -518,6 +585,8 @@ class TimelineService {
                 break;
             case 'delete-course':
             case 'delete-day-courses':
+            case 'batch-delete-courses':
+            case 'batch-delete-day-courses':
                 success = this.redoDeleteCourses(action);
                 break;
             case 'restore-snapshot':
@@ -540,9 +609,9 @@ class TimelineService {
         
         let coursesToAdd = [];
         
-        if (action.type === 'paste-courses') {
+        if (action.courses && action.courses.length > 0) {
             coursesToAdd = action.courses;
-        } else {
+        } else if (action.course) {
             coursesToAdd = [action.course];
         }
 
@@ -588,9 +657,9 @@ class TimelineService {
         
         let coursesToRemove = [];
         
-        if (action.type === 'delete-day-courses') {
+        if (action.courses && action.courses.length > 0) {
             coursesToRemove = action.courses.map(c => c.id);
-        } else {
+        } else if (action.course) {
             coursesToRemove = [action.course.id];
         }
 
@@ -630,7 +699,7 @@ class TimelineService {
         if (!isInitialized) return;
         
         const action = this.timeline.find(a => a.id === actionId);
-        if (action && (action.type === 'paste-courses' || action.type === 'delete-day-courses')) {
+        if (action && action.expanded !== undefined) {
             action.expanded = !action.expanded;
             await this.saveTimeline();
         }

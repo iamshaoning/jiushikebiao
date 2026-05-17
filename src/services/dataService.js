@@ -9,10 +9,6 @@ class DataService {
         this.localStorageKey = 'coursemanagerdata';
     }
 
-    /**
-     * 从本地存储读取数据
-     * @returns {Object} 本地存储的数据
-     */
     getLocalData() {
         try {
             const dataStr = localStorage.getItem(this.localStorageKey);
@@ -23,31 +19,27 @@ class DataService {
         }
     }
 
-    /**
-     * 检查数据是否有差异
-     * @param {Object} localData - 本地数据
-     * @param {Object} serverData - 服务器数据
-     * @returns {boolean} 是否有差异
-     */
+    _normalize(obj) {
+        if (obj === null || obj === undefined) return obj;
+        if (typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(item => this._normalize(item));
+        return Object.keys(obj).sort().reduce((result, key) => {
+            result[key] = this._normalize(obj[key]);
+            return result;
+        }, {});
+    }
+
     checkDataDifference(localData, serverData) {
         if (!localData || !serverData) {
             return true;
         }
 
-        if (localData.students?.length !== serverData.students?.length) return true;
-        if (localData.courses?.length !== serverData.courses?.length) return true;
-        if (localData.organizations?.length !== serverData.organizations?.length) return true;
-        if (localData.grades?.length !== serverData.grades?.length) return true;
-
-        if (JSON.stringify(localData.organizationColors) !== JSON.stringify(serverData.organizationColors)) return true;
-        if (JSON.stringify(localData.gradeColors) !== JSON.stringify(serverData.gradeColors)) return true;
-
-        if (localData.lastupdated !== serverData.lastupdated) return true;
-
-        if (JSON.stringify(localData.students) !== JSON.stringify(serverData.students)) return true;
-        if (JSON.stringify(localData.courses) !== JSON.stringify(serverData.courses)) return true;
-        if (JSON.stringify(localData.organizations) !== JSON.stringify(serverData.organizations)) return true;
-        if (JSON.stringify(localData.grades) !== JSON.stringify(serverData.grades)) return true;
+        const fieldsToCompare = ['students', 'courses', 'organizations', 'grades', 'organizationColors', 'gradeColors'];
+        for (const field of fieldsToCompare) {
+            const localNormalized = JSON.stringify(this._normalize(localData[field]));
+            const serverNormalized = JSON.stringify(this._normalize(serverData[field]));
+            if (localNormalized !== serverNormalized) return true;
+        }
 
         return false;
     }

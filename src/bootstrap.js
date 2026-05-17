@@ -110,6 +110,7 @@ try {
 }
 
 routerService.register('/', () => { registry.get('render').page('calendar-page'); });
+routerService.register('/calendar', () => { registry.get('render').page('calendar-page'); });
 routerService.register('/students', () => { registry.get('render').page('students-page'); });
 routerService.register('/statistics', () => { registry.get('render').page('statistics-page'); });
 routerService.registerNotFound(() => { registry.get('render').page('404-page'); });
@@ -118,6 +119,7 @@ document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
         const page = button.dataset.page;
         let path = '/';
+        if (page === 'calendar-page') path = '/calendar';
         if (page === 'students-page') path = '/students';
         if (page === 'statistics-page') path = '/statistics';
         routerService.navigate(path);
@@ -153,13 +155,29 @@ const utils = {
     compareLocalAndServerData: async () => {
         const localData = dataService.getLocalData();
         if (!localData) return true;
-        if (registry.get('supabaseClient')) {
-            try {
-                const { data: serverData } = await registry.get('supabaseClient').from('coursemanagerdata').select('*').single();
-                return dataService.checkDataDifference(localData, serverData);
-            } catch { return true; }
+
+        const supabaseClient = registry.get('supabaseClient');
+        const auth = registry.get('supabaseAuth');
+        if (!supabaseClient || !auth) return true;
+
+        try {
+            const { data: sessionData } = await auth.getSession();
+            const userId = sessionData?.session?.user?.id;
+            if (!userId) return true;
+
+            const { data: serverData, error } = await supabaseClient
+                .from('coursemanagerdata')
+                .select('*')
+                .eq('userid', userId)
+                .maybeSingle();
+
+            if (error) return true;
+            if (!serverData) return true;
+
+            return dataService.checkDataDifference(localData, serverData);
+        } catch {
+            return true;
         }
-        return true;
     },
     checkDataDifference: (localData, serverData) => dataService.checkDataDifference(localData, serverData),
     startServerStatusMonitor: () => registry.get('serverStatusService').startMonitoring(),
