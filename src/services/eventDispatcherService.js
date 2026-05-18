@@ -26,9 +26,6 @@ class EventDispatcherService {
             if (e.target.closest('#floating-action-bar')) return;
             if (e.ctrlKey || e.metaKey) return;
 
-            const existingSelected = document.querySelectorAll('.calendar-cell-selected');
-            if (existingSelected.length > 1) return;
-
             this._dragState.active = true;
             this._dragState.startX = e.clientX;
             this._dragState.startY = e.clientY;
@@ -86,18 +83,18 @@ class EventDispatcherService {
             if (this._dragState.rect) {
                 this._dragState.rect.remove();
                 this._dragState.rect = null;
-            }
 
-            document.querySelectorAll('.calendar-cell-selecting').forEach(c => c.classList.remove('calendar-cell-selecting'));
+                document.querySelectorAll('.calendar-cell-selecting').forEach(c => c.classList.remove('calendar-cell-selecting'));
 
-            const selectedCells = document.querySelectorAll('.calendar-cell-selected');
-            if (selectedCells.length >= 1) {
-                const dates = Array.from(selectedCells).map(c => c.dataset.date);
-                if (dates.length > 1) {
-                    registry.get('eventHandlerService').handle('calendar-cells-selected', { dates }, e);
+                const selectedCells = document.querySelectorAll('.calendar-cell-selected');
+                if (selectedCells.length >= 1) {
+                    const dates = Array.from(selectedCells).map(c => c.dataset.date);
+                    if (dates.length > 1) {
+                        registry.get('eventHandlerService').handle('calendar-cells-selected', { dates }, e);
+                    }
+                    this._dragState._justDragged = true;
+                    setTimeout(() => { this._dragState._justDragged = false; }, 300);
                 }
-                this._dragState._justDragged = true;
-                setTimeout(() => { this._dragState._justDragged = false; }, 300);
             }
 
             this._dragState.selectedCells = [];
