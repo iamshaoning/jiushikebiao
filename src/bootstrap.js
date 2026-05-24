@@ -113,7 +113,7 @@ routerService.register('/', () => { registry.get('render').page('calendar-page')
 routerService.register('/calendar', () => { registry.get('render').page('calendar-page'); });
 routerService.register('/students', () => { registry.get('render').page('students-page'); });
 routerService.register('/statistics', () => { registry.get('render').page('statistics-page'); });
-routerService.registerNotFound(() => { registry.get('render').page('404-page'); });
+
 
 document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {

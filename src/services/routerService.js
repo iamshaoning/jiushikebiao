@@ -1,7 +1,7 @@
 /**
  * 路由服务
  *
- * @description 基于 Hash 的 SPA 路由，支持 / /students /statistics 三个页面，含 404 处理
+ * @description 基于 Hash 的 SPA 路由，支持 / /students /statistics 三个页面
  * @module routerService
  */
 import { registry } from '../core/registry.js';
@@ -10,28 +10,20 @@ class RouterService {
     constructor() {
         this.routes = {};
         this.currentRoute = null;
-        this.notFoundCallback = null;
     }
-    
+
     register(path, callback) {
         this.routes[path] = callback;
     }
-    
-    /**
-     * 注册404页面回调
-     */
-    registerNotFound(callback) {
-        this.notFoundCallback = callback;
-    }
-    
+
     init() {
         window.addEventListener('hashchange', () => {
             this.handleRouteChange();
         });
-        
+
         this.handleRouteChange();
     }
-    
+
     handleRouteChange() {
         let path = window.location.hash.slice(1) || '/';
         // 默认路径 '/' 同步为 '/calendar'
@@ -44,12 +36,9 @@ class RouterService {
             const callback = this.routes[path];
             if (callback) {
                 callback();
-            } else if (this.notFoundCallback) {
-                this.notFoundCallback();
-                // 不存在的路径也同步回 /#/calendar
+            } else {
+                // 不存在的路径回退到 /#/calendar
                 window.location.hash = '/calendar';
-            } else if (this.routes['/calendar']) {
-                this.routes['/calendar']();
             }
         }
     }
