@@ -33,7 +33,12 @@ class RouterService {
     }
     
     handleRouteChange() {
-        const path = window.location.hash.slice(1) || '/';
+        let path = window.location.hash.slice(1) || '/';
+        // 默认路径 '/' 同步为 '/calendar'
+        if (path === '/') {
+            path = '/calendar';
+            window.location.hash = '/calendar';
+        }
         if (this.currentRoute !== path) {
             this.currentRoute = path;
             const callback = this.routes[path];
@@ -41,8 +46,8 @@ class RouterService {
                 callback();
             } else if (this.notFoundCallback) {
                 this.notFoundCallback();
-            } else if (this.routes['/']) {
-                this.routes['/']();
+            } else if (this.routes['/calendar']) {
+                this.routes['/calendar']();
             }
         }
     }
