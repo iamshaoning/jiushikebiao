@@ -162,13 +162,19 @@ class LoadSystemService {
     async enterNormalMode() {
         this.exitTrialMode();
         this.serverStatusService.startMonitoring();
-        
+
         try {
             // 快照创建已在 dataLoadService.loadData() 内部处理
             // 确保在数据同步前就创建快照
             await this.utils.loadData();
             // 设置标志位避免重复创建（实际的快照创建在 dataLoadService 内部）
             this.loginSnapshotCreated = true;
+            // 数据加载完成后，如果当前是日历页，显式渲染日历
+            // 避免 requestAnimationFrame 延迟导致 refreshAllViews 跳过日历渲染
+            const currentHash = window.location.hash.slice(1) || '/';
+            if (currentHash === '/' || currentHash === '/calendar') {
+                this.render.calendar();
+            }
         } catch (error) {
             console.error('加载数据失败:', error);
             // 即使加载失败，也确保刷新视图
