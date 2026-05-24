@@ -92,7 +92,6 @@ export class StatisticsRenderService {
     detailedTypeTable(detailedStats, utils) {
         const c = this.elements.detailedTypeTableContainer; if (!c) return;
         c.innerHTML = '<div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold" style="color:var(--text-primary)">机构课型数据</h3></div>' + this._renderOneOnOneTable(detailedStats['一对一'], utils) + this._renderGroupTable(detailedStats['多人课'], utils);
-        if (registry.get('lucide')) registry.get('lucide').createIcons();
     }
 
     studentData(studentStats, utils) {
@@ -104,6 +103,5 @@ export class StatisticsRenderService {
             html += '</tbody></table></div>';
             c.innerHTML = '<div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold" style="color:var(--text-primary)">学生课量数据</h3></div>' + html;
         } else { c.innerHTML = '<div class="flex justify-between items-center mb-4"><h3 class="text-lg font-medium" style="color:var(--text-primary)">学生课量数据</h3></div><div class="text-center py-8" style="color:var(--text-secondary)"><p>暂无学生课量数据</p></div>'; }
-        if (registry.get('lucide')) registry.get('lucide').createIcons();
     }
 }

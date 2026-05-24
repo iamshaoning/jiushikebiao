@@ -28,15 +28,20 @@ let pendingSyncTypes = new Set();
 
 export function generateColor(text, type = 'organization') {
     const validType = colorAssignments[type] ? type : 'organization';
-    
+
     if (colorAssignments[validType].has(text)) {
         return colorAssignments[validType].get(text);
     }
-    
-    const color = colorPalette[nextColorIndex[validType] % colorPalette.length];
+
+    // 使用字符串哈希来分配颜色，避免顺序依赖，提高缓存命中率
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+        hash = ((hash << 5) - hash) + text.charCodeAt(i);
+        hash |= 0;
+    }
+    const color = colorPalette[Math.abs(hash) % colorPalette.length];
     colorAssignments[validType].set(text, color);
-    nextColorIndex[validType]++;
-    
+
     scheduleSyncToState(validType);
     return color;
 }

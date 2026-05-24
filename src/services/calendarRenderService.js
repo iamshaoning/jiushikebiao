@@ -60,7 +60,12 @@ export class CalendarRenderService {
 
     _applyCornerRadius(grid) {
         const cells = grid.querySelectorAll('.calendar-cell');
-        if (cells.length > 0) { cells[cells.length - 7].style.borderBottomLeftRadius = '0.75rem'; cells[cells.length - 1].style.borderBottomRightRadius = '0.75rem'; }
+        if (cells.length > 0) {
+            const lastRowStart = cells[cells.length - 7];
+            const lastCell = cells[cells.length - 1];
+            if (lastRowStart) lastRowStart.style.borderBottomLeftRadius = '0.75rem';
+            if (lastCell) lastCell.style.borderBottomRightRadius = '0.75rem';
+        }
     }
 
     calendar(forceUpdate = false) {
@@ -149,14 +154,31 @@ export class CalendarRenderService {
     }
 
     createDayCell(day, dateStr, courses, isCurrentMonth, isToday) {
-        const cell = document.createElement('div'), dateInfo = this.getDateInfo(dateStr);
-        cell.className = `calendar-cell ${isToday ? 'today-border relative z-10 today-cell' : ''} border p-2 min-h-28 hover-cell transition-all cursor-pointer overflow-visible`;
-        cell.style.backgroundColor = isCurrentMonth ? 'var(--bg-secondary)' : 'var(--bg-content)';
-        cell.style.color = isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)';
-        cell.tabIndex = 0; cell.dataset.date = dateStr;
+        const cell = document.createElement('div');
+        const dateInfo = this.getDateInfo(dateStr);
+        const todayClass = isToday ? 'today-border relative z-10 today-cell' : '';
+        const bgColor = isCurrentMonth ? 'var(--bg-secondary)' : 'var(--bg-content)';
+        const textColor = isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)';
 
-        const coursesHTML = courses.length ? [...courses].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')).map(c => this.getCourseTagHTML(c)).join('') : '';
-        cell.innerHTML = `<div class="text-right ${isCurrentMonth ? (isToday ? 'font-bold' : '') : ''} flex items-center justify-end flex-wrap" style="color: ${isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)'};"><div class="flex items-center justify-end w-full">${this._getHolidayTag(dateInfo)}${isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-danger); color: white;">今</span>' : ''}${this._getScheduleTag(dateInfo, dateStr)}${day}</div></div><div class="course-container mt-1 space-y-1 max-h-[calc(100%-1rem)] overflow-y-auto overflow-x-hidden">${coursesHTML}</div>`;
+        cell.className = `calendar-cell ${todayClass} border p-2 min-h-28 hover-cell cursor-pointer overflow-visible`;
+        cell.style.backgroundColor = bgColor;
+        cell.style.color = textColor;
+        cell.tabIndex = 0;
+        cell.dataset.date = dateStr;
+
+        // 预计算课程HTML
+        const coursesHTML = courses.length
+            ? [...courses].sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''))
+                .map(c => this.getCourseTagHTML(c)).join('')
+            : '';
+
+        // 构建日期头部HTML
+        const holidayTag = this._getHolidayTag(dateInfo);
+        const todayTag = isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-danger); color: white;">今</span>' : '';
+        const scheduleTag = this._getScheduleTag(dateInfo, dateStr);
+        const fontWeight = isCurrentMonth && isToday ? 'font-bold' : '';
+
+        cell.innerHTML = `<div class="text-right ${fontWeight} flex items-center justify-end flex-wrap" style="color: ${textColor};"><div class="flex items-center justify-end w-full">${holidayTag}${todayTag}${scheduleTag}${day}</div></div><div class="course-container mt-1 space-y-1 max-h-[calc(100%-1rem)] overflow-y-auto overflow-x-hidden">${coursesHTML}</div>`;
         return cell;
     }
 }

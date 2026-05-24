@@ -194,9 +194,9 @@ export class ListRenderService {
             studentsList.appendChild(fragment);
         }
 
-        // 重新初始化 Lucide 图标
+        // 重新初始化 Lucide 图标 - 只渲染新增的内容
         if (registry.get('lucide')) {
-            registry.get('lucide').createIcons();
+            registry.get('lucide').createIcons({ nodes: [studentsList] });
         }
     }
 
