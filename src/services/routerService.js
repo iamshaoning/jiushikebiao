@@ -46,6 +46,8 @@ class RouterService {
                 callback();
             } else if (this.notFoundCallback) {
                 this.notFoundCallback();
+                // 不存在的路径也同步回 /#/calendar
+                window.location.hash = '/calendar';
             } else if (this.routes['/calendar']) {
                 this.routes['/calendar']();
             }
