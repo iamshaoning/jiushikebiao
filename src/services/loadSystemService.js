@@ -56,7 +56,14 @@ class LoadSystemService {
             this.elements.main.style.display === 'block';
 
         if (!isSystemVisible) {
-            this.render.page('calendar-page');
+            const currentHash = window.location.hash.slice(1) || '/';
+            const pageMap = {
+                '/': 'calendar-page',
+                '/calendar': 'calendar-page',
+                '/students': 'students-page',
+                '/statistics': 'statistics-page'
+            };
+            this.render.page(pageMap[currentHash] || 'calendar-page');
             this.showSystemFramework();
             this.themeService.init();
         }
