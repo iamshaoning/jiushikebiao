@@ -29,25 +29,17 @@ class PageRenderService {
             activeBtn.style.backgroundColor = 'var(--bg-content)';
         }
 
-        // 如果有当前页面，先淡出
-        if (currentPage) {
+        // 如果有当前页面且不是目标页面，先淡出
+        if (currentPage && currentPage.id !== pageId) {
             currentPage.classList.remove('active');
-            // 使用 requestAnimationFrame 延迟添加 hidden，让淡出动画有机会执行
-            requestAnimationFrame(() => {
-                if (!currentPage.classList.contains('active')) {
-                    currentPage.classList.add('hidden');
-                }
-            });
+            currentPage.classList.add('hidden');
         }
 
-        // 显示目标页面并添加动画
+        // 显示目标页面
         const targetPage = document.getElementById(pageId);
         if (targetPage) {
             targetPage.classList.remove('hidden');
-            // 使用 requestAnimationFrame 确保浏览器有机会处理 hidden 移除
-            requestAnimationFrame(() => {
-                targetPage.classList.add('active');
-            });
+            targetPage.classList.add('active');
         }
     }
 
