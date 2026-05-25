@@ -100,7 +100,7 @@ export class StudentFormModal {
                     const organization = document.querySelector('#student-organization-options .custom-option.selected')?.dataset.value;
                     const grade = document.querySelector('#student-grade-options .custom-option.selected')?.dataset.value;
                     const duration = parseInt(document.getElementById('duration-one-on-one').value) || 120;
-                    const fee = parseFloat(document.getElementById('fee-one-on-one').value) ?? 0;
+                    const fee = parseFloat(document.getElementById('fee-one-on-one').value) || 0;
 
                     if (!name || !organization || !grade) {
                         registry.get('notificationService').show(!name ? '请输入学生姓名' : !organization ? '请选择机构' : '请选择年级', 'warning');
@@ -144,7 +144,7 @@ export class StudentFormModal {
                     const organization = document.querySelector('#edit-student-organization-options .custom-option.selected')?.dataset.value;
                     const grade = document.querySelector('#edit-student-grade-options .custom-option.selected')?.dataset.value;
                     const duration = parseInt(document.getElementById('edit-duration-one-on-one').value) || 120;
-                    const fee = parseFloat(document.getElementById('edit-fee-one-on-one').value) ?? 0;
+                    const fee = parseFloat(document.getElementById('edit-fee-one-on-one').value) || 0;
 
                     if (!name || !organization || !grade) {
                         registry.get('notificationService').show(!name ? '请输入学生姓名' : !organization ? '请选择机构' : '请选择年级', 'warning');

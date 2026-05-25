@@ -132,7 +132,9 @@ export class StatisticsCalculatorService {
 
                 // 机构统计（多人课的费用已经在上面统一计算了）
                 if (!stats.byOrganization[student.organization]) {
-                    stats.byOrganization[student.organization] = { fee: 0, courses: 0, students: new Set() };
+                    if (!isGroupLesson) {
+                        stats.byOrganization[student.organization] = { fee: 0, courses: 0, students: new Set() };
+                    }
                 }
                 if (stats.byOrganization[student.organization]) {
                     if (!isGroupLesson) {
@@ -144,7 +146,9 @@ export class StatisticsCalculatorService {
 
                 // 课型统计（多人课的费用已经在上面统一计算了）
                 if (!stats.byLessonType[courseLessonType]) {
-                    stats.byLessonType[courseLessonType] = { fee: 0, courses: 0, students: new Set() };
+                    if (!isGroupLesson) {
+                        stats.byLessonType[courseLessonType] = { fee: 0, courses: 0, students: new Set() };
+                    }
                 }
                 if (stats.byLessonType[courseLessonType]) {
                     if (!isGroupLesson) {

@@ -44,9 +44,19 @@ export class CourseFormModal {
                         if (selectedStudents.length === 0) { registry.get('notificationService').show('请选择学生', 'warning'); resetSaveBtn(); return; }
                         if (!startTime) { registry.get('notificationService').show('请选择开始时间', 'warning'); resetSaveBtn(); return; }
 
+                        // 多人课课时费必填
+                        if (lessonType !== '一对一') {
+                            const feeVal = parseFloat(document.getElementById('course-fee')?.value);
+                            if (isNaN(feeVal) || feeVal <= 0) {
+                                registry.get('notificationService').show('多人课请填写课时费', 'warning');
+                                resetSaveBtn();
+                                return;
+                            }
+                        }
+
                         const duration = parseInt(document.getElementById('course-duration').value) || 120;
                         const feeInput = document.getElementById('course-fee');
-                        const fee = parseFloat(feeInput?.value) ?? 0;
+                        const fee = parseFloat(feeInput?.value) || 0;
 
                         const newCourse = {
                             id: registry.get('utils').generateId(),
@@ -121,9 +131,15 @@ export class CourseFormModal {
                         if (selectedStudents.length === 0) return fail('请选择学生');
                         if (!startTime) return fail('请选择开始时间');
 
+                        // 多人课课时费必填
+                        if (lessonType !== '一对一') {
+                            const feeVal = parseFloat(document.getElementById('course-fee')?.value);
+                            if (isNaN(feeVal) || feeVal <= 0) return fail('多人课请填写课时费');
+                        }
+
                         const duration = parseInt(document.getElementById('course-duration').value) || 120;
                         const feeInput = document.getElementById('course-fee');
-                        const fee = parseFloat(feeInput?.value) ?? 0;
+                        const fee = parseFloat(feeInput?.value) || 0;
 
                         const updatedCourse = {
                             id: courseId, date: courseDate, lessonType,

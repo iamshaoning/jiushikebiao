@@ -134,6 +134,15 @@ class EventHandlerService {
                             if (selectedStudents.length === 0) { registry.get('notificationService').show('请选择学生', 'warning'); resetBtn(); return; }
                             if (!startTime) { registry.get('notificationService').show('请选择开始时间', 'warning'); resetBtn(); return; }
                             const duration = parseInt(document.getElementById('course-duration').value) || 120;
+                            // 多人课课时费必填
+                            if (lessonType !== '一对一') {
+                                const feeVal = parseFloat(document.getElementById('course-fee')?.value);
+                                if (isNaN(feeVal) || feeVal <= 0) {
+                                    registry.get('notificationService').show('多人课请填写课时费', 'warning');
+                                    resetBtn();
+                                    return;
+                                }
+                            }
                             const feeInput = document.getElementById('course-fee');
                             const fee = parseFloat(feeInput?.value) || 0;
                             const coursesToAdd = [];

@@ -394,7 +394,15 @@ class AuthUIService {
      */
     updateUIForAuth(user) {
         if (this.elements.settingsUserName) {
-            this.elements.settingsUserName.textContent = user.email;
+            const email = user.email || '';
+            this.elements.settingsUserName.textContent = email.split('@')[0];
+        }
+        if (this.elements.settingsEmailProvider) {
+            const email = user.email || '';
+            const domain = email.split('@')[1] || '';
+            const provider = domain.split('.')[0] || '';
+            this.elements.settingsEmailProvider.textContent = provider ? provider + '邮箱' : '';
+            this.elements.settingsEmailProvider.style.display = provider ? 'inline-block' : 'none';
         }
 
         if (this.elements.logoutBtn) {
@@ -410,6 +418,9 @@ class AuthUIService {
     updateUIForTrialUser() {
         if (this.elements.settingsUserName) {
             this.elements.settingsUserName.textContent = '试用用户';
+        }
+        if (this.elements.settingsEmailProvider) {
+            this.elements.settingsEmailProvider.style.display = 'none';
         }
 
         if (this.elements.logoutBtn) {
