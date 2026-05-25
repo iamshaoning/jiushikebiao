@@ -103,7 +103,7 @@
 
 ## 联系方式
 
-如有问题或建议，欢迎联系我：[iamshaoning](https://iamshaoning.github.io/iamshaoning/)
+如有问题或建议，欢迎联系我：[iamshaoning](https://github.com/iamshaoning)
 
 ## 许可证
 
