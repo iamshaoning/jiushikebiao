@@ -37,7 +37,8 @@ export class StatisticsRenderService {
     getStatisticsParams(utils) {
         const year = parseInt(utils.safe(this.elements.statisticsYearWrapper, 'querySelector', '.custom-option.selected')?.dataset.value) || new Date().getFullYear();
         const monthValue = utils.safe(this.elements.statisticsMonthWrapper, 'querySelector', '.custom-option.selected')?.dataset.value;
-        const month = monthValue === 'all' ? 'all' : (parseInt(monthValue) || new Date().getMonth());
+        const parsedMonth = parseInt(monthValue);
+        const month = monthValue === 'all' ? 'all' : (isNaN(parsedMonth) ? new Date().getMonth() : parsedMonth);
         const organization = utils.safe(this.elements.statisticsOrganizationWrapper, 'querySelector', '.custom-option.selected')?.dataset.value || '';
         return { year, month, organization };
     }

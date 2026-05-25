@@ -66,9 +66,13 @@ const snapshotUtils = {
             snapshots = [];
         }
         
-        const loginSnapshots = snapshots.filter(s => s.type === 'login');
-        const autoSnapshots = snapshots.filter(s => s.type === 'auto');
-        const manualSnapshots = snapshots.filter(s => s.type === 'manual');
+        // 按 userId 隔离，只操作当前用户的快照
+        const mySnapshots = snapshots.filter(s => s.userId === userId);
+        const otherSnapshots = snapshots.filter(s => s.userId !== userId);
+        
+        const loginSnapshots = mySnapshots.filter(s => s.type === 'login');
+        const autoSnapshots = mySnapshots.filter(s => s.type === 'auto');
+        const manualSnapshots = mySnapshots.filter(s => s.type === 'manual');
         
         if (type === 'login') {
             loginSnapshots.unshift(snapshot);
@@ -87,7 +91,7 @@ const snapshotUtils = {
             }
         }
         
-        snapshots = [...loginSnapshots, ...autoSnapshots, ...manualSnapshots];
+        snapshots = [...otherSnapshots, ...loginSnapshots, ...autoSnapshots, ...manualSnapshots];
         localStorage.setItem('coursemanagerSnapshots', JSON.stringify(snapshots));
         
         if (showNotification !== false && type === 'manual' && registry.get('notificationService')) {

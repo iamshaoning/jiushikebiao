@@ -44,7 +44,7 @@ export class FeeCalculationService {
         const durationInput = document.getElementById('course-duration');
         if (durationInput) {
             const inputValue = parseInt(durationInput.value);
-            if (!isNaN(inputValue) && inputValue > 0 && inputValue <= 240) {
+            if (!isNaN(inputValue) && inputValue > 0) {
                 return inputValue;
             }
         }

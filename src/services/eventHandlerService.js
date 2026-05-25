@@ -135,7 +135,7 @@ class EventHandlerService {
                             if (!startTime) { registry.get('notificationService').show('请选择开始时间', 'warning'); resetBtn(); return; }
                             const duration = parseInt(document.getElementById('course-duration').value) || 120;
                             const feeInput = document.getElementById('course-fee');
-                            const fee = parseFloat(feeInput?.value) ?? 0;
+                            const fee = parseFloat(feeInput?.value) || 0;
                             const coursesToAdd = [];
                             const conflictDates = [];
                             dates.forEach(date => {

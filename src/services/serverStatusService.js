@@ -291,6 +291,8 @@ class ServerStatusService {
             return;
         }
 
+        this.previousStatus = 'syncing';
+
         const elements = registry.get('elements');
         const syncStatus = elements?.syncStatus;
         const syncIcon = elements?.syncIcon;
