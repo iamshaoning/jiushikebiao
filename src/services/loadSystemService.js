@@ -63,9 +63,8 @@ class LoadSystemService {
                 '/students': 'students-page',
                 '/statistics': 'statistics-page'
             };
-            // 先显示框架再渲染页面，避免父容器 display:none 时 CSS Grid 子元素布局失效
-            this.showSystemFramework();
             this.render.page(pageMap[currentHash] || 'calendar-page');
+            this.showSystemFramework();
             this.themeService.init();
         }
 
@@ -78,7 +77,25 @@ class LoadSystemService {
             await this.enterNormalMode();
         }
         
+        // 数据加载完成后，直接同步渲染当前页面，避免 refreshAllViews 防抖延迟导致页面空白
+        this._renderCurrentPage();
+
         this.systemLoaded = true;
+    }
+
+    /**
+     * 根据当前激活的页面直接同步渲染，确保首次加载数据后页面不空白
+     */
+    _renderCurrentPage() {
+        const currentPage = document.querySelector('.page.active');
+        if (currentPage === this.elements.calendarPage) {
+            this.render.calendar();
+        } else if (currentPage === this.elements.studentsPage) {
+            this.render.students();
+        } else if (currentPage === this.elements.statisticsPage) {
+            const { year, month, organization } = this.utils.getStatisticsParams();
+            this.render.statistics(year, month, organization);
+        }
     }
 
     /**
