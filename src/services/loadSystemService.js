@@ -77,25 +77,17 @@ class LoadSystemService {
             await this.enterNormalMode();
         }
         
-        // 数据加载完成后，直接同步渲染当前页面，避免 refreshAllViews 防抖延迟导致页面空白
-        this._renderCurrentPage();
+        // 数据加载完成后，根据当前 hash 直接渲染对应页面，避免 refreshAllViews 防抖延迟导致页面空白
+        const currentHash = window.location.hash.slice(1) || '/';
+        const pageMap = {
+            '/': 'calendar-page',
+            '/calendar': 'calendar-page',
+            '/students': 'students-page',
+            '/statistics': 'statistics-page'
+        };
+        this.render.page(pageMap[currentHash] || 'calendar-page');
 
         this.systemLoaded = true;
-    }
-
-    /**
-     * 根据当前激活的页面直接同步渲染，确保首次加载数据后页面不空白
-     */
-    _renderCurrentPage() {
-        const currentPage = document.querySelector('.page.active');
-        if (currentPage === this.elements.calendarPage) {
-            this.render.calendar();
-        } else if (currentPage === this.elements.studentsPage) {
-            this.render.students();
-        } else if (currentPage === this.elements.statisticsPage) {
-            const { year, month, organization } = this.utils.getStatisticsParams();
-            this.render.statistics(year, month, organization);
-        }
     }
 
     /**
