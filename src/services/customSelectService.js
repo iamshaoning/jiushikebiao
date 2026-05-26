@@ -94,12 +94,18 @@ class CustomSelectService {
         const dropdown = document.getElementById(dropdownId);
         if (!dropdown) return;
 
-        // 切换下拉菜单显示状态
-        dropdown.classList.toggle('hidden');
+        const isHidden = dropdown.classList.contains('hidden');
+        
+        if (isHidden) {
+            dropdown.classList.remove('hidden');
+            dropdown.style.opacity = '0';
+            dropdown.style.transform = 'translateY(-8px)';
+            dropdown.offsetHeight;
+            dropdown.style.transition = 'opacity 200ms ease-out, transform 200ms ease-out';
+            dropdown.style.opacity = '1';
+            dropdown.style.transform = 'translateY(0)';
 
-        // 如果显示了下拉菜单，设置点击外部关闭的监听器
-        if (!dropdown.classList.contains('hidden')) {
-            // 创建关闭监听器
+            // 设置点击外部关闭的监听器
             if (this.closeListener) {
                 document.removeEventListener('click', this.closeListener);
             }
@@ -110,13 +116,34 @@ class CustomSelectService {
                 const isToggleButton = target.closest('[data-action="toggle-duration-dropdown"]');
 
                 if (!isInsideDropdown && !isToggleButton) {
-                    dropdown.classList.add('hidden');
+                    this._hideDurationPicker(dropdown);
                     document.removeEventListener('click', this.closeListener);
                     this.closeListener = null;
                 }
             };
 
             document.addEventListener('click', this.closeListener);
+        } else {
+            this._hideDurationPicker(dropdown);
+        }
+    }
+
+    _hideDurationPicker(dropdown) {
+        if (!dropdown || dropdown.classList.contains('hidden')) return;
+        dropdown.style.transition = 'opacity 150ms ease-in, transform 150ms ease-in';
+        dropdown.style.opacity = '0';
+        dropdown.style.transform = 'translateY(-8px)';
+        const onTransitionEnd = () => {
+            dropdown.classList.add('hidden');
+            dropdown.style.opacity = '';
+            dropdown.style.transform = '';
+            dropdown.style.transition = '';
+            dropdown.removeEventListener('transitionend', onTransitionEnd);
+        };
+        dropdown.addEventListener('transitionend', onTransitionEnd, { once: true });
+        if (this.closeListener) {
+            document.removeEventListener('click', this.closeListener);
+            this.closeListener = null;
         }
     }
 

@@ -162,7 +162,15 @@ class ModalService {
         registry.get('utils').calculateFee();
     }
 
-    handleKeydown(e) { if (e.key === 'Escape') this.hide(); }
+    handleKeydown(e) {
+        if (e.key === 'Escape') {
+            if (this.nestedContainer && this.nestedContainer.style.display === 'flex') {
+                this.hideNested();
+            } else {
+                this.hide();
+            }
+        }
+    }
 
     hide() {
         if (!this.container || !this.content) return;
@@ -192,12 +200,6 @@ class ModalService {
         if (this._nestedHideTimer) { clearTimeout(this._nestedHideTimer); this._nestedHideTimer = null; }
         if (!this.nestedContainer || !this.nestedContent) this.init();
 
-        // 移除之前可能存在的事件监听器，避免重复绑定
-        if (this.nestedContainer._keydownHandler) {
-            document.removeEventListener('keydown', this.nestedContainer._keydownHandler);
-            this.nestedContainer._keydownHandler = null;
-        }
-
         document.body.style.position = 'fixed';
         document.body.style.top = `-${window.scrollY}px`;
         document.body.style.left = '0';
@@ -211,10 +213,7 @@ class ModalService {
         this.nestedContent.classList.remove('scale-90', 'opacity-0', 'translate-y-4');
         this.nestedContent.classList.add('scale-100', 'opacity-100', 'translate-y-0');
 
-        const nestedHandleKeydown = (e) => { if (e.key === 'Escape') this.hideNested(); };
-        document.addEventListener('keydown', nestedHandleKeydown);
         this.nestedContainer.onclick = (e) => { if (e.target === this.nestedContainer) this.hideNested(); };
-        this.nestedContainer._keydownHandler = nestedHandleKeydown;
 
         if (options.onShow) options.onShow();
     }

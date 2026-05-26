@@ -16,7 +16,7 @@ class DatePickerService {
             const container = document.getElementById(containerId);
             const trigger = document.querySelector(triggerSelector);
             if (container && !container.contains(event.target) && (!trigger || !trigger.contains(event.target))) {
-                container.classList.add('hidden');
+                this._hidePicker(container);
                 document.removeEventListener('click', listener);
             }
         };
@@ -30,7 +30,7 @@ class DatePickerService {
         otherContainers.forEach(id => {
             const otherContainer = document.getElementById(id);
             if (otherContainer && otherContainer !== container) {
-                otherContainer.classList.add('hidden');
+                this._hidePicker(otherContainer);
             }
         });
 
@@ -38,6 +38,12 @@ class DatePickerService {
         
         if (isHidden) {
             container.classList.remove('hidden');
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(-8px)';
+            container.offsetHeight;
+            container.style.transition = 'opacity 200ms ease-out, transform 200ms ease-out';
+            container.style.opacity = '1';
+            container.style.transform = 'translateY(0)';
             
             if (typeof renderCallback === 'function') {
                 renderCallback(containerId);
@@ -48,8 +54,23 @@ class DatePickerService {
                 document.addEventListener('click', closeListener);
             }
         } else {
-            container.classList.add('hidden');
+            this._hidePicker(container);
         }
+    }
+
+    _hidePicker(container) {
+        if (!container || container.classList.contains('hidden')) return;
+        container.style.transition = 'opacity 150ms ease-in, transform 150ms ease-in';
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(-8px)';
+        const onTransitionEnd = () => {
+            container.classList.add('hidden');
+            container.style.opacity = '';
+            container.style.transform = '';
+            container.style.transition = '';
+            container.removeEventListener('transitionend', onTransitionEnd);
+        };
+        container.addEventListener('transitionend', onTransitionEnd, { once: true });
     }
 
     createDatePickerTemplate(id, inputId) {
@@ -75,7 +96,7 @@ class DatePickerService {
             const trigger = document.querySelector(`[data-action="toggle-time-picker"][data-target="${containerId}"]`);
 
             if (targetContainer && !targetContainer.contains(event.target) && (!trigger || !trigger.contains(event.target))) {
-                targetContainer.classList.add('hidden');
+                this._hidePicker(targetContainer);
                 document.removeEventListener('click', this._timePickerCloseListener);
                 this._timePickerCloseListener = null;
             }
