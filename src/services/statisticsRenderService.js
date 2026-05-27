@@ -64,7 +64,7 @@ export class StatisticsRenderService {
             const pct = totalCourses > 0 ? (stats.courses / totalCourses * 100) : 0, color = utils.generateColor(org, 'organization'), row = document.createElement('tr');
             row.style.backgroundColor = 'var(--bg-secondary)';
             row.innerHTML = '<td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,' + color + ' 20%, transparent); color:' + color + '">' + utils.escapeHtml(org) + '</span></td><td class="px-4 py-3" style="color:var(--text-primary)">' + stats.courses + '节</td><td class="px-4 py-3" style="color:var(--text-primary)">¥' + stats.fee.toFixed(2) + '</td><td class="px-4 py-3" style="color:var(--text-primary)">' + (stats.students?.size || 0) + '人</td><td class="px-4 py-3"><div class="flex items-center"><div class="w-24 rounded-full h-2 mr-2" style="background-color:var(--bg-content)"><div class="rounded-full h-2" style="width:' + Math.min(pct, 100) + '%; background-color:' + color + '"></div></div><span class="text-xs" style="color:var(--text-secondary)">' + pct.toFixed(1) + '%</span></div></td>';
-            f.appendChild(row);
+           f.appendChild(row);
         });
         tb.appendChild(f);
     }

@@ -158,6 +158,7 @@ export class ListRenderService {
                 const tr = document.createElement('tr');
                 tr.className = 'transition-colors';
                 tr.style.backgroundColor = 'var(--bg-secondary)';
+                tr.dataset.studentId = id;
                 tr.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="font-medium" style="color: var(--text-primary);">${this.utils.escapeHtml(name)}</div>
@@ -198,6 +199,21 @@ export class ListRenderService {
         if (registry.get('lucide')) {
             registry.get('lucide').createIcons({ nodes: [studentsList] });
         }
+
+        // Restore multi-select state after re-render
+        const ed = registry.get('eventDispatcherService');
+        if (ed && ed._selectedStudentIds && ed._selectedStudentIds.size > 0) {
+            const rows = [
+                ...document.querySelectorAll('#students-list tr'),
+                ...document.querySelectorAll('#students-virtual-container .student-item')
+            ];
+            rows.forEach(row => {
+                if (ed._selectedStudentIds.has(row.dataset.studentId)) {
+                    row.classList.add('student-selected');
+                }
+            });
+            ed._updateStudentMultiSelectUI();
+        }
     }
 
     _renderStudentItem(student) {
@@ -212,7 +228,7 @@ export class ListRenderService {
         const id = student.id || '';
 
         return `
-            <div class="student-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;height:80px;box-sizing:border-box;border-bottom:1px solid var(--border-color);background-color:var(--bg-secondary);">
+            <div class="student-item" data-student-id="${this.utils.escapeHtml(id)}" style="display:flex;align-items:center;justify-content:space-between;padding:12px 24px;height:80px;box-sizing:border-box;border-bottom:1px solid var(--border-color);background-color:var(--bg-secondary);">
                 <div style="flex:1;min-width:0;">
                     <div class="font-medium" style="color:var(--text-primary);">${this.utils.escapeHtml(name)}</div>
                 </div>

@@ -117,6 +117,9 @@ routerService.register('/statistics', () => { registry.get('render').page('stati
 
 document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
+        // Close any open modals/popovers before switching pages
+        if (registry.get('modalService')) registry.get('modalService').hide();
+        if (registry.get('eventDispatcherService')) registry.get('eventDispatcherService').clearAllStudentSelections();
         const page = button.dataset.page;
         let path = '/';
         if (page === 'calendar-page') path = '/calendar';

@@ -17,6 +17,8 @@ class EventDispatcherService {
         }
         this.initialized = true;
         this._dragState = { active: false, startX: 0, startY: 0, rect: null, selectedCells: [], _justDragged: false };
+        this._studentDragState = { active: false, startX: 0, startY: 0, rect: null, touchedRows: [], _justDragged: false };
+        this._selectedStudentIds = new Set();
 
         document.body.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
@@ -100,6 +102,111 @@ class EventDispatcherService {
             this._dragState.selectedCells = [];
         });
 
+        // Student list drag selection - mousedown
+        document.body.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (this._dragState.active) return;
+            if (e.ctrlKey || e.metaKey) return;
+
+            const studentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+            if (!studentRow) return;
+            if (e.target.closest('.edit-student') || e.target.closest('.delete-student')) return;
+            if (e.target.closest('button')) return;
+
+            // Check if we're on the students page
+            const studentsPage = document.getElementById('students-page');
+            if (!studentsPage || studentsPage.classList.contains('hidden')) return;
+
+            // Reset calendar drag state in case it's stuck
+            this._dragState.active = false;
+            this._studentDragState.active = true;
+            this._studentDragState.startX = e.clientX;
+            this._studentDragState.startY = e.clientY;
+            this._studentDragState.touchedRows = [];
+        });
+
+        // Student list drag selection - mousemove
+        document.addEventListener('mousemove', (e) => {
+            if (!this._studentDragState.active && this._dragState.active) return;
+
+            if (this._studentDragState.active) {
+                const dx = e.clientX - this._studentDragState.startX;
+                const dy = e.clientY - this._studentDragState.startY;
+                if (!this._studentDragState.rect && (Math.abs(dx) < 5 && Math.abs(dy) < 5)) return;
+
+                if (!this._studentDragState.rect) {
+                    this._studentDragState.rect = document.createElement('div');
+                    this._studentDragState.rect.className = 'selection-rect';
+                    document.body.appendChild(this._studentDragState.rect);
+                    // Clear previous student selections on drag start
+                    this._clearStudentSelections();
+                }
+
+                const left = Math.min(e.clientX, this._studentDragState.startX);
+                const top = Math.min(e.clientY, this._studentDragState.startY);
+                const width = Math.abs(dx);
+                const height = Math.abs(dy);
+
+                this._studentDragState.rect.style.left = left + 'px';
+                this._studentDragState.rect.style.top = top + 'px';
+                this._studentDragState.rect.style.width = width + 'px';
+                this._studentDragState.rect.style.height = height + 'px';
+
+                const selRect = { left, top, right: left + width, bottom: top + height };
+
+                // Get all student rows (both table and virtual)
+                const rows = [
+                    ...document.querySelectorAll('#students-list tr'),
+                    ...document.querySelectorAll('#students-virtual-container .student-item')
+                ];
+
+                rows.forEach(row => {
+                    const cr = row.getBoundingClientRect();
+                    const overlaps = !(cr.right < selRect.left || cr.left > selRect.right || cr.bottom < selRect.top || cr.top > selRect.bottom);
+                    if (overlaps) {
+                        row.classList.add('student-selected');
+                        if (!this._studentDragState.touchedRows.includes(row)) {
+                            this._studentDragState.touchedRows.push(row);
+                        }
+                    } else {
+                        row.classList.remove('student-selected');
+                        const idx = this._studentDragState.touchedRows.indexOf(row);
+                        if (idx !== -1) this._studentDragState.touchedRows.splice(idx, 1);
+                    }
+                });
+
+                return;
+            }
+        });
+
+        // Student list drag selection - mouseup
+        document.addEventListener('mouseup', (e) => {
+            if (!this._studentDragState.active) return;
+            this._studentDragState.active = false;
+
+            if (this._studentDragState.rect) {
+                this._studentDragState.rect.remove();
+                this._studentDragState.rect = null;
+
+                const selectedRows = document.querySelectorAll('#students-page .student-selected');
+                if (selectedRows.length > 0) {
+                    const ids = [];
+                    selectedRows.forEach(row => {
+                        const sid = row.dataset.studentId;
+                        if (sid) {
+                            ids.push(sid);
+                            this._selectedStudentIds.add(sid);
+                        }
+                    });
+                    this._updateStudentMultiSelectUI();
+                    this._studentDragState._justDragged = true;
+                    setTimeout(() => { this._studentDragState._justDragged = false; }, 300);
+                }
+            }
+
+            this._studentDragState.touchedRows = [];
+        });
+
         document.body.addEventListener('contextmenu', (e) => {
             const calendarCell = e.target.closest('.calendar-cell');
             const courseTag = e.target.closest('.course-tag-item');
@@ -135,6 +242,22 @@ class EventDispatcherService {
                 e.stopPropagation();
             }
             
+            // Student row ctrl+click
+            if (e.ctrlKey || e.metaKey) {
+                const studentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+                if (studentRow && !e.target.closest('.edit-student') && !e.target.closest('.delete-student') && !e.target.closest('button')) {
+                    const studentsPage = document.getElementById('students-page');
+                    if (studentsPage && !studentsPage.classList.contains('hidden')) {
+                        e.preventDefault();
+                        const sid = studentRow.dataset.studentId;
+                        if (sid) {
+                            registry.get('eventHandlerService').handle('student-row-ctrl-click', { studentId: sid }, e);
+                        }
+                        return;
+                    }
+                }
+            }
+            
             const customOption = e.target.closest('.custom-option');
             if (customOption) {
                 const selectWrapper = customOption.closest('.custom-select');
@@ -150,14 +273,29 @@ class EventDispatcherService {
             const floatingBar = e.target.closest('#floating-action-bar');
 
             if (!target && !calendarCell && !courseTagItem && !floatingBar) {
-                if (this._dragState._justDragged) return;
+                if (this._dragState._justDragged || this._studentDragState._justDragged) return;
                 registry.get('utils').closeAllSelectDropdowns();
 
                 if (!e.target.closest('#duration-dropdown')) {
                     registry.get('utils').safeAddClass(registry.get('elements').durationDropdown, 'hidden');
                 }
 
+                // Clear student multi-selection when clicking on a student row
+                const studentsPage2 = document.getElementById('students-page');
+                const isStudentRow2 = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+                if (studentsPage2 && !studentsPage2.classList.contains('hidden') && isStudentRow2 && this._selectedStudentIds.size > 0) {
+                    this._clearStudentSelections();
+                    return;
+                }
+
                 registry.get('modalService').closeAllPopovers();
+
+                // Clear student multi-selection when clicking outside student rows
+                const studentsPage = document.getElementById('students-page');
+                const isStudentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+                if (studentsPage && !studentsPage.classList.contains('hidden') && !isStudentRow && this._selectedStudentIds.size > 0) {
+                    this._clearStudentSelections();
+                }
 
                 return;
             }
@@ -198,6 +336,56 @@ class EventDispatcherService {
             const action = target.dataset.action;
             registry.get('eventHandlerService').handle(action, { ...target.dataset }, e);
         });
+    }
+
+    /**
+     * Clear all student selections
+     */
+    _clearStudentSelections() {
+        document.querySelectorAll('#students-page .student-selected').forEach(row => {
+            row.classList.remove('student-selected');
+        });
+        this._selectedStudentIds.clear();
+        this._updateStudentMultiSelectUI();
+    }
+
+    /**
+     * Update the multi-select UI (floating delete bar)
+     */
+    _updateStudentMultiSelectUI() {
+        const studentsPage = document.getElementById('students-page');
+        const fab = document.getElementById('floating-action-bar');
+        const fabContent = document.getElementById('floating-action-bar-content');
+
+        if (this._selectedStudentIds.size > 0) {
+            if (studentsPage) studentsPage.classList.add('students-multi-selecting');
+            if (fab && fabContent) {
+                const cnt = this._selectedStudentIds.size;
+                fabContent.innerHTML = `<span class="text-sm font-medium" style="color:var(--text-primary);padding:0 8px;">已选择 ${cnt} 位学生</span><div data-action="students-multi-edit" class="fab-btn" style="background-color:var(--color-primary);"><i data-lucide="pencil" class="pointer-events-none inline-block"></i>编辑</div><div data-action="students-multi-delete" class="fab-btn" style="background-color:var(--color-danger);"><i data-lucide="trash-2" class="pointer-events-none inline-block"></i>删除</div>`;
+                fabContent.dataset.type = 'student';
+                fab.classList.add('active');
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
+            }
+        } else {
+            if (studentsPage) studentsPage.classList.remove('students-multi-selecting');
+            if (fab && fabContent?.dataset.type === 'student') {
+                fab.classList.remove('active');
+            }
+        }
+    }
+
+    /**
+     * Get current selected student IDs
+     */
+    getSelectedStudentIds() {
+        return [...this._selectedStudentIds];
+    }
+
+    /**
+     * Clear all student selections (public, for external use)
+     */
+    clearAllStudentSelections() {
+        this._clearStudentSelections();
     }
 }
 

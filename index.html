@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="./src/style.css">
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="https://unpkg.com/chinese-days@latest" defer></script>
-    <script src="https://unpkg.com/chart.js@latest" defer></script>
     <script>
         // 页面加载早期检测系统深色模式，避免页面闪烁
         (function() {
@@ -23,7 +22,7 @@
 </head>
 <body class="min-h-screen" style="opacity: 0; transition: opacity 0.5s ease-in-out;">
     <!-- 导航栏 -->
-    <nav class="shadow-sm border-b" style="display: none; background-color: var(--bg-secondary); border-color: var(--border-color);">
+    <nav class="shadow-sm border-b" style="display: none; background-color: var(--bg-secondary); border-color: var(--border-color); position: sticky; top: 0; z-index: 50;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center space-x-4">
@@ -308,8 +307,8 @@
                         <div class="flex justify-between items-center mb-4">
                             <h4 class="text-md font-medium" style="color: var(--text-primary);">机构课量分布</h4>
                         </div>
-                        <div class="h-64">
-                            <canvas id="organization-chart"></canvas>
+                        <div class="h-64 flex items-center justify-center">
+                            <div id="organization-chart"></div>
                         </div>
                     </div>
                     <div>
@@ -405,7 +404,7 @@
     </div>
     
     <!-- 模态框容器 -->
-    <div id="modal-container" class="fixed inset-0 bg-black/50 items-center justify-center z-40 hidden opacity-0 transition-opacity duration-400">
+    <div id="modal-container" class="fixed inset-0 bg-black/50 items-center justify-center hidden opacity-0 transition-opacity duration-400" style="z-index: 40; padding-top: 4rem;">
         <div class="rounded-lg border p-6 w-full max-w-md mx-4 no-shadow transform scale-90 opacity-0 translate-y-4 transition-all duration-400" id="modal-content" style="background-color: var(--bg-secondary); border-color: var(--border-color); transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);">
             <!-- 模态框内容将通过JavaScript动态生成 -->
         </div>

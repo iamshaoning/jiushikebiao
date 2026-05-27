@@ -21,7 +21,8 @@ export class ManagementModal {
                         <h3 class="text-lg font-semibold" style="color: var(--text-primary);">${title}</h3>
                     </div>
                     <div class="mb-4">
-                        <div class="flex items-center space-x-2 mb-2">
+                        <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">名称 <span class="text-xs font-normal" style="color: var(--text-secondary);">(支持批量添加，用空格/逗号/顿号分隔)</span></label>
+                        <div class="flex items-center space-x-2">
                             <input type="text" id="new-${itemName}" class="flex-grow px-3 py-2 rounded-md" style="border: 1px solid var(--border-color); color: var(--text-primary);">
                             <button id="add-${itemName}" class="bg-primary text-white px-3 py-2 rounded-md" data-action="add-org-inline" data-item-name="${itemName}">添加</button>
                         </div>

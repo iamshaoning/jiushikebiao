@@ -27,8 +27,57 @@ class EventHandlerService {
 
     _setupStudentHandlers() { return {
         'edit-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) registry.get('modalService').showEditStudent(s); },
-        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除，确定吗？`, async () => { const deleteIds = new Set(rc.map(r => r.id)); registry.get('setState')(d => { d.courses = d.courses.filter(c => !deleteIds.has(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, ['students', 'courses']); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
+        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除`, async () => { const deleteIds = new Set(rc.map(r => r.id)); registry.get('setState')(d => { d.courses = d.courses.filter(c => !deleteIds.has(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, ['students', 'courses']); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
         'add-student-main': () => { registry.get('modalService').showAddStudent(); },
+         'student-row-ctrl-click': (payload) => {
+            const ed = registry.get('eventDispatcherService');
+            if (!ed) return;
+            const sid = payload.studentId;
+            const row = document.querySelector(`[data-student-id="${CSS.escape(sid)}"]`);
+            if (!row) return;
+            if (ed._selectedStudentIds.has(sid)) {
+                ed._selectedStudentIds.delete(sid);
+                row.classList.remove('student-selected');
+            } else {
+                ed._selectedStudentIds.add(sid);
+                row.classList.add('student-selected');
+            }
+            ed._updateStudentMultiSelectUI();
+        },
+        'students-multi-delete': () => {
+            const ed = registry.get('eventDispatcherService');
+            if (!ed) return;
+            const selectedIds = ed.getSelectedStudentIds();
+            if (!selectedIds.length) return;
+            const state = registry.get('state');
+            const affectedCourses = state.courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.some(sid => selectedIds.includes(sid)));
+            registry.get('modalService').showConfirm(
+                `删除 <strong>${selectedIds.length}</strong> 位学生后，相关的 <strong>${affectedCourses.length}</strong> 节课也将全部删除。`,
+                async () => {
+                    const deleteCourseIds = new Set(affectedCourses.map(c => c.id));
+                    const deleteStudentIds = new Set(selectedIds);
+                    registry.get('setState')(d => {
+                        d.courses = d.courses.filter(c => !deleteCourseIds.has(c.id));
+                        d.students = d.students.filter(st => !deleteStudentIds.has(st.id));
+                    }, ['students', 'courses']);
+                    ed.clearAllStudentSelections();
+                    await registry.get('utils').saveData();
+                    registry.get('notificationService').show(`已删除 ${selectedIds.length} 位学生`, 'success');
+                },
+                'delete'
+            );
+        },
+        'students-multi-cancel': () => {
+            const ed = registry.get('eventDispatcherService');
+            if (ed) ed.clearAllStudentSelections();
+        },
+        'students-multi-edit': () => {
+            const ed = registry.get('eventDispatcherService');
+            if (!ed) return;
+            const selectedIds = ed.getSelectedStudentIds();
+            if (!selectedIds.length) return;
+            registry.get('modalService').studentForm.showBatchEditStudents(Array.from(selectedIds));
+        },
     };}
 
     _setupCourseHandlers() { return {
@@ -322,7 +371,96 @@ class EventHandlerService {
         'manage-grades': () => { registry.get('modalService').showManageGrades(); },
         'edit-org-inline': (p, e) => { const itemName = p.itemName, item = p.item; const cfg = registry.get('currentManagementModalConfig'); if (!cfg) return; const el = e.target.closest(`[data-${itemName}]`); if (!el) return; const nip = document.getElementById(`new-${itemName}`), ab = document.getElementById(`add-${itemName}`); if (!nip || !ab) return; const oiv = nip.value; nip.value = item; nip.focus(); nip.select(); const obt = ab.textContent; ab.textContent = '保存'; ab.classList.remove('bg-primary'); ab.style.backgroundColor = 'var(--color-success)'; cfg.editingItem = { itemName, originalItem: item, itemElement: el, originalInputValue: oiv, originalBtnText: obt }; if (ab._originalClickHandler) ab.removeEventListener('click', ab._originalClickHandler); const cancelEdit = () => { nip.value = oiv; ab.textContent = obt; ab.style.backgroundColor = 'var(--color-primary)'; nip.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const beb = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`); if (beb) beb.click(); } }; ab.onclick = ab._originalClickHandler || null; delete cfg.editingItem; }; ab.onclick = async (ev) => { ev.preventDefault(); ev.stopPropagation(); const nn = nip.value.trim(); if (!nn) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; } if (nn === item) { cancelEdit(); return; } if (cfg.items.includes(nn)) { registry.get('notificationService').show(`该${itemName}名称已存在`, 'warning'); return; } if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } self._isSaving = true; ab.disabled = true; nip.disabled = true; try { const idx = cfg.items.indexOf(item); if (cfg.editItem && idx !== -1) { const r = cfg.editItem(idx, nn); if (r === false) { cancelEdit(); return; } }; await registry.get('utils').saveData(); registry.get('notificationService').show(`${itemName}修改成功`, 'success'); if (cfg.updateUI) cfg.updateUI(); cancelEdit(); } catch (error) { registry.get('errorHandlerService').log('error', `${itemName}修改失败`, error); registry.get('notificationService').show(`${itemName}修改失败`, 'error'); cancelEdit(); } finally { self._isSaving = false; ab.disabled = false; nip.disabled = false; } }; nip.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); ab.click(); } if (ev.key === 'Escape') { ev.preventDefault(); ev.stopPropagation(); cancelEdit(); } }; },
         'delete-org-inline': async (p, e) => { const itemName = p.itemName, item = p.item; const cfg = registry.get('currentManagementModalConfig'); if (!cfg) return; if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } const ci = cfg.items.find(i => i === item || i === p[itemName]), di = ci || item; if (cfg.onDelete?.(di)) { registry.get('notificationService').show(`该${itemName}正在被使用，无法删除`, 'warning'); return; } self._isSaving = true; const ib = document.getElementById(`new-${itemName}`); if (ib) ib.disabled = true; const rowElem = e.target.closest(`[data-${itemName}]`); try { const idx = cfg.items.indexOf(di); if (idx !== -1) { cfg.deleteItem?.(di); await registry.get('utils').saveData(); if (rowElem) rowElem.remove(); registry.get('notificationService').show(`${itemName}删除成功`, 'success'); cfg.updateUI?.(); } } finally { self._isSaving = false; if (ib) { ib.disabled = false; ib.focus(); } } },
-        'add-org-inline': async (p, e) => { const itemName = p.itemName, nip = document.getElementById(`new-${itemName}`), ab = document.getElementById(`add-${itemName}`); if (!nip || !registry.get('currentManagementModalConfig')) return; if (ab && !ab._originalClickHandler) ab._originalClickHandler = ab.onclick || function(){}; if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } const ni = nip.value.trim(); if (!ni) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; } if (registry.get('currentManagementModalConfig').items.includes(ni)) { registry.get('notificationService').show(`该${itemName}名称已存在`, 'warning'); return; } self._isSaving = true; if (ab) ab.disabled = true; nip.disabled = true; try { registry.get('currentManagementModalConfig').addItem(ni); registry.get('currentManagementModalConfig').onAdd?.(ni); await registry.get('utils').saveData(); const il = document.getElementById(`${itemName}s-list`); if (il) { const idiv = document.createElement('div'); idiv.className = 'flex items-center justify-between p-2 rounded'; idiv.style.backgroundColor = 'var(--bg-secondary)'; idiv.dataset[itemName] = ni; const ct = itemName === '机构' ? 'organization' : 'grade', bc = registry.get('utils').generateColor(ni, ct); idiv.innerHTML = `<button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color: color-mix(in srgb, ${bc} 20%, transparent); color: ${bc};" data-item="${registry.get('utils').escapeHtml(ni)}" data-item-name="${itemName}" data-color="${bc}">${registry.get('utils').escapeHtml(ni)}</button><div class="flex items-center"><button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(ni)}"><i data-lucide="square-pen" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-success)"></i></button><button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(ni)}"><i data-lucide="trash-2" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-danger)"></i></button></div>`; il.appendChild(idiv); if (registry.get('lucide')) registry.get('lucide').createIcons(); const cpt = idiv.querySelector(`.${itemName}-name.color-picker-trigger`); if (cpt) { cpt.addEventListener('click', (ev) => { ev.stopPropagation(); registry.get('modalService').showColorPicker({ itemName: cpt.dataset.item, itemType: ct, currentColor: cpt.dataset.color, onSelect: (nc) => { registry.get('utils').setColor(cpt.dataset.item, nc, ct); cpt.style.backgroundColor = `color-mix(in srgb, ${nc} 20%, transparent)`; cpt.style.color = nc; cpt.dataset.color = nc; if (ct === 'organization') { registry.get('setState')(draft => { draft.courses.forEach(c => { if (Array.isArray(c.organizations)) c.organizations.forEach((o, i) => { if (o === cpt.dataset.item && c.colors?.[i]) c.colors[i] = nc; }); }); }, ['courses', 'organizationColors']); } registry.get('utils').saveData().catch(err => { registry.get('errorHandlerService').log('error', '颜色保存失败', err); }); registry.get('currentManagementModalConfig').updateUI?.(); } }); }); } } nip.value = ''; nip.focus(); registry.get('notificationService').show(`${itemName}添加成功`, 'success'); registry.get('currentManagementModalConfig').updateUI?.(); } finally { self._isSaving = false; if (ab) ab.disabled = false; nip.disabled = false; nip.focus(); } },
+        'add-org-inline': async (p, e) => {
+            const itemName = p.itemName;
+            const nip = document.getElementById(`new-${itemName}`);
+            const ab = document.getElementById(`add-${itemName}`);
+            if (!nip || !registry.get('currentManagementModalConfig')) return;
+            if (ab && !ab._originalClickHandler) ab._originalClickHandler = ab.onclick || function(){};
+            if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; }
+            const rawValue = nip.value.trim();
+            if (!rawValue) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; }
+            const cfg = registry.get('currentManagementModalConfig');
+            const names = rawValue.split(/[，,、\s]+/).filter(n => n.trim());
+
+            let addedCount = 0;
+            const addedNames = [];
+            self._isSaving = true;
+            if (ab) ab.disabled = true;
+            nip.disabled = true;
+            try {
+                const ct = itemName === '机构' ? 'organization' : 'grade';
+                for (const ni of names) {
+                    const trimmed = ni.trim();
+                    if (cfg.items.includes(trimmed)) continue;
+                    cfg.addItem(trimmed);
+                    cfg.onAdd?.(trimmed);
+                    addedCount++;
+                    addedNames.push(trimmed);
+                }
+                if (addedCount === 0) {
+                    registry.get('notificationService').show(`所有${itemName}名称已存在`, 'warning');
+                    return;
+                }
+                await registry.get('utils').saveData();
+                // Refresh the entire list UI by re-rendering the list
+                const il = document.getElementById(`${itemName}s-list`);
+                if (il) {
+                    il.innerHTML = registry.get('state')[itemName === '机构' ? 'organizations' : 'grades'].map(item => {
+                        const bc = registry.get('utils').generateColor(item, ct);
+                        return `<div class="flex items-center justify-between p-2 rounded" style="background-color:var(--bg-secondary);" data-${itemName}="${registry.get('utils').escapeHtml(item)}">
+                            <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color:color-mix(in srgb,${bc} 20%,transparent);color:${bc};" data-item="${registry.get('utils').escapeHtml(item)}" data-item-name="${itemName}" data-color="${bc}">${registry.get('utils').escapeHtml(item)}</button>
+                            <div class="flex items-center">
+                                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(item)}">
+                                    <i data-lucide="square-pen" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-success)"></i>
+                                </button>
+                                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(item)}">
+                                    <i data-lucide="trash-2" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-danger)"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    // Re-attach color picker listeners
+                    if (registry.get('lucide')) registry.get('lucide').createIcons();
+                    il.querySelectorAll(`.${itemName}-name.color-picker-trigger`).forEach(cpt => {
+                        cpt.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            registry.get('modalService').showColorPicker({
+                                itemName: cpt.dataset.item,
+                                itemType: ct,
+                                currentColor: cpt.dataset.color,
+                                onSelect: (nc) => {
+                                    registry.get('utils').setColor(cpt.dataset.item, nc, ct);
+                                    cpt.style.backgroundColor = `color-mix(in srgb, ${nc} 20%, transparent)`;
+                                    cpt.style.color = nc;
+                                    cpt.dataset.color = nc;
+                                    if (ct === 'organization') {
+                                        registry.get('setState')(draft => {
+                                            draft.courses.forEach(c => {
+                                                if (Array.isArray(c.organizations)) c.organizations.forEach((o, i) => {
+                                                    if (o === cpt.dataset.item && c.colors?.[i]) c.colors[i] = nc;
+                                                });
+                                            });
+                                        }, ['courses', 'organizationColors']);
+                                    }
+                                    registry.get('utils').saveData().catch(err => { registry.get('errorHandlerService').log('error', '颜色保存失败', err); });
+                                    registry.get('currentManagementModalConfig').updateUI?.();
+                                }
+                            });
+                        });
+                    });
+                }
+                nip.value = '';
+                nip.focus();
+                registry.get('notificationService').show(`成功添加 ${addedCount} 个${itemName}`, 'success');
+                cfg.updateUI?.();
+            } finally {
+                self._isSaving = false;
+                if (ab) ab.disabled = false;
+                nip.disabled = false;
+                nip.focus();
+            }
+        },
     };}
     
     handle(action, payload, e) {

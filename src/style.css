@@ -33,6 +33,10 @@
     100% { transform: scale(1); opacity: 0.7; }
 }
 
+@keyframes reveal {
+    to { clip-path: circle(var(--r) at var(--x) var(--y)); }
+}
+
 /* ------------------------------
    2. Tailwind 基础配置
    ------------------------------ */
@@ -131,19 +135,6 @@ body {
 
 html {
     scrollbar-width: none;
-}
-
-@keyframes reveal {
-    to { clip-path: circle(var(--r) at var(--x) var(--y)); }
-}
-
-@keyframes fadeOut {
-    to { opacity: 0; }
-}
-
-@keyframes glow {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
 }
 
 ::-webkit-scrollbar {
@@ -846,6 +837,61 @@ button:not(:active), .btn:not(:active) {
     transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease, pointer-events 0s 0.25s;
 }
 
+/* CSS Pie Chart */
+.css-pie-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    position: relative;
+}
+.css-pie-svg {
+    width: 220px;
+    height: 220px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.css-pie-svg .pie-segment {
+    transition: opacity 0.15s;
+}
+.css-pie-svg .pie-segment:hover {
+    opacity: 0.85;
+}
+.css-pie-tooltip {
+    position: absolute;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    display: none;
+}
+.css-pie-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1rem;
+}
+.css-pie-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+}
+.css-pie-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.css-pie-legend-label {
+    color: var(--text-primary);
+}
+
 .dark .custom-select-trigger {
   background: var(--bg-input) !important;
   border-color: var(--border-color) !important;
@@ -975,6 +1021,18 @@ button:not(:active), .btn:not(:active) {
     background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
+/* Student multi-select styles */
+#students-list tr.student-selected,
+.student-item.student-selected {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+.students-multi-selecting .edit-student,
+.students-multi-selecting .delete-student {
+    opacity: 0.3;
+    pointer-events: none;
+}
 
 .hover-cell:hover {
   box-shadow: inset 0 0 0 2px var(--color-hover) !important;
@@ -1516,22 +1574,9 @@ button:not(:active), .btn:not(:active) {
     border-width: 2px;
 }
 
-/* ------------------------------
-   19. 学生选择按钮样式
-   ------------------------------ */
-
-.student-btn {
-    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
-}
-
-.student-btn:hover,
-.student-btn.selected:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
 
 /* ------------------------------
-   20. 页面与动画样式
+   19. 页面与动画样式
    ------------------------------ */
 
 .page {
@@ -1550,7 +1595,7 @@ button:not(:active), .btn:not(:active) {
 }
 
 /* ------------------------------
-   21. 浮动操作栏样式
+   20. 浮动操作栏样式
    ------------------------------ */
 
 .floating-action-bar {

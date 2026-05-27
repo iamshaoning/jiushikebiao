@@ -74,7 +74,7 @@ export function initCourseFormEvents(isEdit, courseData = null) {
                 studentSelectionArea.innerHTML = `
                     <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">${lessonType === '一对一' ? '点击选择一位学生' : '点击可选多位学生'}</label>
                     <div class="border rounded-md p-3" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
-                        <div class="flex flex-wrap gap-2" id="student-buttons">
+                        <div class="flex flex-wrap gap-2 overflow-y-auto" id="student-buttons" style="max-height: 8rem;">
                             ${filteredStudents.map(student => {
                                 let isSelected = false;
                                 if (isEdit && courseData && courseData.studentIds && Array.isArray(courseData.studentIds)) {
@@ -109,75 +109,70 @@ export function initCourseFormEvents(isEdit, courseData = null) {
     // 事件委托：处理学生选择按钮点击
     const bindStudentButtonEvents = () => {
         const studentButtonsContainer = document.getElementById('student-buttons');
-        if (studentButtonsContainer) {
-            // 先移除之前的事件监听器，避免重复绑定
-            if (studentButtonsContainer._clickHandler) {
-                studentButtonsContainer.removeEventListener('click', studentButtonsContainer._clickHandler);
-            }
-            
-            const clickHandler = function(e) {
-                const btn = e.target.closest('.student-btn');
-                if (!btn) return;
-                
-                const lessonType = btn.dataset.lessonType;
-                const color = btn.dataset.color;
-                
-                if (lessonType === '一对一') {
-                    document.querySelectorAll('.student-btn').forEach(b => {
-                        b.classList.remove('selected', 'bg-opacity-40');
-                        b.style.backgroundColor = 'transparent';
-                    });
-                    btn.classList.add('selected', 'bg-opacity-40');
-                    btn.style.backgroundColor = color + '40';
-                    
-                    if (isEdit) {
-                        setTimeout(() => {
-                            registry.get('utils').calculateFee();
-                        }, 10);
-                    } else {
-                        const durationInput = document.getElementById('course-duration');
-                        const actualDuration = durationInput ? (parseInt(durationInput.value) || 120) : 120;
-                        const studentFees = registry.get('state').students.find(s => s.id === btn.dataset.id)?.fees ?? {};
-                        const studentBaseFee = studentFees['一对一'] ?? parseFloat(btn.dataset.fee) ?? 0;
-                        const studentBaseDuration = studentFees['一对一_duration'] ?? 120;
-                        const divisor = Math.max(1, studentBaseDuration);
-                        const calculatedFee = (studentBaseFee / divisor) * actualDuration;
-                        const feeInput = document.getElementById('course-fee');
-                        if (feeInput) {
-                            feeInput.value = calculatedFee.toFixed(2);
-                        }
-                    }
-                } else {
-                    const selectedStudents = document.querySelectorAll('.student-btn.selected');
-                    const currentOrganization = btn.dataset.organization;
-                    const currentGrade = btn.dataset.grade;
-                    
-                    let organizationMatch = true;
-                    let gradeMatch = true;
-                    selectedStudents.forEach(selectedBtn => {
-                        if (selectedBtn.dataset.organization !== currentOrganization) {
-                            organizationMatch = false;
-                        }
-                        if (selectedBtn.dataset.grade !== currentGrade) {
-                            gradeMatch = false;
-                        }
-                    });
-                    
-                    if (!organizationMatch) {
-                        registry.get('notificationService').show('多人课只能选择同一机构的学生', 'warning');
-                    } else if (!gradeMatch) {
-                        registry.get('notificationService').show('多人课只能选择同一年级的学生', 'warning');
-                    } else {
-                        btn.classList.toggle('selected');
-                        btn.classList.toggle('bg-opacity-40');
-                        btn.style.backgroundColor = btn.classList.contains('selected') ? color + '40' : 'transparent';
-                    }
-                }
-            };
-            
-            studentButtonsContainer.addEventListener('click', clickHandler);
-            studentButtonsContainer._clickHandler = clickHandler;
+        if (!studentButtonsContainer) return;
+
+        if (studentButtonsContainer._clickHandler) {
+            studentButtonsContainer.removeEventListener('click', studentButtonsContainer._clickHandler);
         }
+
+        const clickHandler = function(e) {
+            const btn = e.target.closest('.student-btn');
+            if (!btn) return;
+
+            const lessonType = btn.dataset.lessonType;
+            const color = btn.dataset.color;
+
+            if (lessonType === '一对一') {
+                document.querySelectorAll('.student-btn').forEach(b => {
+                    b.classList.remove('selected', 'bg-opacity-40');
+                    b.style.backgroundColor = 'transparent';
+                });
+                btn.classList.add('selected', 'bg-opacity-40');
+                btn.style.backgroundColor = color + '40';
+
+                if (isEdit) {
+                    setTimeout(() => registry.get('utils').calculateFee(), 10);
+                } else {
+                    const durationInput = document.getElementById('course-duration');
+                    const actualDuration = durationInput ? (parseInt(durationInput.value) || 120) : 120;
+                    const studentFees = registry.get('state').students.find(s => s.id === btn.dataset.id)?.fees ?? {};
+                    const studentBaseFee = studentFees['一对一'] ?? parseFloat(btn.dataset.fee) ?? 0;
+                    const studentBaseDuration = studentFees['一对一_duration'] ?? 120;
+                    const divisor = Math.max(1, studentBaseDuration);
+                    const calculatedFee = (studentBaseFee / divisor) * actualDuration;
+                    const feeInput = document.getElementById('course-fee');
+                    if (feeInput) feeInput.value = calculatedFee.toFixed(2);
+                }
+            } else {
+                const selectedStudents = document.querySelectorAll('.student-btn.selected');
+                const currentOrganization = btn.dataset.organization;
+                const currentGrade = btn.dataset.grade;
+
+                let organizationMatch = true;
+                let gradeMatch = true;
+                selectedStudents.forEach(selectedBtn => {
+                    if (selectedBtn.dataset.organization !== currentOrganization) {
+                        organizationMatch = false;
+                    }
+                    if (selectedBtn.dataset.grade !== currentGrade) {
+                        gradeMatch = false;
+                    }
+                });
+
+                if (!organizationMatch) {
+                    registry.get('notificationService').show('多人课只能选择同一机构的学生', 'warning');
+                } else if (!gradeMatch) {
+                    registry.get('notificationService').show('多人课只能选择同一年级的学生', 'warning');
+                } else {
+                    btn.classList.toggle('selected');
+                    btn.classList.toggle('bg-opacity-40');
+                    btn.style.backgroundColor = btn.classList.contains('selected') ? color + '40' : 'transparent';
+                }
+            }
+        };
+
+        studentButtonsContainer.addEventListener('click', clickHandler);
+        studentButtonsContainer._clickHandler = clickHandler;
     };
     
     bindStudentButtonEvents();
