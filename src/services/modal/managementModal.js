@@ -29,7 +29,8 @@ export class ManagementModal {
                     </div>
                     <div>
                         <h4 class="text-sm font-medium mb-2" style="color: var(--text-primary);">已有${itemName} <span class="text-xs font-normal" style="color: var(--text-secondary);">（点击名称可修改颜色）</span></h4>
-                        <div id="${itemName}s-list" class="space-y-2 max-h-80 overflow-y-auto pr-2">
+                        <div class="scroll-fade-bottom">
+                            <div id="${itemName}s-list" class="space-y-2 max-h-80 overflow-y-auto pr-2">
                             ${items.map(item => {
                                 const bgColor = registry.get('utils').generateColor(item, colorType);
                                 return `
@@ -46,6 +47,7 @@ export class ManagementModal {
                                 </div>
                                 `;
                             }).join('')}
+                            </div>
                         </div>
                     </div>
                     <div class="flex justify-end mt-6">
@@ -60,6 +62,17 @@ export class ManagementModal {
         this.modal.show(content, {
             onShow: () => {
                 if (registry.get('lucide')) registry.get('lucide').createIcons();
+
+                const mgmtScrollFadeWrapper = document.getElementById(`${itemName}s-list`)?.closest('.scroll-fade-bottom');
+                const mgmtScrollFadeContainer = document.getElementById(`${itemName}s-list`);
+                if (mgmtScrollFadeWrapper && mgmtScrollFadeContainer) {
+                    const checkMgmtScrollFade = () => {
+                        const atBottom = mgmtScrollFadeContainer.scrollTop + mgmtScrollFadeContainer.clientHeight >= mgmtScrollFadeContainer.scrollHeight - 1;
+                        mgmtScrollFadeWrapper.classList.toggle('scrolled-to-bottom', atBottom);
+                    };
+                    mgmtScrollFadeContainer.addEventListener('scroll', checkMgmtScrollFade);
+                    checkMgmtScrollFade();
+                }
 
                 document.querySelectorAll(`.${itemName}-name.color-picker-trigger`).forEach(trigger => {
                     trigger.addEventListener('click', (e) => {

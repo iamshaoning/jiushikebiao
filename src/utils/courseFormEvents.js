@@ -73,7 +73,7 @@ export function initCourseFormEvents(isEdit, courseData = null) {
             } else {
                 studentSelectionArea.innerHTML = `
                     <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">${lessonType === '一对一' ? '点击选择一位学生' : '点击可选多位学生'}</label>
-                    <div class="border rounded-md p-3" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
+                    <div class="border rounded-md p-3 scroll-fade-bottom" style="border-color: var(--border-color); background-color: var(--bg-secondary);">
                         <div class="flex flex-wrap gap-2 overflow-y-auto" id="student-buttons" style="max-height: 8rem;">
                             ${filteredStudents.map(student => {
                                 let isSelected = false;
@@ -105,7 +105,19 @@ export function initCourseFormEvents(isEdit, courseData = null) {
     
     // 初始化学生选择区域
     updateStudentSelection();
-    
+
+    // 添加底部渐变遮罩滚动检测
+    const scrollFadeWrapper = document.querySelector('#student-buttons')?.closest('.scroll-fade-bottom');
+    const scrollFadeContainer = document.getElementById('student-buttons');
+    if (scrollFadeWrapper && scrollFadeContainer) {
+        const checkScrollFade = () => {
+            const atBottom = scrollFadeContainer.scrollTop + scrollFadeContainer.clientHeight >= scrollFadeContainer.scrollHeight - 1;
+            scrollFadeWrapper.classList.toggle('scrolled-to-bottom', atBottom);
+        };
+        scrollFadeContainer.addEventListener('scroll', checkScrollFade);
+        checkScrollFade();
+    }
+
     // 事件委托：处理学生选择按钮点击
     const bindStudentButtonEvents = () => {
         const studentButtonsContainer = document.getElementById('student-buttons');
