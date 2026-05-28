@@ -200,12 +200,6 @@ class ModalService {
         if (this._nestedHideTimer) { clearTimeout(this._nestedHideTimer); this._nestedHideTimer = null; }
         if (!this.nestedContainer || !this.nestedContent) this.init();
 
-        document.body.style.position = 'fixed';
-        document.body.style.top = `-${window.scrollY}px`;
-        document.body.style.left = '0';
-        document.body.style.right = '0';
-        document.body.style.bottom = '0';
-
         this.nestedContent.innerHTML = content;
         this.nestedContainer.style.display = 'flex';
         this.nestedContainer.offsetHeight;
@@ -227,13 +221,6 @@ class ModalService {
         this._nestedHideTimer = setTimeout(() => {
             this._nestedHideTimer = null;
             this.nestedContainer.style.display = 'none';
-            const scrollY = parseInt(document.body.style.top) * -1;
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.left = '';
-            document.body.style.right = '';
-            document.body.style.bottom = '';
-            window.scrollTo(0, scrollY);
         }, 300);
 
         if (this.nestedContainer._keydownHandler) { document.removeEventListener('keydown', this.nestedContainer._keydownHandler); this.nestedContainer._keydownHandler = null; }
