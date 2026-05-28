@@ -29,18 +29,50 @@ class PageRenderService {
             activeBtn.style.backgroundColor = 'var(--bg-content)';
         }
 
-        // 如果有当前页面且不是目标页面，先淡出
-        if (currentPage && currentPage.id !== pageId) {
+        const targetPage = document.getElementById(pageId);
+        if (!targetPage) return;
+
+        // Same page, no transition needed
+        if (currentPage === targetPage) return;
+
+        // Fade out current page first, then fade in target page
+        if (currentPage) {
             currentPage.classList.remove('active');
-            currentPage.classList.add('hidden');
+            currentPage.style.pointerEvents = 'none';
+
+            const switchPage = () => {
+                if (!this._pendingTransition) return;
+                this._pendingTransition = false;
+                currentPage.removeEventListener('transitionend', switchPage);
+                currentPage.classList.add('hidden');
+                currentPage.style.pointerEvents = '';
+
+                // Fade in target page
+                if (targetPage.classList.contains('hidden')) {
+                    targetPage.classList.remove('hidden');
+                    void targetPage.offsetWidth;
+                }
+                targetPage.classList.add('active');
+            };
+
+            this._pendingTransition = true;
+            currentPage.addEventListener('transitionend', switchPage);
+
+            // Fallback: if transitionend doesn't fire within 300ms
+            this._fallbackTimer = setTimeout(() => {
+                if (this._pendingTransition) {
+                    switchPage();
+                }
+            }, 300);
+            return; // Don't proceed to fade-in until fade-out completes
         }
 
-        // 显示目标页面
-        const targetPage = document.getElementById(pageId);
-        if (targetPage) {
+        // No current page, just show target directly
+        if (targetPage.classList.contains('hidden')) {
             targetPage.classList.remove('hidden');
-            targetPage.classList.add('active');
+            void targetPage.offsetWidth;
         }
+        targetPage.classList.add('active');
     }
 
 }
