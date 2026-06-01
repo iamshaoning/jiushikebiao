@@ -958,12 +958,12 @@ button:not(:active), .btn:not(:active) {
 }
 
 #toggle-privacy.active {
-  background-color: var(--color-primary) !important;
+  background: rgba(59, 130, 246, 0.1) !important;
   border-color: var(--color-primary) !important;
 }
 
 #toggle-privacy.active i {
-  color: white !important;
+  color: var(--color-primary) !important;
 }
 
 
