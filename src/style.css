@@ -944,6 +944,28 @@ button:not(:active), .btn:not(:active) {
   color: var(--text-primary) !important;
 }
 
+#toggle-privacy {
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+}
+
+#toggle-privacy:hover {
+  background-color: var(--bg-content) !important;
+}
+
+#toggle-privacy i {
+  color: var(--text-primary) !important;
+}
+
+#toggle-privacy.active {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+#toggle-privacy.active i {
+  color: white !important;
+}
+
 
 .grid.grid-cols-7.bg-gray-100,
 .dark .grid.grid-cols-7 {

@@ -12,11 +12,18 @@ export class CalendarRenderService {
         this.utils = utils;
         this.lucide = registry.get('lucide') || null;
         this.getCourseTagHTML = (course) => {
+            const state = registry.get('state');
+            const privacy = state && state.privacyMode;
             const primaryColor = course.colors?.[0] || 'var(--color-secondary)';
             const fee = course.fees?.[0] ?? 0;
-            const feeHtml = fee > 0 ? `<span style="color: var(--text-primary);">¥${fee}</span>` : '';
+            const feeHtml = (!privacy && fee > 0) ? `<span style="color: var(--text-primary);">¥${fee}</span>` : '';
             const studentNames = Array.isArray(course.studentNames) ? course.studentNames : [];
-            return `<div class="course-tag-item course-item mt-1 rounded text-xs relative z-10" data-action="course-click" data-course-id="${course.id}" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);"><div class="tag-content p-1"><div class="flex flex-wrap gap-1 mb-1">${studentNames.map((name, index) => { const color = course.colors?.[index] || 'var(--color-secondary)'; return `<span class="px-1 py-0.5 rounded text-xs" style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${this.utils.escapeHtml(name)}</span>`; }).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime || ''} - ${this.utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</span>${feeHtml}</div>${course.note ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${this.utils.escapeHtml(course.note)}</div>` : ''}</div></div>`;
+            const noteHtml = (!privacy && course.note) ? `<div class="text-[9px] truncate" style="color: var(--text-secondary);">${this.utils.escapeHtml(course.note)}</div>` : '';
+            const maskName = (name) => {
+                if (!name) return '';
+                return name[0] + '*'.repeat(Math.max(0, name.length - 1));
+            };
+            return `<div class="course-tag-item course-item mt-1 rounded text-xs relative z-10" data-action="course-click" data-course-id="${course.id}" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent);"><div class="tag-content p-1"><div class="flex flex-wrap gap-1 mb-1">${studentNames.map((name, index) => { const color = course.colors?.[index] || 'var(--color-secondary)'; const displayName = privacy ? maskName(name) : name; return `<span class="px-1 py-0.5 rounded text-xs" style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">${this.utils.escapeHtml(displayName)}</span>`; }).join('')}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span class="text-[10px]" style="color: var(--text-secondary);">${course.startTime || ''} - ${this.utils.calculateEndTimeFromDuration(course.startTime, course.duration)}</span>${feeHtml}</div>${noteHtml}</div></div>`;
         };
     }
 

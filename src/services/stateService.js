@@ -18,7 +18,8 @@ class StateService {
             grades: [],
             organizationColors: {},
             gradeColors: {},
-            lastupdated: null
+            lastupdated: null,
+            privacyMode: false
         };
     }
 
