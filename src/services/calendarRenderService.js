@@ -113,8 +113,7 @@ export class CalendarRenderService {
         if (!this.elements.calendarGrid._containerStyled) {
             this.elements.calendarGrid._containerStyled = true;
             const headerRow = this.elements.calendarGrid.previousElementSibling;
-            if (headerRow) { headerRow.style.cssText = 'border-top-left-radius:0.75rem;border-top-right-radius:0.75rem;overflow:hidden'; const hc = headerRow.querySelectorAll('div'); if (hc.length) { hc[0].style.borderTopLeftRadius = '0.75rem'; hc[hc.length - 1].style.borderTopRightRadius = '0.75rem'; hc.forEach(c => c.style.overflow = 'hidden'); } }
-            const cc = headerRow?.parentElement; if (cc) cc.style.cssText = 'border-radius:0.75rem;overflow:hidden';
+            if (headerRow) { headerRow.style.borderTopLeftRadius = '0.75rem'; headerRow.style.borderTopRightRadius = '0.75rem'; headerRow.style.overflow = 'hidden'; const hc = headerRow.querySelectorAll('div'); if (hc.length) { hc[0].style.borderTopLeftRadius = '0.75rem'; hc[hc.length - 1].style.borderTopRightRadius = '0.75rem'; hc.forEach(c => c.style.overflow = 'hidden'); } }
         }
         this.elements.calendarGrid._calendarInitialized = true;
         if (!this.elements.calendarGrid._mousedownListenerAdded) { this.elements.calendarGrid.addEventListener('mousedown', e => e.preventDefault()); this.elements.calendarGrid._mousedownListenerAdded = true; }
