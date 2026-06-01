@@ -990,7 +990,7 @@ button:not(:active), .btn:not(:active) {
 }
 
 .grid.grid-cols-7 .text-center.py-3:last-child,
-.dark .grid.grid-cols-7 .text-center.py-3:last-child {
+.dark .grid.grid-cols-7.bg-gray-100 .text-center.py-3:last-child {
   border-top-right-radius: 0.75rem !important;
   overflow: hidden !important;
 }
