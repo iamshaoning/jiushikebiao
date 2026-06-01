@@ -958,12 +958,12 @@ button:not(:active), .btn:not(:active) {
 }
 
 #toggle-privacy.active {
-  background: rgba(59, 130, 246, 0.1) !important;
-  border-color: var(--color-primary) !important;
+  background: rgba(155, 50, 255, 0.2) !important;
+  border-color: var(--color-purple) !important;
 }
 
 #toggle-privacy.active i {
-  color: var(--color-primary) !important;
+  color: var(--text-primary) !important;
 }
 
 
@@ -990,7 +990,7 @@ button:not(:active), .btn:not(:active) {
 }
 
 .grid.grid-cols-7 .text-center.py-3:last-child,
-.dark .grid.grid-cols-7.bg-gray-100 .text-center.py-3:last-child {
+.dark .grid.grid-cols-7 .text-center.py-3:last-child {
   border-top-right-radius: 0.75rem !important;
   overflow: hidden !important;
 }
