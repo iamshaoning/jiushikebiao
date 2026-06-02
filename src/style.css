@@ -391,11 +391,6 @@ nav, header {
   color: var(--text-primary);
 }
 
-.dark .bg-white,
-.dark .bg-gray-100 {
-  background-color: var(--bg-secondary) !important;
-}
-
 .dark h1,
 .dark h2,
 .dark h3,
@@ -453,17 +448,6 @@ nav, header {
    8. 背景与表格样式
    ------------------------------ */
 
-.bg-white {
-  background-color: var(--bg-secondary) !important;
-}
-
-.bg-gray-100 {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
-}
-
-
-.dark .bg-white,
 .divide-gray-200 > *,
 .border-b {
   border-color: var(--border-color) !important;
@@ -475,10 +459,6 @@ nav, header {
 }
 
 .dark #statistics-page .gap-4 > * {
-  border-color: var(--border-color) !important;
-}
-
-.dark #statistics-page .bg-white {
   border-color: var(--border-color) !important;
 }
 
@@ -632,8 +612,7 @@ button.border-gray-200 {
   border-color: var(--border-color) !important;
 }
 
-#cancel-confirm,
-#cancel-button {
+#cancel-confirm {
   background-color: var(--bg-content) !important;
   border-color: var(--border-color) !important;
 }
@@ -966,8 +945,6 @@ button:not(:active), .btn:not(:active) {
   color: var(--text-primary) !important;
 }
 
-
-.grid.grid-cols-7.bg-gray-100,
 .dark .grid.grid-cols-7.border-b {
   background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
@@ -995,7 +972,6 @@ button:not(:active), .btn:not(:active) {
   overflow: hidden !important;
 }
 
-#calendar-grid.parent,
 .rounded-xl.shadow-sm.border {
   border: 1px solid var(--border-color) !important;
   overflow: hidden !important;
@@ -1007,12 +983,9 @@ button:not(:active), .btn:not(:active) {
   overflow: hidden !important;
 }
 
-
-.bg-red-50.text-red-400 {
-  background-color: rgba(239, 68, 68, 0.08) !important;
-  color: var(--color-danger) !important;
+.calendar-cell.overflow-visible {
+  overflow: visible !important;
 }
-
 
 .today-border,
 .dark .today-border {
@@ -1147,10 +1120,7 @@ button:not(:active), .btn:not(:active) {
 
 .dark .modal-content input,
 .dark .modal-content select,
-.dark .modal-content textarea,
-.dark .bg-white.rounded-lg.shadow-xl input,
-.dark .bg-white.rounded-lg.shadow-xl select,
-.dark .bg-white.rounded-lg.shadow-xl textarea {
+.dark .modal-content textarea {
   background-color: var(--bg-input) !important;
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
