@@ -87,16 +87,17 @@ export class CalendarRenderService {
         const coursesByDate = this._buildCoursesByDate();
         const fragment = document.createDocumentFragment();
         const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const startOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const daysInLastMonth = new Date(month === 0 ? year - 1 : year, month === 0 ? 12 : month, 0).getDate();
 
-        this._fillDays(fragment, year, month, firstDayOfMonth, daysInLastMonth - firstDayOfMonth + 1, coursesByDate, false);
+        this._fillDays(fragment, year, month, startOffset, daysInLastMonth - startOffset + 1, coursesByDate, false);
         for (let d = 1; d <= daysInMonth; d++) {
             const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const isToday = new Date().getFullYear() === year && new Date().getMonth() === month && new Date().getDate() === d;
             fragment.appendChild(this.createDayCell(d, ds, coursesByDate.get(ds) || [], true, isToday));
         }
-        const remaining = 42 - firstDayOfMonth - daysInMonth;
+        const remaining = 42 - startOffset - daysInMonth;
         if (remaining > 0) {
             const nm = month === 11 ? 0 : month + 1, ny = month === 11 ? year + 1 : year;
             for (let d = 1; d <= remaining; d++) {
