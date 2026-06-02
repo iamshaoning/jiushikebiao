@@ -968,7 +968,7 @@ button:not(:active), .btn:not(:active) {
 
 
 .grid.grid-cols-7.bg-gray-100,
-.dark .grid.grid-cols-7 {
+.dark .grid.grid-cols-7.border-b {
   background-color: var(--bg-secondary) !important;
   border-color: var(--border-color) !important;
   border-top-left-radius: 0.75rem !important;
@@ -976,21 +976,21 @@ button:not(:active), .btn:not(:active) {
   overflow: hidden !important;
 }
 
-.grid.grid-cols-7 .text-center.py-3,
-.dark .grid.grid-cols-7 .text-center.py-3 {
+.grid.grid-cols-7.border-b .text-center.py-3,
+.dark .grid.grid-cols-7.border-b .text-center.py-3 {
   color: var(--text-primary) !important;
   border-color: var(--border-color) !important;
   overflow: hidden !important;
 }
 
-.grid.grid-cols-7 .text-center.py-3:first-child,
-.dark .grid.grid-cols-7 .text-center.py-3:first-child {
+.grid.grid-cols-7.border-b .text-center.py-3:first-child,
+.dark .grid.grid-cols-7.border-b .text-center.py-3:first-child {
   border-top-left-radius: 0.75rem !important;
   overflow: hidden !important;
 }
 
-.grid.grid-cols-7 .text-center.py-3:last-child,
-.dark .grid.grid-cols-7.bg-gray-100 .text-center.py-3:last-child {
+.grid.grid-cols-7.border-b .text-center.py-3:last-child,
+.dark .grid.grid-cols-7.border-b .text-center.py-3:last-child {
   border-top-right-radius: 0.75rem !important;
   overflow: hidden !important;
 }
