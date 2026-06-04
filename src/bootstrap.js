@@ -141,51 +141,60 @@ registry.set('viewRefreshService', viewRefreshService);
 const state = registry.get('state');
 
 const utils = {
+    // ---- 核心工具 (coreUtils) ----
     generateId: coreUtils.generateId, escapeHtml: coreUtils.escapeHtml,
     debounce: coreUtils.debounce, safe: coreUtils.safe, safeSet: coreUtils.safeSet,
     safeAddClass: coreUtils.safeAddClass, safeRemoveClass: coreUtils.safeRemoveClass,
+    withTimeout: coreUtils.withTimeout,
+
+    // ---- 日期工具 (dateUtils) ----
     timeToMins: dateUtils.timeToMins,
     getTimestamp: dateUtils.getTimestamp, calculateEndTime: dateUtils.calculateEndTime,
     calculateEndTimeFromDuration: dateUtils.calculateEndTimeFromDuration,
+
+    // ---- 快照工具 (snapshotUtils) ----
     createSnapshot: snapshotUtils.createSnapshot, getSnapshots: snapshotUtils.getSnapshots,
     restoreSnapshot: snapshotUtils.restoreSnapshot, deleteSnapshot: snapshotUtils.deleteSnapshot,
     startAutoSnapshotTimer: snapshotUtils.startAutoSnapshotTimer,
+
+    // ---- 剪贴板工具 (clipboardUtils) ----
     copyCourses: clipboardUtils.copyCourses, pasteCourses: clipboardUtils.pasteCourses,
+
+    // ---- 状态工具 (stateUtils) ----
     saveData: stateUtils.saveData, syncToServer: stateUtils.syncToServer,
-    withTimeout: coreUtils.withTimeout,
+    debouncedSaveData: null,
+    initDebouncedSave: function() { this.debouncedSaveData = this.debounce(this.saveData, 2000); },
+
+    // ---- 颜色工具 (colorUtils) ----
     generateColor, removeColorAssignment, getUsedColors, setColor,
     getColorPalette, initColorsFromState, isLightColor,
+
+    // ---- 数据对比 ----
     compareLocalAndServerData: async () => {
         const localData = dataService.getLocalData();
         if (!localData) return true;
-
         const supabaseClient = registry.get('supabaseClient');
         const auth = registry.get('supabaseAuth');
         if (!supabaseClient || !auth) return true;
-
         try {
             const { data: sessionData } = await auth.getSession();
             const userId = sessionData?.session?.user?.id;
             if (!userId) return true;
-
             const { data: serverData, error } = await supabaseClient
                 .from('coursemanagerdata')
                 .select('*')
                 .eq('userid', userId)
                 .maybeSingle();
-
             if (error) return true;
             if (!serverData) return true;
-
             return dataService.checkDataDifference(localData, serverData);
-        } catch {
-            return true;
-        }
+        } catch { return true; }
     },
     checkDataDifference: (localData, serverData) => dataService.checkDataDifference(localData, serverData),
     startServerStatusMonitor: () => registry.get('serverStatusService').startMonitoring(),
     stopServerStatusMonitor: () => registry.get('serverStatusService').stopMonitoring(),
 
+    // ---- 服务代理 (bind 到实例) ----
     checkTimeConflict: (newCourse) => conflictCheckService.checkTimeConflict(newCourse, utils),
     calculateFee: () => feeCalculationService.calculateFee(),
     toggleTimePicker: datePickerService.toggleTimePicker.bind(datePickerService),
@@ -199,12 +208,12 @@ const utils = {
     toggleDurationPicker: customSelectService.toggleDurationPicker.bind(customSelectService),
     getCustomSelectValue: customSelectService.getCustomSelectValue.bind(customSelectService),
     setCustomSelectValue: customSelectService.setCustomSelectValue.bind(customSelectService),
+    getCourseFee: function(course, student, index) { return feeCalculationService.getCourseFee(course, student, index); },
+
+    // ---- 视图/状态 ----
     updateStateFromData: (data, useDefaults = true) => registry.get('stateService').updateStateFromData(data, useDefaults),
     refreshAllViews: viewRefreshService.refreshAllViews.bind(viewRefreshService),
-    getCourseFee: function(course, student, index) { return feeCalculationService.getCourseFee(course, student, index); },
-    debouncedSaveData: null,
     loadData: null,
-    initDebouncedSave: function() { this.debouncedSaveData = this.debounce(this.saveData, 2000); },
     exportStatisticsData: (year, month, organization = '') => registry.get('exportService').exportStatisticsData(year, month, organization),
 };
 

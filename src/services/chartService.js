@@ -55,7 +55,7 @@ export class ChartService {
         entries.sort(([, a], [, b]) => b.courses - a.courses).forEach(([label, stats]) => {
             const color = utils.generateColor(label, 'organization');
             const pct = stats.courses / total;
-            const tooltip = `${label}: ${stats.courses}节 | ¥${stats.fee.toFixed(2)} | ${stats.students?.size || 0}人`;
+            const tooltip = `${label}: ${stats.courses}节 | ¥${stats.fee.toFixed(0)} | ${stats.students?.size || 0}人`;
 
             // 单段满圆（pct >= 1）使用 circle 元素，SVG arc 无法渲染 360° 弧
             if (pct >= 1) {

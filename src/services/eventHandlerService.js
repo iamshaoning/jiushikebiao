@@ -80,6 +80,66 @@ class EventHandlerService {
         },
     };}
 
+    /**
+     * 根据选中元素数量更新浮动操作栏
+     * @param {'course'|'cell'} type
+     */
+    _updateSelectedFab(type) {
+        const isCourse = type === 'course';
+        const sel = isCourse
+            ? document.querySelectorAll('.course-tag-item.is-selected')
+            : document.querySelectorAll('.calendar-cell-selected');
+        const fab = document.getElementById('floating-action-bar');
+        const fabContent = document.getElementById('floating-action-bar-content');
+        if (!fab || !fabContent) return;
+
+        if (sel.length === 0) {
+            registry.get('modalService').closeAllPopovers();
+            return;
+        }
+        if (sel.length === 1) {
+            const id = isCourse
+                ? (sel[0].dataset.courseId || sel[0].closest('[data-course-id]')?.dataset.courseId)
+                : sel[0].dataset.date;
+            if (id) {
+                fabContent.innerHTML = isCourse
+                    ? this._renderCourseActionButtons(registry.get('utils').escapeHtml(id))
+                    : this._renderCellActionButtons(registry.get('utils').escapeHtml(id));
+            }
+        } else {
+            const ids = Array.from(sel).map(el =>
+                isCourse
+                    ? (el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId)
+                    : el.dataset.date
+            ).filter(Boolean);
+            if (ids.length) {
+                fabContent.innerHTML = isCourse
+                    ? this._renderMultiCourseActionButtons(ids)
+                    : this._renderMultiCellActionButtons(ids);
+            }
+        }
+        fabContent.dataset.type = type;
+        fab.classList.add('active');
+        if (registry.get('lucide')) registry.get('lucide').createIcons();
+    }
+
+    /** 渲染机构/年级列表项HTML */
+    _renderOrgGradeItem(item, itemName, ct) {
+        const bc = registry.get('utils').generateColor(item, ct);
+        const esc = registry.get('utils').escapeHtml(item);
+        return `<div class="flex items-center justify-between p-2 rounded" style="background-color:var(--bg-secondary);" data-${itemName}="${esc}">
+            <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color:color-mix(in srgb,${bc} 20%,transparent);color:${bc};" data-item="${esc}" data-item-name="${itemName}" data-color="${bc}">${esc}</button>
+            <div class="flex items-center">
+                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${esc}">
+                    <i data-lucide="square-pen" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-success)"></i>
+                </button>
+                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${esc}">
+                    <i data-lucide="trash-2" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-danger)"></i>
+                </button>
+            </div>
+        </div>`;
+    }
+
     _setupCourseHandlers() { return {
         'edit-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('modalService').showEditCourse(c); },
         'copy-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('utils').copyCourses([c]); },
@@ -88,59 +148,8 @@ class EventHandlerService {
             const ci = e.target.closest('.course-tag-item'); 
             if (!ci) return;
             if (e && (e.ctrlKey || e.metaKey)) {
-                const wasSelected = ci.classList.contains('is-selected');
-                if (wasSelected) {
-                    ci.classList.remove('is-selected');
-                    const remaining = document.querySelectorAll('.course-tag-item.is-selected');
-                    if (remaining.length === 0) {
-                        registry.get('modalService').closeAllPopovers();
-                    } else if (remaining.length === 1) {
-                        const courseId = remaining[0].dataset.courseId || remaining[0].closest('[data-course-id]')?.dataset.courseId;
-                        if (courseId) {
-                            const fab = document.getElementById('floating-action-bar');
-                            const fabContent = document.getElementById('floating-action-bar-content');
-                            if (fab && fabContent) {
-                                fabContent.innerHTML = registry.get('eventHandlerService')._renderCourseActionButtons(registry.get('utils').escapeHtml(courseId));
-                                fabContent.dataset.type = 'course';
-                                fab.classList.add('active');
-                                if (registry.get('lucide')) registry.get('lucide').createIcons();
-                            }
-                        }
-                    } else {
-                        const courseIds = Array.from(remaining).map(el => el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId).filter(Boolean);
-                        const fab = document.getElementById('floating-action-bar');
-                        const fabContent = document.getElementById('floating-action-bar-content');
-                        if (fab && fabContent) {
-                            fabContent.innerHTML = registry.get('eventHandlerService')._renderMultiCourseActionButtons(courseIds);
-                            fabContent.dataset.type = 'course';
-                            fab.classList.add('active');
-                            if (registry.get('lucide')) registry.get('lucide').createIcons();
-                        }
-                    }
-                } else {
-                    ci.classList.add('is-selected');
-                    const selected = document.querySelectorAll('.course-tag-item.is-selected');
-                    if (selected.length === 1) {
-                        const fab = document.getElementById('floating-action-bar');
-                        const fabContent = document.getElementById('floating-action-bar-content');
-                        if (fab && fabContent) {
-                            fabContent.innerHTML = registry.get('eventHandlerService')._renderCourseActionButtons(registry.get('utils').escapeHtml(p.courseId));
-                            fabContent.dataset.type = 'course';
-                            fab.classList.add('active');
-                            if (registry.get('lucide')) registry.get('lucide').createIcons();
-                        }
-                    } else {
-                        const courseIds = Array.from(selected).map(el => el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId).filter(Boolean);
-                        const fab = document.getElementById('floating-action-bar');
-                        const fabContent = document.getElementById('floating-action-bar-content');
-                        if (fab && fabContent) {
-                            fabContent.innerHTML = registry.get('eventHandlerService')._renderMultiCourseActionButtons(courseIds);
-                            fabContent.dataset.type = 'course';
-                            fab.classList.add('active');
-                            if (registry.get('lucide')) registry.get('lucide').createIcons();
-                        }
-                    }
-                }
+                ci.classList.toggle('is-selected');
+                this._updateSelectedFab('course');
             } else {
                 registry.get('modalService').closeAllPopovers();
                 registry.get('utils').handleCourseClick(ci, p.courseId, e);
@@ -367,7 +376,7 @@ class EventHandlerService {
             registry.get('render').calendar();
         },
         'calendar-cell-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; if (e.target.closest('#floating-action-bar')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; document.querySelectorAll('.calendar-cell-selected').forEach(c => c.classList.remove('calendar-cell-selected')); const ds = cell.dataset.date; cell.classList.add('calendar-cell-selected'); const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (!fab || !fabContent) return; const prevType = fabContent.dataset.type; const isCrossType = prevType && prevType !== 'cell'; const showButtons = () => { fabContent.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(ds)); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); }; if (isCrossType) { setTimeout(showButtons, 180); } else { showButtons(); } },
-        'calendar-cell-ctrl-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; if (e.target.closest('#floating-action-bar')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; const wasSelected = cell.classList.contains('calendar-cell-selected'); if (wasSelected) { cell.classList.remove('calendar-cell-selected'); const remaining = document.querySelectorAll('.calendar-cell-selected'); if (remaining.length === 0) { registry.get('modalService').closeAllPopovers(); } else if (remaining.length === 1) { const ds = remaining[0].dataset.date; const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(ds)); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } else { const dates = Array.from(remaining).map(c => c.dataset.date); const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderMultiCellActionButtons(dates); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } } else { cell.classList.add('calendar-cell-selected'); const selected = document.querySelectorAll('.calendar-cell-selected'); if (selected.length === 1) { const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderCellActionButtons(registry.get('utils').escapeHtml(cell.dataset.date)); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } else { const dates = Array.from(selected).map(c => c.dataset.date); const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (fab && fabContent) { fabContent.innerHTML = this._renderMultiCellActionButtons(dates); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); } } } },
+        'calendar-cell-ctrl-click': (p, e) => { if (e && e.button !== 0) return; if (e.target.closest('.course-tag-item')) return; if (e.target.closest('#floating-action-bar')) return; const cell = e.target.closest('.calendar-cell'); if (!cell) return; cell.classList.toggle('calendar-cell-selected'); this._updateSelectedFab('cell'); },
         'calendar-cells-selected': (p, e) => { const dates = p.dates; if (!dates || dates.length === 0) return; const fab = document.getElementById('floating-action-bar'); const fabContent = document.getElementById('floating-action-bar-content'); if (!fab || !fabContent) return; fabContent.innerHTML = this._renderMultiCellActionButtons(dates); fabContent.dataset.type = 'cell'; fab.classList.add('active'); if (registry.get('lucide')) registry.get('lucide').createIcons(); },
     };}
 
@@ -425,20 +434,7 @@ class EventHandlerService {
                 // Refresh the entire list UI by re-rendering the list
                 const il = document.getElementById(`${itemName}s-list`);
                 if (il) {
-                    il.innerHTML = registry.get('state')[itemName === '机构' ? 'organizations' : 'grades'].map(item => {
-                        const bc = registry.get('utils').generateColor(item, ct);
-                        return `<div class="flex items-center justify-between p-2 rounded" style="background-color:var(--bg-secondary);" data-${itemName}="${registry.get('utils').escapeHtml(item)}">
-                            <button class="${itemName}-name color-picker-trigger px-2 py-1 text-xs font-medium rounded-full cursor-pointer hover:opacity-80 transition-opacity" style="background-color:color-mix(in srgb,${bc} 20%,transparent);color:${bc};" data-item="${registry.get('utils').escapeHtml(item)}" data-item-name="${itemName}" data-color="${bc}">${registry.get('utils').escapeHtml(item)}</button>
-                            <div class="flex items-center">
-                                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(item)}">
-                                    <i data-lucide="square-pen" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-success)"></i>
-                                </button>
-                                <button class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-transform" data-action="delete-org-inline" data-item-name="${itemName}" data-item="${registry.get('utils').escapeHtml(item)}">
-                                    <i data-lucide="trash-2" class="text-lg inline-block" style="width:18px;height:18px;color:var(--color-danger)"></i>
-                                </button>
-                            </div>
-                        </div>`;
-                    }).join('');
+                    il.innerHTML = registry.get('state')[itemName === '机构' ? 'organizations' : 'grades'].map(item => this._renderOrgGradeItem(item, itemName, ct)).join('');
                     // Re-attach color picker listeners
                     if (registry.get('lucide')) registry.get('lucide').createIcons();
                     il.querySelectorAll(`.${itemName}-name.color-picker-trigger`).forEach(cpt => {
