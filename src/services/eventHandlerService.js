@@ -377,6 +377,12 @@ class EventHandlerService {
         'select-duration': (p, e) => { const b = e.target.closest('[data-duration]'); if (!b) return; const d = parseInt(b.dataset.duration); if (isNaN(d)) return; const el = document.getElementById('course-duration'); if (el) el.value = d; const sti = document.getElementById('course-start-time'); const st = sti?.value || ''; const u = registry.get('utils'); if (st) u.calculateEndTime('course-start-time', 'course-end-time', d); u.calculateFee(); const dd = document.getElementById('duration-dropdown'); if (dd) dd.classList.add('hidden'); },
         'toggle-select': (p) => { const c = document.getElementById(p.selectWrapper); if (!c) return; const t = c.querySelector('.custom-select-trigger'), o = c.querySelector('.custom-select-options'); if (!t || !o) return; document.querySelectorAll('.custom-select-options.open').forEach(oo => { if (oo !== o) { oo.classList.remove('open'); oo.parentElement.querySelector('.custom-select-trigger').classList.remove('active'); } }); o.classList.toggle('open'); t.classList.toggle('active'); },
         'select-option': (p) => { const c = document.getElementById(p.wrapper); if (!c) return; const t = c.querySelector('.custom-select-trigger'), o = c.querySelector(`.custom-option[data-value="${CSS.escape(p.value)}"]`); if (!t || !o) return; (t.querySelector('span') || t).textContent = o.textContent; c.querySelectorAll('.custom-option').forEach(opt => opt.classList.remove('selected')); o.classList.add('selected'); c.querySelector('.custom-select-options')?.classList.remove('open'); t.classList.remove('active'); c.dispatchEvent(new CustomEvent('change', { detail: { value: p.value, text: o.textContent }, bubbles: true })); },
+        'show-course-detail': (payload) => {
+            const service = registry.get('statisticsRenderService');
+            if (service) {
+                service.showCourseDetail(payload, registry.get('utils'));
+            }
+        },
     };}
 
     _setupOrgGradeHandlers() { const self = this; return {

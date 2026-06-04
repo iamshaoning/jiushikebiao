@@ -39,7 +39,8 @@ export class ChartService {
 
         const entries = Object.entries(data);
         if (entries.length === 0) {
-            container.innerHTML = '<div class="text-center" style="color:var(--text-secondary)"><div class="css-pie" style="background:var(--bg-content)">暂无数据</div></div>';
+            container.innerHTML = '<div class="text-center" style="color:var(--text-secondary);padding:2rem 0;"><i data-lucide="pie-chart" style="display:block;margin:0 auto 8px" class="text-4xl"></i><p>暂无数据</p></div>';
+            if (registry.get('lucide')) registry.get('lucide').createIcons({ nodes: [container] });
             return;
         }
 
@@ -54,14 +55,21 @@ export class ChartService {
         entries.sort(([, a], [, b]) => b.courses - a.courses).forEach(([label, stats]) => {
             const color = utils.generateColor(label, 'organization');
             const pct = stats.courses / total;
-            const startAngle = cumulative * 360;
-            const endAngle = (cumulative + pct) * 360;
-            const pathD = this._describeArc(cx, cy, r, startAngle, endAngle);
-
             const tooltip = `${label}: ${stats.courses}节 | ¥${stats.fee.toFixed(2)} | ${stats.students?.size || 0}人`;
-            paths.push(`<g class="pie-segment" data-tooltip="${utils.escapeHtml(tooltip)}">
-                <path d="${pathD}" fill="${color}"/>
-            </g>`);
+
+            // 单段满圆（pct >= 1）使用 circle 元素，SVG arc 无法渲染 360° 弧
+            if (pct >= 1) {
+                paths.push(`<g class="pie-segment" data-tooltip="${utils.escapeHtml(tooltip)}">
+                    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>
+                </g>`);
+            } else {
+                const startAngle = cumulative * 360;
+                const endAngle = (cumulative + pct) * 360;
+                const pathD = this._describeArc(cx, cy, r, startAngle, endAngle);
+                paths.push(`<g class="pie-segment" data-tooltip="${utils.escapeHtml(tooltip)}">
+                    <path d="${pathD}" fill="${color}"/>
+                </g>`);
+            }
 
             cumulative += pct;
             labels.push({ label, color });

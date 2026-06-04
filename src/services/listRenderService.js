@@ -96,6 +96,9 @@ export class ListRenderService {
                     </td>
                 </tr>
             `;
+            if (registry.get('lucide')) {
+                registry.get('lucide').createIcons({ nodes: [studentsList] });
+            }
             return;
         }
         const VirtualList = registry.get('VirtualList');
