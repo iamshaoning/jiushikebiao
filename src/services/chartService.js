@@ -56,12 +56,11 @@ export class ChartService {
             const pct = stats.courses / total;
             const startAngle = cumulative * 360;
             const endAngle = (cumulative + pct) * 360;
-            const gap = endAngle - startAngle > 3 ? 1 : 0;
-            const pathD = this._describeArc(cx, cy, r, startAngle + gap, endAngle);
+            const pathD = this._describeArc(cx, cy, r, startAngle, endAngle);
 
             const tooltip = `${label}: ${stats.courses}节 | ¥${stats.fee.toFixed(2)} | ${stats.students?.size || 0}人`;
             paths.push(`<g class="pie-segment" data-tooltip="${utils.escapeHtml(tooltip)}">
-                <path d="${pathD}" fill="${color}" stroke="var(--bg-secondary)" stroke-width="2"/>
+                <path d="${pathD}" fill="${color}"/>
             </g>`);
 
             cumulative += pct;
