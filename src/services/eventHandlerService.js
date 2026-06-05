@@ -27,7 +27,7 @@ class EventHandlerService {
 
     _setupStudentHandlers() { return {
         'edit-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) registry.get('modalService').showEditStudent(s); },
-        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除`, async () => { const deleteIds = new Set(rc.map(r => r.id)); registry.get('setState')(d => { d.courses = d.courses.filter(c => !deleteIds.has(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, ['students', 'courses']); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
+        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除`, async () => { if (rc.length > 0) registry.get('timelineService').recordBatchDeleteCourses(rc.map(c => ({...c}))); const deleteIds = new Set(rc.map(r => r.id)); registry.get('setState')(d => { d.courses = d.courses.filter(c => !deleteIds.has(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, ['students', 'courses']); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
         'add-student-main': () => { registry.get('modalService').showAddStudent(); },
          'student-row-ctrl-click': (payload) => {
             const ed = registry.get('eventDispatcherService');
@@ -54,6 +54,7 @@ class EventHandlerService {
             registry.get('modalService').showConfirm(
                 `删除 <strong>${selectedIds.length}</strong> 位学生后，相关的 <strong>${affectedCourses.length}</strong> 节课也将全部删除。`,
                 async () => {
+                    if (affectedCourses.length > 0) registry.get('timelineService').recordBatchDeleteCourses(affectedCourses.map(c => ({...c})));
                     const deleteCourseIds = new Set(affectedCourses.map(c => c.id));
                     const deleteStudentIds = new Set(selectedIds);
                     registry.get('setState')(d => {
