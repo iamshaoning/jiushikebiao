@@ -435,6 +435,48 @@ class TimelineService {
     }
 
     /**
+     * 记录删除学生操作（含联动删除的课程）
+     */
+    async recordDeleteStudent(student, deletedCourses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized) return;
+
+        const action = {
+            id: this.generateId(),
+            type: 'delete-student',
+            timestamp: new Date().toISOString(),
+            student: JSON.parse(JSON.stringify(student)),
+            deletedCourses: deletedCourses.map(c => JSON.parse(JSON.stringify(c))),
+            expanded: false,
+            description: `删除学生：${student.name}`
+        };
+
+        await this.addToTimeline(action);
+        return action;
+    }
+
+    /**
+     * 记录批量删除学生操作（含联动删除的课程）
+     */
+    async recordBatchDeleteStudents(students, deletedCourses) {
+        const isInitialized = await this.ensureUserInitialized();
+        if (!isInitialized || !students || students.length === 0) return;
+
+        const action = {
+            id: this.generateId(),
+            type: 'batch-delete-students',
+            timestamp: new Date().toISOString(),
+            students: students.map(s => JSON.parse(JSON.stringify(s))),
+            deletedCourses: deletedCourses.map(c => JSON.parse(JSON.stringify(c))),
+            expanded: false,
+            description: `批量删除 ${students.length} 位学生：`
+        };
+
+        await this.addToTimeline(action);
+        return action;
+    }
+
+    /**
      * 添加记录到时间轴
      */
     async addToTimeline(action) {
@@ -479,8 +521,13 @@ class TimelineService {
             case 'batch-delete-day-courses':
                 success = this.undoDeleteCourses(action);
                 break;
+            case 'delete-student':
+            case 'batch-delete-students':
+                success = this.undoDeleteStudents(action);
+                break;
             case 'restore-snapshot':
-                return false;
+                success = this.undoRestoreSnapshot(action);
+                break;
         }
 
         if (success) {
@@ -589,8 +636,13 @@ class TimelineService {
             case 'batch-delete-day-courses':
                 success = this.redoDeleteCourses(action);
                 break;
+            case 'delete-student':
+            case 'batch-delete-students':
+                success = this.redoDeleteStudents(action);
+                break;
             case 'restore-snapshot':
-                return false;
+                success = this.redoRestoreSnapshot(action);
+                break;
         }
 
         if (success) {
@@ -667,6 +719,103 @@ class TimelineService {
 
         const removeSet = new Set(coursesToRemove);
         registry.get('setState')(draft => draft.courses = draft.courses.filter(c => !removeSet.has(c.id)), ['courses', 'calendar']);
+
+        return true;
+    }
+
+    /**
+     * 撤销删除学生（还原学生和联动删除的课程）
+     */
+    undoDeleteStudents(action) {
+        if (!registry.get('state')) return false;
+
+        const students = action.students || (action.student ? [action.student] : []);
+        const courses = action.deletedCourses || [];
+
+        if (!students.length && !courses.length) return false;
+
+        registry.get('setState')(draft => {
+            students.forEach(student => {
+                const exists = draft.students.find(s => s.id === student.id);
+                if (!exists) {
+                    draft.students.push(JSON.parse(JSON.stringify(student)));
+                }
+            });
+            courses.forEach(course => {
+                const exists = draft.courses.find(c => c.id === course.id);
+                if (!exists) {
+                    draft.courses.push(JSON.parse(JSON.stringify(course)));
+                }
+            });
+        }, ['students', 'courses', 'calendar']);
+
+        return true;
+    }
+
+    /**
+     * 重做删除学生（再次删除学生和联动课程）
+     */
+    redoDeleteStudents(action) {
+        if (!registry.get('state')) return false;
+
+        const students = action.students || (action.student ? [action.student] : []);
+        const courses = action.deletedCourses || [];
+
+        if (!students.length && !courses.length) return false;
+
+        const studentIds = new Set(students.map(s => s.id));
+        const courseIds = new Set(courses.map(c => c.id));
+
+        registry.get('setState')(draft => {
+            draft.students = draft.students.filter(s => !studentIds.has(s.id));
+            draft.courses = draft.courses.filter(c => !courseIds.has(c.id));
+        }, ['students', 'courses', 'calendar']);
+
+        return true;
+    }
+
+    /**
+     * 撤销快照恢复（还原到快照恢复前的数据）
+     */
+    undoRestoreSnapshot(action) {
+        if (!registry.get('state') || !action.previousData) return false;
+
+        const prevData = action.previousData;
+
+        registry.get('setState')(draft => {
+            draft.students = prevData.students || [];
+            draft.courses = prevData.courses || [];
+            draft.organizations = prevData.organizations || [];
+            draft.grades = prevData.grades || [];
+            draft.organizationColors = prevData.organizationColors || {};
+            draft.gradeColors = prevData.gradeColors || {};
+            draft.lastupdated = prevData.lastupdated;
+        }, ['students', 'courses', 'organizations', 'grades', 'organizationColors', 'gradeColors', 'calendar']);
+
+        localStorage.setItem('coursemanagerdata', JSON.stringify(prevData));
+
+        return true;
+    }
+
+    /**
+     * 重做快照恢复（重新应用快照数据）
+     */
+    redoRestoreSnapshot(action) {
+        if (!registry.get('state') || !action.snapshotData) return false;
+
+        const snapData = action.snapshotData;
+
+        registry.get('setState')(draft => {
+            draft.students = snapData.students || [];
+            draft.courses = snapData.courses || [];
+            draft.organizations = snapData.organizations || [];
+            draft.grades = snapData.grades || [];
+            draft.organizationColors = snapData.organizationColors || {};
+            draft.gradeColors = snapData.gradeColors || {};
+            draft.lastupdated = snapData.lastupdated;
+        }, ['students', 'courses', 'organizations', 'grades', 'organizationColors', 'gradeColors', 'calendar']);
+
+        localStorage.setItem('coursemanagerdata', JSON.stringify(snapData));
 
         return true;
     }

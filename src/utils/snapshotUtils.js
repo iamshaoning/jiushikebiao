@@ -147,6 +147,19 @@ const snapshotUtils = {
             }
             return;
         }
+
+        // 保存恢复前的当前数据，用于撤销
+        const currentDataStr = localStorage.getItem('coursemanagerdata');
+        let previousData = { students: [], courses: [], organizations: [], grades: [], organizationColors: {}, gradeColors: {} };
+        if (currentDataStr) {
+            try { previousData = JSON.parse(currentDataStr); } catch (e) {}
+        }
+
+        // 快照数据（用于重做）
+        const snapshotData = {
+            ...snapshot.data,
+            lastupdated: new Date().toISOString()
+        };
         
         // 记录快照恢复操作到时间轴
         if (registry.get('timelineService')) {
@@ -165,7 +178,7 @@ const snapshotUtils = {
                 'manual': '手动快照'
             };
             
-            // 使用timelineService添加记录
+            // 使用timelineService添加记录，包含前后数据用于撤销/重做
             const restoreRecord = {
                 id: Date.now().toString(36) + Math.random().toString(36).slice(2),
                 type: 'restore-snapshot',
@@ -173,6 +186,8 @@ const snapshotUtils = {
                 snapshotType: snapshot.type,
                 snapshotDate: formattedDate,
                 snapshotId: snapshotId,
+                previousData: previousData,
+                snapshotData: snapshotData,
                 description: `恢复了 ${typeLabels[snapshot.type]} (${formattedDate})`
             };
             registry.get('timelineService')?.addToTimeline(restoreRecord).catch(err => {
@@ -180,15 +195,9 @@ const snapshotUtils = {
             });
         }
         
-        // 更新快照数据的时间戳，确保服务器接受新数据
-        const restoredData = {
-            ...snapshot.data,
-            lastupdated: new Date().toISOString()
-        };
+        localStorage.setItem('coursemanagerdata', JSON.stringify(snapshotData));
         
-        localStorage.setItem('coursemanagerdata', JSON.stringify(restoredData));
-        
-        registry.get('utils').updateStateFromData(restoredData, false);
+        registry.get('utils').updateStateFromData(snapshotData, false);
         
         registry.get('utils').refreshAllViews(true);
         
