@@ -73,7 +73,7 @@ export class ConflictModal {
                         <i data-lucide="arrow-right" style="width: 14px; height: 14px; color: var(--text-secondary); flex-shrink: 0;"></i>
                     </div>
                     <div style="flex: 1; min-width: 0; width: 0;">
-                        <div style="font-size: 11px; font-weight: 600; color: var(--color-danger); margin-bottom: 4px; white-space: nowrap;">冲突课程（${conflictingCourses.length}节）</div>
+                        <div style="font-size: 11px; font-weight: 600; color: var(--color-danger); margin-bottom: 4px; white-space: nowrap;">冲突课程</div>
                         <div class="conflict-list" style="display: flex; flex-direction: column; gap: 4px; overflow: hidden;">${conflictTags}</div>
                     </div>
                 </div>
@@ -162,8 +162,6 @@ export class ConflictModal {
         if (!scrollEl) return;
 
         const checkScroll = () => {
-            const hasOverflow = scrollEl.scrollHeight > scrollEl.clientHeight + 1;
-            scrollEl.classList.toggle('has-overflow', hasOverflow);
             const atBottom = scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 1;
             scrollEl.classList.toggle('scrolled-to-bottom', atBottom);
         };

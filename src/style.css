@@ -1677,10 +1677,6 @@ button:not(:active), .btn:not(:active) {
     transition: opacity 0.15s ease;
 }
 
-.scroll-fade-bottom:not(.has-overflow)::after {
-    opacity: 0;
-}
-
 .scroll-fade-bottom.scrolled-to-bottom::after {
     opacity: 0;
 }
