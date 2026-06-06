@@ -38,32 +38,7 @@ export class ConflictModal {
             return;
         }
 
-        this._overrideContainerWidth();
         this._render();
-    }
-
-    /**
-     * 覆盖模态框容器宽度限制
-     */
-    _overrideContainerWidth() {
-        const el = this.modal[this.useNested ? 'nestedContent' : 'content'];
-        if (el) {
-            el.classList.remove('max-w-md');
-            el.style.maxWidth = '900px';
-            el.style.width = '95vw';
-        }
-    }
-
-    /**
-     * 还原模态框容器宽度
-     */
-    _restoreContainerWidth() {
-        const el = this.modal[this.useNested ? 'nestedContent' : 'content'];
-        if (el) {
-            el.classList.add('max-w-md');
-            el.style.maxWidth = '';
-            el.style.width = '';
-        }
     }
 
     /**
@@ -83,39 +58,33 @@ export class ConflictModal {
         const conflictingCourses = conflict.conflictingCourses;
 
         const newTag = this._generateCourseTag(newCourse);
-        const conflictTags = conflictingCourses.map((c, i) =>
+        const conflictTags = conflictingCourses.map((c) =>
             this._generateCourseTag(c)
         ).join('');
 
         const content = `
             <div class="conflict-modal">
-                <div class="conflict-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <span style="font-weight: 700; font-size: 16px; color: var(--text-primary);">时间冲突处理</span>
-                        <span style="margin-left: 8px; font-size: 13px; color: var(--text-secondary);">${total > 1 ? `第 ${current}/${total} 节` : ''}</span>
-                    </div>
-                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">待处理 ${total - this.results.length} 节冲突</span>
+                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700; font-size: 15px; color: var(--text-primary);">时间冲突处理</span>
+                    ${total > 1 ? `<span style="font-size: 12px; color: var(--text-secondary);">${current}/${total}</span>` : ''}
+                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">${total - this.results.length} 节冲突</span>
                 </div>
 
-                <div class="conflict-compare" style="padding: 12px 16px; display: flex; gap: 8px; align-items: flex-start; overflow: hidden;">
-                    <div class="conflict-side" style="flex: 1; min-width: 0; width: 0;">
-                        <div style="font-size: 11px; font-weight: 600; color: var(--color-success); margin-bottom: 6px; white-space: nowrap;">要写入的课程</div>
-                        <div style="overflow: hidden;">${newTag}</div>
+                <div style="padding: 10px 16px; overflow: hidden;">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--color-success); margin-bottom: 4px;">要写入的课程</div>
+                    <div style="overflow: hidden;">${newTag}</div>
+                    <div style="display: flex; justify-content: center; padding: 4px 0;">
+                        <i data-lucide="arrow-down" style="width: 16px; height: 16px; color: var(--text-secondary);"></i>
                     </div>
-                    <div class="conflict-divider" style="display: flex; align-items: center; flex-shrink: 0; padding-top: 40px;">
-                        <i data-lucide="arrow-right" style="width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0;"></i>
-                    </div>
-                    <div class="conflict-side" style="flex: 1; min-width: 0; width: 0;">
-                        <div style="font-size: 11px; font-weight: 600; color: var(--color-danger); margin-bottom: 6px; white-space: nowrap;">冲突课程（${conflictingCourses.length}节）</div>
-                        <div class="conflict-list" style="display: flex; flex-direction: column; gap: 6px; overflow: hidden;">${conflictTags}</div>
-                    </div>
+                    <div style="font-size: 11px; font-weight: 600; color: var(--color-danger); margin-bottom: 4px;">冲突课程（${conflictingCourses.length}节）</div>
+                    <div class="conflict-list" style="display: flex; flex-direction: column; gap: 6px; overflow: hidden;">${conflictTags}</div>
                 </div>
 
                 ${total > 1 ? this._renderBulkControls() : ''}
 
-                <div class="conflict-actions" style="padding: 12px 16px; border-top: 1px solid var(--border-color); display: flex; gap: 12px; justify-content: flex-end; align-items: center;">
-                    <button id="conflict-skip" class="conflict-btn-skip" style="padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">跳过</button>
-                    <button id="conflict-override" class="conflict-btn-override" style="padding: 8px 20px; border-radius: 8px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 14px; transition: all 0.2s;">覆盖</button>
+                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="conflict-skip" class="conflict-btn-skip" style="padding: 6px 18px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">跳过</button>
+                    <button id="conflict-override" class="conflict-btn-override" style="padding: 6px 18px; border-radius: 6px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 13px;">覆盖</button>
                 </div>
             </div>
         `;
@@ -134,47 +103,41 @@ export class ConflictModal {
     _renderAll() {
         const allItems = this.conflicts.map((conflict, index) => {
             const newTag = this._generateCourseTag(conflict.newCourse);
-            const conflictTags = conflict.conflictingCourses.map((c, i) =>
+            const conflictTags = conflict.conflictingCourses.map((c) =>
                 this._generateCourseTag(c)
             ).join('');
 
             return `
-                <div class="compare-all-item" style="margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">冲突 ${index + 1} / ${this.conflicts.length}</div>
-                    <div style="display: flex; gap: 8px; align-items: flex-start; overflow: hidden;">
-                        <div style="flex: 1; min-width: 0; width: 0;">
-                            <div style="font-size: 11px; font-weight: 600; color: var(--color-success); margin-bottom: 4px; white-space: nowrap;">要写入</div>
-                            <div style="overflow: hidden;">${newTag}</div>
-                        </div>
-                        <div style="display: flex; align-items: center; flex-shrink: 0; padding-top: 32px;">
-                            <i data-lucide="arrow-right" style="width: 14px; height: 14px; color: var(--text-secondary);"></i>
-                        </div>
-                        <div style="flex: 1; min-width: 0; width: 0;">
-                            <div style="font-size: 11px; font-weight: 600; color: var(--color-danger); margin-bottom: 4px; white-space: nowrap;">冲突课程</div>
-                            <div style="display: flex; flex-direction: column; gap: 6px; overflow: hidden;">${conflictTags}</div>
-                        </div>
+                <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">冲突 ${index + 1} / ${this.conflicts.length}</div>
+                    <div style="font-size: 11px; font-weight: 600; color: var(--color-success); margin-bottom: 2px;">要写入</div>
+                    <div style="overflow: hidden; margin-bottom: 4px;">${newTag}</div>
+                    <div style="display: flex; justify-content: center; padding: 2px 0;">
+                        <i data-lucide="arrow-down" style="width: 14px; height: 14px; color: var(--text-secondary);"></i>
                     </div>
+                    <div style="font-size: 11px; font-weight: 600; color: var(--color-danger); margin-bottom: 2px;">冲突课程</div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; overflow: hidden;">${conflictTags}</div>
                 </div>
             `;
         }).join('');
 
         const content = `
             <div class="conflict-modal" style="display: flex; flex-direction: column; max-height: 80vh;">
-                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-                    <span style="font-weight: 700; font-size: 16px; color: var(--text-primary);">时间冲突处理（统一处理）</span>
-                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">${this.conflicts.length} 节冲突</span>
+                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+                    <span style="font-weight: 700; font-size: 15px; color: var(--text-primary);">时间冲突处理（统一处理）</span>
+                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">${this.conflicts.length} 节冲突</span>
                 </div>
-                <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 16px 20px; min-height: 0;">
+                <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 12px 16px; min-height: 0;">
                     <div id="conflict-all-scroll-inner">${allItems}</div>
                 </div>
-                <div style="padding: 0 16px 8px; display: flex; align-items: center; flex-shrink: 0;">
-                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--text-primary);">
+                <div style="padding: 0 16px 6px; display: flex; align-items: center; flex-shrink: 0;">
+                    <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
                         <input type="checkbox" id="conflict-bulk-checkbox" checked style="accent-color: var(--color-primary);"> 统一处理
                     </label>
                 </div>
-                <div style="padding: 12px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: flex-end; gap: 12px;">
-                    <button id="conflict-skip" class="conflict-btn-skip" style="padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 14px; transition: all 0.2s;">全部跳过</button>
-                    <button id="conflict-override" class="conflict-btn-override" style="padding: 8px 20px; border-radius: 8px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 14px; transition: all 0.2s;">全部覆盖</button>
+                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="conflict-skip" class="conflict-btn-skip" style="padding: 6px 18px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">全部跳过</button>
+                    <button id="conflict-override" class="conflict-btn-override" style="padding: 6px 18px; border-radius: 6px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 13px;">全部覆盖</button>
                 </div>
             </div>
         `;
@@ -202,8 +165,8 @@ export class ConflictModal {
      */
     _renderBulkControls() {
         return `
-            <div class="conflict-bulk-controls" style="padding: 0 16px 8px; display: flex; align-items: center; gap: 12px;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--text-primary);">
+            <div class="conflict-bulk-controls" style="padding: 0 16px 6px; display: flex; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
                     <input type="checkbox" id="conflict-bulk-checkbox" style="accent-color: var(--color-primary);"> 统一处理
                 </label>
             </div>
@@ -306,7 +269,6 @@ export class ConflictModal {
             }
         });
 
-        this._restoreContainerWidth();
         this.modal[this.useNested ? 'hideNested' : 'hide']();
 
         if (this.onResolve) {
