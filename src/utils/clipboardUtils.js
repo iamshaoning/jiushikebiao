@@ -121,7 +121,7 @@ const clipboardUtils = {
                     });
                     if (deleteIds.size > 0) {
                         const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
-                        registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                        registry.get('historyService').recordBatchDeleteCourses(deletedCourses);
                     }
                     const overriddenCourses = overridden.map(o => o.newCourse);
                     const allCoursesToAdd = [...coursesToAdd, ...overriddenCourses];
@@ -133,10 +133,10 @@ const clipboardUtils = {
                         }, 'courses');
                         await registry.get('utils').saveData();
                         if (overriddenCourses.length > 0) {
-                            registry.get('timelineService').recordPasteCourses(overriddenCourses);
+                            registry.get('historyService').recordPasteCourses(overriddenCourses);
                         }
                         if (coursesToAdd.length > 0) {
-                            registry.get('timelineService').recordPasteCourses(coursesToAdd);
+                            registry.get('historyService').recordPasteCourses(coursesToAdd);
                         }
                         const skippedCount = skipped.length;
                         let msg = `成功粘贴 ${allCoursesToAdd.length} 节课程`;
@@ -158,8 +158,8 @@ const clipboardUtils = {
                 } else if (coursesToAdd.length > 0) {
                     registry.get('setState')(draft => draft.courses.push(...coursesToAdd), 'courses');
                     await registry.get('utils').saveData();
-                    if (registry.get('timelineService')) {
-                        registry.get('timelineService').recordPasteCourses(coursesToAdd);
+                    if (registry.get('historyService')) {
+                        registry.get('historyService').recordPasteCourses(coursesToAdd);
                     }
                     let msg = `成功粘贴 ${coursesToAdd.length} 节课程`;
                     if (duplicateCount > 0) msg += `，${duplicateCount} 节已存在`;

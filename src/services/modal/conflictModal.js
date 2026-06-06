@@ -69,7 +69,7 @@ export class ConflictModal {
                         <div style="font-size: 11px; font-weight: 600; color: var(--color-success); margin-bottom: 4px; white-space: nowrap;">要写入的课程</div>
                         <div style="overflow: hidden;">${newTag}</div>
                     </div>
-                    <div style="display: flex; align-items: center; flex-shrink: 0; padding-top: 28px;">
+                    <div style="display: flex; align-items: center; flex-shrink: 0; padding-top: 45px;">
                         <i data-lucide="arrow-right" style="width: 14px; height: 14px; color: var(--text-secondary); flex-shrink: 0;"></i>
                     </div>
                     <div style="flex: 1; min-width: 0; width: 0;">
@@ -112,7 +112,7 @@ export class ConflictModal {
                             <div style="font-size: 10px; font-weight: 600; color: var(--color-success); margin-bottom: 2px; white-space: nowrap;">要写入</div>
                             <div style="overflow: hidden;">${newTag}</div>
                         </div>
-                        <div style="display: flex; align-items: center; flex-shrink: 0; padding-top: 24px;">
+                        <div style="display: flex; align-items: center; flex-shrink: 0; padding-top: 45px;">
                             <i data-lucide="arrow-right" style="width: 12px; height: 12px; color: var(--text-secondary);"></i>
                         </div>
                         <div style="flex: 1; min-width: 0; width: 0;">

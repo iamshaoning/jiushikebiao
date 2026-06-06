@@ -67,7 +67,7 @@ const elements = {
     organizationTable: null,
     detailedTypeTableContainer: null,
     studentDataContainer: null,
-    timelineBtn: null,
+    historyBtn: null,
     snapshotBtn: null
 };
 
@@ -134,7 +134,7 @@ function initElements() {
     elements.organizationTable = document.getElementById('organization-table');
     elements.detailedTypeTableContainer = document.getElementById('detailed-type-table-container');
     elements.studentDataContainer = document.getElementById('student-data-container');
-    elements.timelineBtn = document.getElementById('timeline-btn');
+    elements.historyBtn = document.getElementById('history-btn');
     elements.snapshotBtn = document.getElementById('snapshot-btn');
 
     return elements;

@@ -125,11 +125,11 @@ class LoadSystemService {
 
         localStorage.removeItem('coursemanagerdata');
         
-        // 重置时间轴服务状态，避免显示其他账号的历史操作记录
-        // 注意：不删除 localStorage 中的时间轴数据，只重置内存中的状态
-        if (registry.get('timelineService')) {
-            registry.get('timelineService').currentUserId = null;
-            registry.get('timelineService').timeline = [];
+        // 重置历史记录服务状态，避免显示其他账号的操作记录
+        // 注意：不删除 localStorage 中的历史记录数据，只重置内存中的状态
+        if (registry.get('historyService')) {
+            registry.get('historyService').currentUserId = null;
+            registry.get('historyService').records = [];
         }
 
         this.notificationService.show('您现在处于试用模式，数据不会被保存', 'info');

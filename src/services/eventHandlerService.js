@@ -27,7 +27,7 @@ class EventHandlerService {
 
     _setupStudentHandlers() { return {
         'edit-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) registry.get('modalService').showEditStudent(s); },
-        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除`, async () => { registry.get('timelineService').recordDeleteStudent(s, rc); const deleteIds = new Set(rc.map(r => r.id)); registry.get('setState')(d => { d.courses = d.courses.filter(c => !deleteIds.has(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, ['students', 'courses']); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
+        'delete-student': (payload) => { const s = registry.get('state').students.find(s => s.id === payload.id); if (s) { const rc = registry.get('state').courses.filter(c => Array.isArray(c.studentIds) && c.studentIds.includes(s.id)); registry.get('modalService').showConfirm(`删除学生 <strong>${registry.get('utils').escapeHtml(s.name)}</strong> 后，相关的${rc.length}节课也将全部删除`, async () => { registry.get('historyService').recordDeleteStudent(s, rc); const deleteIds = new Set(rc.map(r => r.id)); registry.get('setState')(d => { d.courses = d.courses.filter(c => !deleteIds.has(c.id)); d.students = d.students.filter(st => st.id !== s.id); }, ['students', 'courses']); await registry.get('utils').saveData(); registry.get('notificationService').show('学生删除成功', 'success'); }, 'delete'); } },
         'add-student-main': () => { registry.get('modalService').showAddStudent(); },
          'student-row-ctrl-click': (payload) => {
             const ed = registry.get('eventDispatcherService');
@@ -55,7 +55,7 @@ class EventHandlerService {
             registry.get('modalService').showConfirm(
                 `删除 <strong>${selectedIds.length}</strong> 位学生后，相关的 <strong>${affectedCourses.length}</strong> 节课也将全部删除。`,
                 async () => {
-                    registry.get('timelineService').recordBatchDeleteStudents(affectedStudents, affectedCourses);
+                    registry.get('historyService').recordBatchDeleteStudents(affectedStudents, affectedCourses);
                     const deleteCourseIds = new Set(affectedCourses.map(c => c.id));
                     const deleteStudentIds = new Set(selectedIds);
                     registry.get('setState')(d => {
@@ -145,7 +145,7 @@ class EventHandlerService {
     _setupCourseHandlers() { return {
         'edit-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('modalService').showEditCourse(c); },
         'copy-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); if (c) registry.get('utils').copyCourses([c]); },
-        'delete-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); registry.get('modalService').showConfirm('确定要删除这节课程吗？', async () => { if (c) registry.get('timelineService').recordDeleteCourse(c); registry.get('setState')(d => { d.courses = d.courses.filter(co => co.id !== p.id); }, 'courses'); await registry.get('utils').saveData(); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
+        'delete-course': (p) => { const c = registry.get('state').courses.find(c => c.id === p.id); registry.get('modalService').showConfirm('确定要删除这节课程吗？', async () => { if (c) registry.get('historyService').recordDeleteCourse(c); registry.get('setState')(d => { d.courses = d.courses.filter(co => co.id !== p.id); }, 'courses'); await registry.get('utils').saveData(); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
         'course-click': (p, e) => { 
             const ci = e.target.closest('.course-tag-item'); 
             if (!ci) return;
@@ -160,7 +160,7 @@ class EventHandlerService {
         'add-course': (p) => { if (p.date) registry.get('modalService').showAddCourse(p.date); },
         'copy-date': (p) => { registry.get('utils').copyCourses(registry.get('state').courses.filter(c => c.date === p.date)); },
         'paste-to-date': (p) => { registry.get('utils').pasteCourses(p.date); },
-        'delete-date-courses': (p) => { const cs = registry.get('state').courses.filter(c => c.date === p.date); if (!cs.length) { registry.get('notificationService').show('该日期没有课程可删除', 'warning'); return; } registry.get('modalService').showConfirm(`确定要删除 ${p.date} 的全部课程吗？`, async () => { registry.get('timelineService').recordDeleteDayCourses(p.date, [...cs]); const deleteIds = new Set(cs.map(c => c.id)); registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses'); await registry.get('utils').saveData(); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
+        'delete-date-courses': (p) => { const cs = registry.get('state').courses.filter(c => c.date === p.date); if (!cs.length) { registry.get('notificationService').show('该日期没有课程可删除', 'warning'); return; } registry.get('modalService').showConfirm(`确定要删除 ${p.date} 的全部课程吗？`, async () => { registry.get('historyService').recordDeleteDayCourses(p.date, [...cs]); const deleteIds = new Set(cs.map(c => c.id)); registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses'); await registry.get('utils').saveData(); registry.get('notificationService').show('课程已删除', 'success'); }, 'delete'); },
         'course-time-change': () => { const u = registry.get('utils'); const d = document.getElementById('course-duration'); const dVal = d ? parseInt(d.value) || 120 : 120; u.calculateEndTime('course-start-time', 'course-end-time', dVal); u.calculateFee(); },
         'export-data': () => { registry.get('modalService').showConfirm('确定要导出课时统计数据吗？', () => { const u = registry.get('utils'); const { year, month, organization } = u.getStatisticsParams(); u.exportStatisticsData(year, month, organization); }, 'confirm'); },
         'add-course-multi': (p) => {
@@ -233,7 +233,7 @@ class EventHandlerService {
                                 });
                                 if (deleteIds.size > 0) {
                                     const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
-                                    registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                                    registry.get('historyService').recordBatchDeleteCourses(deletedCourses);
                                 }
                                 // 添加未被跳过的课程
                                 const overriddenCourses = overridden.map(o => o.newCourse);
@@ -245,10 +245,10 @@ class EventHandlerService {
                                             draft.courses.push(...allToAdd);
                                         }, 'courses');
                                         if (overriddenCourses.length > 0) {
-                                            registry.get('timelineService').recordBatchAddCourses(overriddenCourses);
+                                            registry.get('historyService').recordBatchAddCourses(overriddenCourses);
                                         }
                                         if (coursesToAdd.length > 0) {
-                                            registry.get('timelineService').recordBatchAddCourses(coursesToAdd);
+                                            registry.get('historyService').recordBatchAddCourses(coursesToAdd);
                                         }
                                         await registry.get('utils').saveData();
                                         registry.get('modalService').hide();
@@ -278,7 +278,7 @@ class EventHandlerService {
                             } else if (coursesToAdd.length > 0) {
                                 try {
                                     registry.get('setState')(draft => { draft.courses.push(...coursesToAdd); }, 'courses');
-                                    registry.get('timelineService').recordBatchAddCourses(coursesToAdd);
+                                    registry.get('historyService').recordBatchAddCourses(coursesToAdd);
                                     await registry.get('utils').saveData();
                                     registry.get('modalService').hide();
                                     registry.get('notificationService').show(`批量添加 ${coursesToAdd.length} 节成功`, 'success');
@@ -340,7 +340,7 @@ class EventHandlerService {
                     });
                     if (deleteIds.size > 0) {
                         const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
-                        registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                        registry.get('historyService').recordBatchDeleteCourses(deletedCourses);
                     }
                     const overriddenCourses = overridden.map(o => o.newCourse);
                     const allCoursesToAdd = [...allToAdd, ...overriddenCourses];
@@ -350,10 +350,10 @@ class EventHandlerService {
                             draft.courses.push(...allCoursesToAdd);
                         }, 'courses');
                         if (overriddenCourses.length > 0) {
-                            registry.get('timelineService').recordBatchPasteCourses(overriddenCourses);
+                            registry.get('historyService').recordBatchPasteCourses(overriddenCourses);
                         }
                         if (allToAdd.length > 0) {
-                            registry.get('timelineService').recordBatchPasteCourses(allToAdd);
+                            registry.get('historyService').recordBatchPasteCourses(allToAdd);
                         }
                         await registry.get('utils').saveData();
                         const skippedCount = skipped.length;
@@ -376,7 +376,7 @@ class EventHandlerService {
                     });
                 } else if (allToAdd.length > 0) {
                     registry.get('setState')(draft => { draft.courses.push(...allToAdd); }, 'courses');
-                    registry.get('timelineService').recordBatchPasteCourses(allToAdd);
+                    registry.get('historyService').recordBatchPasteCourses(allToAdd);
                     await registry.get('utils').saveData();
                     let msg = `批量粘贴成功 ${allToAdd.length} 节`;
                     if (dupCount > 0) msg += `，忽略重复 ${dupCount} 节`;
@@ -396,7 +396,7 @@ class EventHandlerService {
             if (!allCourses.length) { registry.get('notificationService').show('选中日期没有课程可删除', 'warning'); return; }
             registry.get('modalService').showConfirm(`确定要删除 ${dates.length} 天的全部课程（共 ${allCourses.length} 节）吗？`, async () => {
                 const deleteIds = new Set(allCourses.map(c => c.id));
-                registry.get('timelineService').recordBatchDeleteDayCourses(dates, allCourses);
+                registry.get('historyService').recordBatchDeleteDayCourses(dates, allCourses);
                 registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses');
                 await registry.get('utils').saveData();
                 registry.get('notificationService').show(`已删除 ${dates.length} 天共 ${allCourses.length} 节课程`, 'success');
@@ -409,7 +409,7 @@ class EventHandlerService {
             if (!courses.length) { registry.get('notificationService').show('未找到要删除的课程', 'warning'); return; }
             registry.get('modalService').showConfirm(`确定要删除选中的 ${courses.length} 节课程吗？`, async () => {
                 const deleteIds = new Set(ids);
-                registry.get('timelineService').recordBatchDeleteCourses(courses);
+                registry.get('historyService').recordBatchDeleteCourses(courses);
                 registry.get('setState')(d => { d.courses = d.courses.filter(co => !deleteIds.has(co.id)); }, 'courses');
                 await registry.get('utils').saveData();
                 registry.get('notificationService').show(`已删除 ${courses.length} 节课程`, 'success');

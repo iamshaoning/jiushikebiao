@@ -86,13 +86,13 @@ export class CourseFormModal {
                                             });
                                             if (deleteIds.size > 0) {
                                                 const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
-                                                registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                                                registry.get('historyService').recordBatchDeleteCourses(deletedCourses);
                                             }
                                             registry.get('setState')(draft => {
                                                 draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
                                                 draft.courses.push(newCourse);
                                             }, 'courses');
-                                            registry.get('timelineService').recordAddCourse(newCourse, false);
+                                            registry.get('historyService').recordAddCourse(newCourse, false);
                                             await registry.get('utils').saveData();
                                             this.modal.hide();
                                             registry.get('notificationService').show('课程添加成功', 'success');
@@ -109,7 +109,7 @@ export class CourseFormModal {
 
                         try {
                         registry.get('setState')(draft => { draft.courses.push(newCourse); }, 'courses');
-                        registry.get('timelineService').recordAddCourse(newCourse, false);
+                        registry.get('historyService').recordAddCourse(newCourse, false);
                         await registry.get('utils').saveData();
                         this.modal.hide();
                         registry.get('notificationService').show('课程添加成功', 'success');
@@ -191,7 +191,7 @@ export class CourseFormModal {
                         try {
                         const oldCourse = JSON.parse(JSON.stringify(registry.get('state').courses[courseIndex]));
                         registry.get('setState')(draft => { draft.courses[courseIndex] = updatedCourse; }, 'courses');
-                        registry.get('timelineService').recordUpdateCourse(oldCourse, updatedCourse, '');
+                        registry.get('historyService').recordUpdateCourse(oldCourse, updatedCourse, '');
                         await registry.get('utils').saveData();
                         this.modal.hide();
                         registry.get('notificationService').show('课程编辑成功', 'success');

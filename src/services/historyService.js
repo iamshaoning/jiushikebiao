@@ -1,16 +1,16 @@
 /**
- * 时间轴服务
+ * 历史记录服务
  *
  * @description 记录课程操作历史（添加/编辑/删除），支持撤销/重做，按用户 ID 分组存储
- * @module timelineService
+ * @module historyService
  */
 import { registry } from '../core/registry.js';
 
-class TimelineService {
+class HistoryService {
     constructor() {
-        this.timelineKey = 'coursemanagertimeline';
+        this.storageKey = 'coursemanagertimeline';
         this.maxRecords = 20; // 限制最多保存20条记录
-        this.timeline = [];
+        this.records = [];
         this.currentUserId = null;
     }
 
@@ -29,11 +29,11 @@ class TimelineService {
         return null;
     }
 
-    async reloadTimelineForUser() {
+    async reloadHistoryForUser() {
         const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
-            this.timeline = [];
+            this.records = [];
             return;
         }
         
@@ -41,47 +41,47 @@ class TimelineService {
         if (this.currentUserId) {
             this.loadTimeline();
         } else {
-            this.timeline = [];
+            this.records = [];
         }
     }
 
     /**
-     * 从本地存储加载当前用户的时间轴
+     * 从本地存储加载当前用户的历史记录
      */
-    loadTimeline() {
+    loadHistory() {
         try {
             if (!this.currentUserId) {
-                this.timeline = [];
+                this.records = [];
                 return;
             }
 
-            const dataStr = localStorage.getItem(this.timelineKey);
+            const dataStr = localStorage.getItem(this.recordsKey);
             if (dataStr) {
                 const storedData = JSON.parse(dataStr);
                 
                 // 检查是否是按用户分组的格式
                 if (storedData && !Array.isArray(storedData)) {
                     // 只加载当前用户的数据
-                    this.timeline = storedData[this.currentUserId] || [];
+                    this.records = storedData[this.currentUserId] || [];
                 } else {
                     // 旧格式或不是分组格式，清除并重新开始
-                    this.timeline = [];
+                    this.records = [];
                     // 保存空的分组格式
-                    this.saveTimeline();
+                    this.saveHistory();
                 }
             } else {
-                this.timeline = [];
+                this.records = [];
             }
         } catch (error) {
-            console.error('加载时间轴失败:', error);
-            this.timeline = [];
+            console.error('加载历史记录失败:', error);
+            this.records = [];
         }
     }
 
     /**
-     * 保存时间轴到本地存储（按用户ID分组存储）
+     * 保存历史记录到本地存储（按用户ID分组存储）
      */
-    async saveTimeline() {
+    async saveHistory() {
         try {
             if (!this.currentUserId) {
                 this.currentUserId = await this.getUserIdDirectly();
@@ -91,22 +91,22 @@ class TimelineService {
                 return; // 没有用户ID，不保存
             }
 
-            const dataStr = localStorage.getItem(this.timelineKey);
-            let allTimelines = {};
+            const dataStr = localStorage.getItem(this.recordsKey);
+            let allHistories = {};
             
             if (dataStr) {
                 const parsedData = JSON.parse(dataStr);
                 if (parsedData && !Array.isArray(parsedData)) {
-                    allTimelines = parsedData;
+                    allHistories = parsedData;
                 }
                 // 如果是旧格式数组数据，直接忽略，使用新格式
             }
             
             // 只更新当前用户的数据
-            allTimelines[this.currentUserId] = this.timeline;
-            localStorage.setItem(this.timelineKey, JSON.stringify(allTimelines));
+            allHistories[this.currentUserId] = this.records;
+            localStorage.setItem(this.recordsKey, JSON.stringify(allHistories));
         } catch (error) {
-            console.error('保存时间轴失败:', error);
+            console.error('保存历史记录失败:', error);
         }
     }
 
@@ -204,11 +204,11 @@ class TimelineService {
      * 确保用户已初始化
      */
     async ensureUserInitialized() {
-        // 检查是否处于试用模式，如果是则不初始化时间轴
+        // 检查是否处于试用模式，如果是则不初始化历史记录
         const isTrialMode = registry.get('serverStatusService')?.isTrialMode || false;
         if (isTrialMode) {
             this.currentUserId = null;
-            this.timeline = [];
+            this.records = [];
             return false;
         }
         
@@ -237,7 +237,7 @@ class TimelineService {
             description: `添加：`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -257,7 +257,7 @@ class TimelineService {
             description: `粘贴：`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -336,7 +336,7 @@ class TimelineService {
             description: `修改：`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -355,7 +355,7 @@ class TimelineService {
             description: `删除：`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -376,7 +376,7 @@ class TimelineService {
             description: `删除：`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -391,7 +391,7 @@ class TimelineService {
             expanded: false,
             description: `批量添加 ${courses.length} 节课程：`
         };
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -406,7 +406,7 @@ class TimelineService {
             expanded: false,
             description: `批量删除 ${courses.length} 节课程：`
         };
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -422,7 +422,7 @@ class TimelineService {
             expanded: false,
             description: `批量删除 ${dates.length} 天共 ${allCourses.length} 节课程：`
         };
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -437,7 +437,7 @@ class TimelineService {
             expanded: false,
             description: `批量粘贴 ${courses.length} 节课程：`
         };
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -458,7 +458,7 @@ class TimelineService {
             description: `删除学生：${student.name}`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
@@ -479,24 +479,24 @@ class TimelineService {
             description: `批量删除 ${students.length} 位学生：`
         };
 
-        await this.addToTimeline(action);
+        await this.addToHistory(action);
         return action;
     }
 
     /**
-     * 添加记录到时间轴
+     * 添加记录到历史记录
      */
-    async addToTimeline(action) {
+    async addToHistory(action) {
         const isInitialized = await this.ensureUserInitialized();
         if (!isInitialized) return;
         
-        this.timeline.unshift(action);
+        this.records.unshift(action);
         
-        if (this.timeline.length > this.maxRecords) {
-            this.timeline = this.timeline.slice(0, this.maxRecords);
+        if (this.records.length > this.maxRecords) {
+            this.records = this.records.slice(0, this.maxRecords);
         }
         
-        await this.saveTimeline();
+        await this.saveHistory();
     }
 
     /**
@@ -506,10 +506,10 @@ class TimelineService {
         const isInitialized = await this.ensureUserInitialized();
         if (!isInitialized) return false;
         
-        const index = this.timeline.findIndex(a => a.id === actionId);
+        const index = this.records.findIndex(a => a.id === actionId);
         if (index === -1) return false;
 
-        const action = this.timeline[index];
+        const action = this.records[index];
         let success = false;
 
         switch (action.type) {
@@ -539,7 +539,7 @@ class TimelineService {
 
         if (success) {
             action.undone = true;
-            await this.saveTimeline();
+            await this.saveHistory();
         }
 
         return success;
@@ -621,10 +621,10 @@ class TimelineService {
         const isInitialized = await this.ensureUserInitialized();
         if (!isInitialized) return false;
         
-        const index = this.timeline.findIndex(a => a.id === actionId);
-        if (index === -1 || !this.timeline[index].undone) return false;
+        const index = this.records.findIndex(a => a.id === actionId);
+        if (index === -1 || !this.records[index].undone) return false;
 
-        const action = this.timeline[index];
+        const action = this.records[index];
         let success = false;
 
         switch (action.type) {
@@ -654,7 +654,7 @@ class TimelineService {
 
         if (success) {
             action.undone = false;
-            await this.saveTimeline();
+            await this.saveHistory();
         }
 
         return success;
@@ -828,23 +828,23 @@ class TimelineService {
     }
 
     /**
-     * 获取时间轴记录
+     * 获取历史记录记录
      */
-    async getTimeline() {
+    async getHistory() {
         const isInitialized = await this.ensureUserInitialized();
         if (!isInitialized) return [];
-        return [...this.timeline];
+        return [...this.records];
     }
 
     /**
-     * 清空时间轴
+     * 清空历史记录
      */
-    async clearTimeline() {
+    async clearHistory() {
         const isInitialized = await this.ensureUserInitialized();
         if (!isInitialized) return;
         
-        this.timeline = [];
-        await this.saveTimeline();
+        this.records = [];
+        await this.saveHistory();
     }
 
     /**
@@ -854,13 +854,13 @@ class TimelineService {
         const isInitialized = await this.ensureUserInitialized();
         if (!isInitialized) return;
         
-        const action = this.timeline.find(a => a.id === actionId);
+        const action = this.records.find(a => a.id === actionId);
         if (action && action.expanded !== undefined) {
             action.expanded = !action.expanded;
-            await this.saveTimeline();
+            await this.saveHistory();
         }
     }
 }
 
-const timelineService = new TimelineService();
-export default timelineService;
+const historyService = new HistoryService();
+export default historyService;

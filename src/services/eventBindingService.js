@@ -22,7 +22,7 @@ class EventBindingService {
     init() {
         this.bindStudentSearchEvent();
         this.bindStatisticsDropdownEvents();
-        this.bindTimelineButtonEvent();
+        this.bindHistoryButtonEvent();
         this.bindSnapshotButtonEvent();
         this.bindSyncStatusEvent();
         this.bindOrganizationOptionsEvent();
@@ -75,12 +75,12 @@ class EventBindingService {
     }
 
     /**
-     * 绑定时间轴按钮事件
+     * 绑定历史记录按钮事件
      */
-    bindTimelineButtonEvent() {
-        if (this.elements.timelineBtn) {
-            this.elements.timelineBtn.addEventListener('click', () => {
-                this.modalService.showTimeline();
+    bindHistoryButtonEvent() {
+        if (this.elements.historyBtn) {
+            this.elements.historyBtn.addEventListener('click', () => {
+                this.modalService.showHistory();
             });
         }
     }

@@ -18,7 +18,7 @@ import eventHandlerService from './services/eventHandlerService.js';
 import stateService from './services/stateService.js';
 import exportService from './services/exportService.js';
 import errorHandlerService from './services/errorHandlerService.js';
-import timelineService from './services/timelineService.js';
+import historyService from './services/historyService.js';
 
 import { getCourseFormTemplate } from './utils/courseFormTemplate.js';
 import { initCourseFormEvents } from './utils/courseFormEvents.js';
@@ -64,7 +64,7 @@ registry.set('eventDispatcherService', eventDispatcherService);
 registry.set('eventHandlerService', eventHandlerService);
 registry.set('stateService', stateService);
 registry.set('exportService', exportService);
-registry.set('timelineService', timelineService);
+registry.set('historyService', historyService);
 registry.set('coreUtils', coreUtils);
 registry.set('dateUtils', dateUtils);
 registry.set('snapshotUtils', snapshotUtils);

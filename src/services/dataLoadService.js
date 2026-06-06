@@ -187,8 +187,8 @@ class DataLoadService {
                 }
             } else { this._handleOffline(localData, isLoggedIn); }
 
-            const ts = registry.get('timelineService');
-            if (ts?.reloadTimelineForUser) await ts.reloadTimelineForUser();
+            const ts = registry.get('historyService');
+            if (ts?.reloadHistoryForUser) await ts.reloadHistoryForUser();
         } catch (error) {
             registry.get('errorHandlerService').handleError(error, '加载数据失败', true);
             this.utils.updateStateFromData({});

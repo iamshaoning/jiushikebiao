@@ -6,7 +6,7 @@
  */
 import { registry } from '../core/registry.js';
 import { ColorPickerModal } from './modal/colorPickerModal.js';
-import { TimelineModal } from './modal/timelineModal.js';
+import { HistoryModal } from './modal/historyModal.js';
 import { StudentFormModal } from './modal/studentFormModal.js';
 import { CourseFormModal } from './modal/courseFormModal.js';
 import { ManagementModal } from './modal/managementModal.js';
@@ -23,7 +23,7 @@ class ModalService {
         this.setTimeoutId = null;
         this._boundKeydownHandler = null;
         this.colorPicker = new ColorPickerModal(this);
-        this.timeline = new TimelineModal(this);
+        this.history = new HistoryModal(this);
         this.studentForm = new StudentFormModal(this);
         this.courseForm = new CourseFormModal(this);
         this.management = new ManagementModal(this);
@@ -268,7 +268,7 @@ class ModalService {
     showManageGrades() { this.management.showManageGrades(); }
     showColorPicker(options) { this.colorPicker.show(options); }
     async showSnapshotManager() { await this.snapshot.show(); }
-    async showTimeline() { await this.timeline.show(); }
+    async showHistory() { await this.history.show(); }
 }
 
 const modalService = new ModalService();

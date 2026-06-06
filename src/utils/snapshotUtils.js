@@ -161,8 +161,8 @@ const snapshotUtils = {
             lastupdated: new Date().toISOString()
         };
         
-        // 记录快照恢复操作到时间轴
-        if (registry.get('timelineService')) {
+        // 记录快照恢复操作到历史记录
+        if (registry.get('historyService')) {
             const snapshotDate = new Date(snapshot.timestamp);
             const formattedDate = snapshotDate.toLocaleString('zh-CN', {
                 year: 'numeric',
@@ -190,8 +190,8 @@ const snapshotUtils = {
                 snapshotData: snapshotData,
                 description: `恢复了 ${typeLabels[snapshot.type]} (${formattedDate})`
             };
-            registry.get('timelineService')?.addToTimeline(restoreRecord).catch(err => {
-                console.error('记录快照恢复至时间轴失败:', err);
+            registry.get('historyService')?.addToHistory(restoreRecord).catch(err => {
+                console.error('记录快照恢复至历史记录失败:', err);
             });
         }
         
