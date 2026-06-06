@@ -132,7 +132,7 @@ export class ConflictModal {
                 <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 12px 16px; min-height: 0;">
                     <div id="conflict-all-scroll-inner">${allItems}</div>
                 </div>
-                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
+                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                     <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
                         <input type="checkbox" id="conflict-bulk-checkbox" checked style="accent-color: var(--color-primary);"> 统一处理
                     </label>
