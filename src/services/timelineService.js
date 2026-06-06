@@ -168,13 +168,13 @@ class TimelineService {
         const dateText = course.date ? this.formatDate(course.date) : '';
 
         const padding = compact ? 'p-2' : 'p-3';
-        const minWidth = compact ? 'min-width: 160px' : 'min-width: 220px';
+        const tagStyle = compact ? 'width: 100%; box-sizing: border-box;' : 'min-width: 220px';
         const studentGap = compact ? 'margin-bottom: 4px' : 'margin-bottom: 8px';
         const detailGap = compact ? 'margin-top: 2px' : 'margin-top: 4px';
         const textSize = compact ? 'text-[10px]' : 'text-xs';
 
         return `
-            <div class="course-tag-item course-item mt-1 rounded ${textSize} relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); ${minWidth}; max-width: 100%;">
+            <div class="course-tag-item course-item mt-1 rounded ${textSize} relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); ${tagStyle}; max-width: 100%;">
                 <div class="tag-content ${padding}">
                     <div class="flex flex-wrap gap-1" style="${studentGap};">
                         ${studentTags}
