@@ -145,7 +145,7 @@ export class HistoryModal {
                 if (clearBtn) clearBtn.addEventListener('click', () => {
                     this.modal.showConfirm('确定要清空所有操作历史吗？', async () => {
                         try {
-                            await registry.get('historyService').clearTimeline();
+                            await registry.get('historyService').clearHistory();
                             registry.get('notificationService').show('历史已清空', 'success');
                         } catch (error) {
                             registry.get('errorHandlerService').log('error', '清空历史失败', error);

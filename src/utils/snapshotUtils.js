@@ -178,7 +178,7 @@ const snapshotUtils = {
                 'manual': '手动快照'
             };
             
-            // 使用timelineService添加记录，包含前后数据用于撤销/重做
+            // 使用historyService添加记录，包含前后数据用于撤销/重做
             const restoreRecord = {
                 id: Date.now().toString(36) + Math.random().toString(36).slice(2),
                 type: 'restore-snapshot',

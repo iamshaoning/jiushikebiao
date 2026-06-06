@@ -8,7 +8,7 @@ import { registry } from '../core/registry.js';
 
 class HistoryService {
     constructor() {
-        this.storageKey = 'coursemanagertimeline';
+        this.storageKey = 'coursemanagerhistory';
         this.maxRecords = 20; // 限制最多保存20条记录
         this.records = [];
         this.currentUserId = null;
@@ -39,7 +39,7 @@ class HistoryService {
         
         this.currentUserId = await this.getUserIdDirectly();
         if (this.currentUserId) {
-            this.loadTimeline();
+            this.loadHistory();
         } else {
             this.records = [];
         }
@@ -215,7 +215,7 @@ class HistoryService {
         if (!this.currentUserId) {
             this.currentUserId = await this.getUserIdDirectly();
             if (this.currentUserId) {
-                this.loadTimeline();
+                this.loadHistory();
             }
         }
         return !!this.currentUserId;
