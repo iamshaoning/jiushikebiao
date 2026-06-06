@@ -61,7 +61,7 @@ export class ConflictModal {
                 <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                     <span style="font-weight: 700; font-size: 15px; color: var(--text-primary);">时间冲突处理</span>
                     ${total > 1 ? `<span style="font-size: 12px; color: var(--text-secondary);">${current}/${total}</span>` : ''}
-                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">${total - this.results.length} 节冲突</span>
+                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">还有 ${total - this.results.length} 节冲突需处理</span>
                 </div>
 
                 <div style="padding: 10px 16px; display: flex; gap: 6px; align-items: flex-start; overflow: hidden;">
@@ -128,7 +128,7 @@ export class ConflictModal {
             <div class="conflict-modal" style="display: flex; flex-direction: column; max-height: 80vh;">
                 <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                     <span style="font-weight: 700; font-size: 15px; color: var(--text-primary);">时间冲突处理（统一处理）</span>
-                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">${this.conflicts.length} 节冲突</span>
+                    <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">还有 ${this.conflicts.length} 节冲突需处理</span>
                 </div>
                 <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 12px 16px 0; min-height: 0;">
                     <div id="conflict-all-scroll-inner" style="padding-bottom: 12px;">${allItems}</div>

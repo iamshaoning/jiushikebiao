@@ -228,6 +228,16 @@ export function initCourseFormEvents(isEdit, courseData = null) {
         });
     }
     
+    // 阻止开始时间输入框空格键弹出系统时间选择器
+    const startTimeInputForKeyboard = document.getElementById('course-start-time');
+    if (startTimeInputForKeyboard) {
+        startTimeInputForKeyboard.addEventListener('keydown', function(e) {
+            if (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space') {
+                e.preventDefault();
+            }
+        });
+    }
+    
     // 监听课型变化
     document.querySelectorAll('input[name="course-lesson-type"]').forEach(radio => {
         radio.addEventListener('change', () => {

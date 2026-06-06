@@ -167,16 +167,16 @@ class TimelineService {
         const dateText = course.date ? this.formatDate(course.date) : '';
 
         return `
-            <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); min-width: 220px; max-width: 100%;">
-                <div class="tag-content p-3">
-                    <div class="flex flex-wrap gap-1" style="margin-bottom: 8px;">
+            <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); min-width: 180px; max-width: 100%;">
+                <div class="tag-content" style="padding: 8px 10px;">
+                    <div class="flex flex-wrap gap-1" style="margin-bottom: 6px;">
                         ${studentTags}
                     </div>
                     <div>
                         <span style="color: var(--text-primary);${hl('课型')}">${escapeHtml(course.lessonType)}</span>
                         ${feeText ? '<span style="color: var(--text-primary); margin-left: 6px;' + hl('课时费') + '">' + feeText + '</span>' : ''}
                     </div>
-                    <div style="margin-top: 4px;">
+                    <div style="margin-top: 2px;">
                         <span style="color: var(--text-secondary);${hl('日期')}">${dateText || ''}</span>
                         <span style="color: var(--text-secondary); margin-left: 2px;${hlTime ? hlStyle : ''}">${dateText ? ' · ' : ''}${course.startTime} - ${endTime}</span>
                     </div>

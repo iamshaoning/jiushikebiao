@@ -363,7 +363,7 @@ class EventHandlerService {
                         if (dupCount > 0) msg += `，忽略重复 ${dupCount} 节`;
                         registry.get('notificationService').show(msg, 'success');
                     } else {
-                        registry.get('notificationService').show('所有课程均已跳过', 'warning');
+                        registry.get('notificationService').show('所有冲突课程均已跳过', 'warning');
                     }
                 };
 

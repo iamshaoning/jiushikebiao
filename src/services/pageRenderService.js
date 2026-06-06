@@ -20,13 +20,11 @@ class PageRenderService {
         if (this.elements.navButtons) {
             this.elements.navButtons.forEach(item => {
                 item.classList.remove('active');
-                item.style.backgroundColor = '';
             });
         }
         const activeBtn = document.querySelector(`[data-page="${pageId}"]`);
         if (activeBtn) {
             activeBtn.classList.add('active');
-            activeBtn.style.backgroundColor = 'var(--bg-content)';
         }
 
         const targetPage = document.getElementById(pageId);
