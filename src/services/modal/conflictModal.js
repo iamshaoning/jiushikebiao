@@ -57,7 +57,7 @@ export class ConflictModal {
         ).join('');
 
         const content = `
-            <div class="conflict-modal" style="max-width: 720px; width: 95vw;">
+            <div class="conflict-modal" style="max-width: 900px; width: 95vw;">
                 <div class="conflict-header" style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         <span style="font-weight: 700; font-size: 16px; color: var(--text-primary);">
@@ -256,7 +256,7 @@ export class ConflictModal {
         }).join('');
 
         const content = `
-            <div class="conflict-compare-all-modal" style="max-width: 720px; width: 95vw; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="conflict-compare-all-modal" style="max-width: 900px; width: 95vw; max-height: 80vh; display: flex; flex-direction: column;">
                 <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
                     <span style="font-weight: 700; font-size: 16px; color: var(--text-primary);">
                         全部冲突对比（${this.conflicts.length}节）
