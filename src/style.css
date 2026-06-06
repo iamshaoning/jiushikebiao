@@ -1545,6 +1545,26 @@ button:not(:active), .btn:not(:active) {
     border-width: 2px;
 }
 
+/* ------------------------------
+   18.1 冲突处理模态框样式
+   ------------------------------ */
+.conflict-btn-skip:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+.conflict-btn-override:hover {
+    opacity: 0.9;
+}
+.conflict-btn-compare-all:hover {
+    background-color: var(--bg-tertiary) !important;
+}
+.conflict-compare-all-modal .compare-all-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.conflict-compare-all-modal .compare-all-scroll::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
 
 /* ------------------------------
    19. 页面与动画样式

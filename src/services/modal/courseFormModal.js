@@ -72,8 +72,38 @@ export class CourseFormModal {
                         };
 
                         if (registry.get('utils').checkTimeConflict(newCourse)) {
-                            registry.get('notificationService').show('该时间段已有课程安排', 'warning');
-                            resetSaveBtn();
+                            const conflictingCourses = registry.get('utils').findConflictingCourses(newCourse);
+                            registry.get('modalService').conflict.show({
+                                conflicts: [{ newCourse, conflictingCourses }],
+                                isSingleAdd: true,
+                                onResolve: async ({ skipped, overridden }) => {
+                                    if (overridden.length > 0) {
+                                        try {
+                                            // 删除冲突课程
+                                            const deleteIds = new Set();
+                                            overridden.forEach(o => {
+                                                o.conflictingCourses.forEach(c => deleteIds.add(c.id));
+                                            });
+                                            if (deleteIds.size > 0) {
+                                                const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
+                                                registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                                            }
+                                            registry.get('setState')(draft => {
+                                                draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
+                                                draft.courses.push(newCourse);
+                                            }, 'courses');
+                                            registry.get('timelineService').recordAddCourse(newCourse, false);
+                                            await registry.get('utils').saveData();
+                                            this.modal.hide();
+                                            registry.get('notificationService').show('课程添加成功', 'success');
+                                        } catch (error) {
+                                            registry.get('errorHandlerService').log('error', '课程添加失败', error);
+                                            registry.get('notificationService').show('课程添加失败', 'error');
+                                        }
+                                    }
+                                    resetSaveBtn();
+                                }
+                            });
                             return;
                         }
 

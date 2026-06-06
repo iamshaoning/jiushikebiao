@@ -33,4 +33,25 @@ export class ConflictCheckService {
             return Math.max(newStartMins, courseStartMins) < Math.min(newEndMins, courseEndMins);
         });
     }
+
+    /**
+     * 查找与给定课程时间冲突的所有课程
+     * @param {Object} newCourse - 新课程对象
+     * @param {Object} utils - 工具函数对象
+     * @returns {Array} 冲突的课程数组
+     */
+    findConflictingCourses(newCourse, utils) {
+        const sameDayCourses = this.state.courses.filter(course =>
+            course.date === newCourse.date && (!newCourse.id || course.id !== newCourse.id)
+        );
+
+        const newStartMins = utils.timeToMins(newCourse.startTime);
+        const newEndMins = newStartMins + Number(newCourse.duration ?? 120);
+
+        return sameDayCourses.filter(course => {
+            const courseStartMins = utils.timeToMins(course.startTime);
+            const courseEndMins = courseStartMins + Number(course.duration ?? 120);
+            return Math.max(newStartMins, courseStartMins) < Math.min(newEndMins, courseEndMins);
+        });
+    }
 }

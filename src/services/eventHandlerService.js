@@ -206,7 +206,7 @@ class EventHandlerService {
                             const feeInput = document.getElementById('course-fee');
                             const fee = parseFloat(feeInput?.value) || 0;
                             const coursesToAdd = [];
-                            const conflictDates = [];
+                            const conflicts = [];
                             dates.forEach(date => {
                                 const newCourse = {
                                     id: registry.get('utils').generateId(), date, lessonType,
@@ -217,34 +217,76 @@ class EventHandlerService {
                                     startTime, duration, fees: [fee], note,
                                     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
                                 };
-                                if (registry.get('utils').checkTimeConflict(newCourse)) {
-                                    conflictDates.push(date);
+                                const conflictingCourses = registry.get('utils').findConflictingCourses(newCourse);
+                                if (conflictingCourses.length > 0) {
+                                    conflicts.push({ newCourse, conflictingCourses });
                                 } else {
                                     coursesToAdd.push(newCourse);
                                 }
                             });
-                            if (coursesToAdd.length > 0) {
+
+                            const processAddResults = async ({ skipped, overridden }) => {
+                                // 删除被覆盖的冲突课程
+                                const deleteIds = new Set();
+                                overridden.forEach(o => {
+                                    o.conflictingCourses.forEach(c => deleteIds.add(c.id));
+                                });
+                                if (deleteIds.size > 0) {
+                                    const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
+                                    registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                                }
+                                // 添加未被跳过的课程
+                                const overriddenCourses = overridden.map(o => o.newCourse);
+                                const allToAdd = [...coursesToAdd, ...overriddenCourses];
+                                if (allToAdd.length > 0) {
+                                    try {
+                                        registry.get('setState')(draft => {
+                                            draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
+                                            draft.courses.push(...allToAdd);
+                                        }, 'courses');
+                                        if (overriddenCourses.length > 0) {
+                                            registry.get('timelineService').recordBatchAddCourses(overriddenCourses);
+                                        }
+                                        if (coursesToAdd.length > 0) {
+                                            registry.get('timelineService').recordBatchAddCourses(coursesToAdd);
+                                        }
+                                        await registry.get('utils').saveData();
+                                        registry.get('modalService').hide();
+                                        const skippedCount = skipped.length;
+                                        const addedCount = allToAdd.length;
+                                        if (skippedCount > 0) {
+                                            registry.get('notificationService').show(`批量添加成功 ${addedCount} 节，跳过 ${skippedCount} 节`, 'success');
+                                        } else {
+                                            registry.get('notificationService').show(`批量添加 ${addedCount} 节成功`, 'success');
+                                        }
+                                    } catch (error) {
+                                        registry.get('errorHandlerService').log('error', '批量添加课程失败', error);
+                                        registry.get('notificationService').show('批量添加课程失败', 'error');
+                                    }
+                                } else {
+                                    registry.get('notificationService').show('所有冲突课程均已跳过', 'warning');
+                                }
+                                resetBtn();
+                            };
+
+                            if (conflicts.length > 0) {
+                                registry.get('modalService').conflict.show({
+                                    conflicts,
+                                    isSingleAdd: false,
+                                    onResolve: processAddResults
+                                });
+                            } else if (coursesToAdd.length > 0) {
                                 try {
                                     registry.get('setState')(draft => { draft.courses.push(...coursesToAdd); }, 'courses');
                                     registry.get('timelineService').recordBatchAddCourses(coursesToAdd);
                                     await registry.get('utils').saveData();
                                     registry.get('modalService').hide();
-                                    const formatDate = (d) => d.replace(/-/g, '');
-                                    const successCount = coursesToAdd.length;
-                                    if (conflictDates.length > 0) {
-                                        registry.get('notificationService').show(`批量添加到${successCount}天成功`, 'success');
-                                        registry.get('notificationService').show(`添加到以下日期失败：${[...new Set(conflictDates)].map(formatDate).join('、')}`, 'error');
-                                    } else {
-                                        registry.get('notificationService').show(`批量添加到${successCount}天成功`, 'success');
-                                    }
+                                    registry.get('notificationService').show(`批量添加 ${coursesToAdd.length} 节成功`, 'success');
                                 } catch (error) {
                                     registry.get('errorHandlerService').log('error', '批量添加课程失败', error);
                                     registry.get('notificationService').show('批量添加课程失败', 'error');
                                     resetBtn();
                                 }
-                            } else {
-                                registry.get('notificationService').show(`所有日期均存在时间冲突，未能添加`, 'warning');
-                                resetBtn();
                             }
                         });
                     }
@@ -260,48 +302,87 @@ class EventHandlerService {
                 const courses = JSON.parse(copiedCourses);
                 if (!courses || !courses.length) { registry.get('notificationService').show('没有可粘贴的课程', 'warning'); return; }
                 const allToAdd = [];
-                const results = [];
+                const conflicts = [];
+                let dupCount = 0;
                 dates.forEach(date => {
                     const targetDateCourses = registry.get('state').courses.filter(c => c.date === date);
-                    let added = 0, conflict = 0, dup = 0;
-                    const dateToAdd = [];
                     courses.forEach(course => {
                         const isDup = targetDateCourses.some(ec => ec.startTime === course.startTime && ec.duration === course.duration && ec.lessonType === course.lessonType && JSON.stringify((ec.studentIds || []).slice().sort()) === JSON.stringify((course.studentIds || []).slice().sort()));
-                        if (isDup) { dup++; return; }
+                        if (isDup) { dupCount++; return; }
                         const newCourse = { ...JSON.parse(JSON.stringify(course)), id: registry.get('utils').generateId(), date, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-                        let hasConflict = false;
+                        // 检查与已存在课程的冲突
+                        const conflictingCourses = [];
                         for (const ec of targetDateCourses) {
                             const ns = registry.get('utils').timeToMins(newCourse.startTime), ne = ns + Number(newCourse.duration ?? 120);
                             const es = registry.get('utils').timeToMins(ec.startTime), ee = es + Number(ec.duration ?? 120);
-                            if (Math.max(ns, es) < Math.min(ne, ee)) { hasConflict = true; break; }
+                            if (Math.max(ns, es) < Math.min(ne, ee)) { conflictingCourses.push(ec); }
                         }
-                        if (!hasConflict) {
-                            for (const ac of dateToAdd) {
+                        if (conflictingCourses.length > 0) {
+                            conflicts.push({ newCourse, conflictingCourses });
+                        } else {
+                            // 检查与已加入队列的课程冲突
+                            let hasConflictWithQueue = false;
+                            for (const ac of allToAdd) {
+                                if (ac.date !== date) continue;
                                 const ns = registry.get('utils').timeToMins(newCourse.startTime), ne = ns + Number(newCourse.duration ?? 120);
                                 const as2 = registry.get('utils').timeToMins(ac.startTime), ae = as2 + Number(ac.duration ?? 120);
-                                if (Math.max(ns, as2) < Math.min(ne, ae)) { hasConflict = true; break; }
+                                if (Math.max(ns, as2) < Math.min(ne, ae)) { hasConflictWithQueue = true; break; }
                             }
+                            if (!hasConflictWithQueue) allToAdd.push(newCourse);
                         }
-                        if (hasConflict) { conflict++; } else { dateToAdd.push(newCourse); added++; }
                     });
-                    allToAdd.push(...dateToAdd);
-                    results.push({ date, added, conflict, dup });
                 });
-                if (allToAdd.length > 0) {
+
+                const processPasteResults = async ({ skipped, overridden }) => {
+                    const deleteIds = new Set();
+                    overridden.forEach(o => {
+                        o.conflictingCourses.forEach(c => deleteIds.add(c.id));
+                    });
+                    if (deleteIds.size > 0) {
+                        const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
+                        registry.get('timelineService').recordBatchDeleteCourses(deletedCourses);
+                    }
+                    const overriddenCourses = overridden.map(o => o.newCourse);
+                    const allCoursesToAdd = [...allToAdd, ...overriddenCourses];
+                    if (allCoursesToAdd.length > 0) {
+                        registry.get('setState')(draft => {
+                            draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
+                            draft.courses.push(...allCoursesToAdd);
+                        }, 'courses');
+                        if (overriddenCourses.length > 0) {
+                            registry.get('timelineService').recordBatchPasteCourses(overriddenCourses);
+                        }
+                        if (allToAdd.length > 0) {
+                            registry.get('timelineService').recordBatchPasteCourses(allToAdd);
+                        }
+                        await registry.get('utils').saveData();
+                        const skippedCount = skipped.length;
+                        const addedCount = allCoursesToAdd.length;
+                        let msg = `批量粘贴成功 ${addedCount} 节`;
+                        if (skippedCount > 0) msg += `，跳过 ${skippedCount} 节`;
+                        if (dupCount > 0) msg += `，忽略重复 ${dupCount} 节`;
+                        registry.get('notificationService').show(msg, 'success');
+                    } else {
+                        registry.get('notificationService').show('所有课程均已跳过', 'warning');
+                    }
+                };
+
+                if (conflicts.length > 0) {
+                    registry.get('modalService').conflict.show({
+                        conflicts,
+                        isSingleAdd: false,
+                        useNested: false,
+                        onResolve: processPasteResults
+                    });
+                } else if (allToAdd.length > 0) {
                     registry.get('setState')(draft => { draft.courses.push(...allToAdd); }, 'courses');
-                    if (registry.get('timelineService')) registry.get('timelineService').recordBatchPasteCourses(allToAdd);
+                    registry.get('timelineService').recordBatchPasteCourses(allToAdd);
                     await registry.get('utils').saveData();
-                }
-                const successDates = results.filter(r => r.added > 0).map(r => r.date);
-                const failDates = results.filter(r => r.added === 0 || r.conflict > 0 || r.dup > 0).map(r => r.date);
-                const formatDate = (d) => d.replace(/-/g, '');
-                if (successDates.length === 0) {
-                    registry.get('notificationService').show('所有日期均未能粘贴', 'warning');
-                } else if (failDates.length > 0) {
-                    registry.get('notificationService').show(`批量粘贴到${successDates.length}天成功`, 'success');
-                    registry.get('notificationService').show(`粘贴到以下日期部分或全部失败：${failDates.map(formatDate).join('、')}`, 'error');
+                    let msg = `批量粘贴成功 ${allToAdd.length} 节`;
+                    if (dupCount > 0) msg += `，忽略重复 ${dupCount} 节`;
+                    registry.get('notificationService').show(msg, 'success');
                 } else {
-                    registry.get('notificationService').show(`批量粘贴到${successDates.length}天成功`, 'success');
+                    registry.get('notificationService').show(dupCount > 0 ? '所有课程均为重复' : '未能粘贴', 'warning');
                 }
             } catch (error) {
                 registry.get('notificationService').show('数据异常，操作失败', 'error');

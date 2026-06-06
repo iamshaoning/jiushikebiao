@@ -196,6 +196,7 @@ const utils = {
 
     // ---- 服务代理 (bind 到实例) ----
     checkTimeConflict: (newCourse) => conflictCheckService.checkTimeConflict(newCourse, utils),
+    findConflictingCourses: (newCourse) => conflictCheckService.findConflictingCourses(newCourse, utils),
     calculateFee: () => feeCalculationService.calculateFee(),
     toggleTimePicker: datePickerService.toggleTimePicker.bind(datePickerService),
     toggleDatePicker: datePickerService.toggleDatePicker.bind(datePickerService),

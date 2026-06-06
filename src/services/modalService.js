@@ -11,6 +11,7 @@ import { StudentFormModal } from './modal/studentFormModal.js';
 import { CourseFormModal } from './modal/courseFormModal.js';
 import { ManagementModal } from './modal/managementModal.js';
 import { SnapshotModal } from './modal/snapshotModal.js';
+import { ConflictModal } from './modal/conflictModal.js';
 
 class ModalService {
     constructor() {
@@ -27,6 +28,7 @@ class ModalService {
         this.courseForm = new CourseFormModal(this);
         this.management = new ManagementModal(this);
         this.snapshot = new SnapshotModal(this);
+        this.conflict = new ConflictModal(this);
     }
 
     init() {
