@@ -204,9 +204,13 @@ select {
 }
 
 /* 移除所有输入元素的默认聚焦样式 */
-input:focus, textarea:focus, select:focus, button:focus {
+input:focus, textarea:focus, select:focus, button:not(.nav-item):focus {
     outline: none !important;
     box-shadow: none !important;
+}
+
+.nav-item:focus {
+    outline: none;
 }
 
 /* ------------------------------
@@ -307,7 +311,7 @@ nav, header {
 
 .nav-item {
     position: relative;
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
     overflow: hidden;
 }
 
@@ -1669,12 +1673,12 @@ button:not(:active), .btn:not(:active) {
     left: 0;
     right: 0;
     display: block;
-    height: 3rem;
-    margin-top: -3rem;
-    background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 70%);
+    height: 5rem;
+    margin-top: -5rem;
+    background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 40%);
     pointer-events: none;
     z-index: 2;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.3s ease;
 }
 
 .scroll-fade-bottom.scrolled-to-bottom::after {

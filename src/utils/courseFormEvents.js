@@ -227,12 +227,12 @@ export function initCourseFormEvents(isEdit, courseData = null) {
             registry.get('utils').calculateFee();
         });
     }
-    
-    // 阻止开始时间输入框空格键弹出系统时间选择器
-    const startTimeInputForKeyboard = document.getElementById('course-start-time');
-    if (startTimeInputForKeyboard) {
-        startTimeInputForKeyboard.addEventListener('keydown', function(e) {
-            if (e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space') {
+
+    // 屏蔽开始时间input的Space键，防止弹出系统时间选择器
+    const startTimeInput = document.getElementById('course-start-time');
+    if (startTimeInput) {
+        startTimeInput.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
                 e.preventDefault();
             }
         });
