@@ -1673,12 +1673,12 @@ button:not(:active), .btn:not(:active) {
     left: 0;
     right: 0;
     display: block;
-    height: 5rem;
-    margin-top: -5rem;
-    background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 40%);
+    height: 3rem;
+    margin-top: -3rem;
+    background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 70%);
     pointer-events: none;
     z-index: 2;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.15s ease;
 }
 
 .scroll-fade-bottom.scrolled-to-bottom::after {

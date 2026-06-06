@@ -137,7 +137,7 @@ class TimelineService {
     /**
      * 生成课程标签HTML（类似日历样式）
      */
-    generateCourseTag(course, changes = []) {
+    generateCourseTag(course, changes = [], compact = false) {
         if (!course) return '';
 
         const escapeHtml = (str) => registry.get('utils').escapeHtml(str) || '';
@@ -151,10 +151,11 @@ class TimelineService {
         const hl = (key) => changedSet.has(key) ? hlStyle : '';
         const hlTime = changedSet.has('时间') || changedSet.has('时长');
 
+        const studentTagSize = compact ? 'text-[10px] px-1.5 py-0' : 'text-xs px-2 py-0.5';
         const studentTags = namesArray.map((name, index) => {
             const color = course.colors && course.colors[index] ? course.colors[index] : primaryColor;
             return `
-                <span class="px-2 py-0.5 rounded text-xs font-medium"
+                <span class="${studentTagSize} rounded font-medium"
                       style="background-color: color-mix(in srgb, ${color} 20%, transparent); color: ${color};">
                     ${escapeHtml(name)}
                 </span>
@@ -166,17 +167,23 @@ class TimelineService {
         const feeText = fee > 0 ? `¥${fee}` : '';
         const dateText = course.date ? this.formatDate(course.date) : '';
 
+        const padding = compact ? 'p-2' : 'p-3';
+        const minWidth = compact ? 'min-width: 160px' : 'min-width: 220px';
+        const studentGap = compact ? 'margin-bottom: 4px' : 'margin-bottom: 8px';
+        const detailGap = compact ? 'margin-top: 2px' : 'margin-top: 4px';
+        const textSize = compact ? 'text-[10px]' : 'text-xs';
+
         return `
-            <div class="course-tag-item course-item mt-1 rounded text-xs relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); min-width: 220px; max-width: 100%;">
-                <div class="tag-content p-3">
-                    <div class="flex flex-wrap gap-1" style="margin-bottom: 8px;">
+            <div class="course-tag-item course-item mt-1 rounded ${textSize} relative z-10 inline-block" style="--tag-theme-color: ${primaryColor}; background-color: color-mix(in srgb, ${primaryColor} 10%, transparent); ${minWidth}; max-width: 100%;">
+                <div class="tag-content ${padding}">
+                    <div class="flex flex-wrap gap-1" style="${studentGap};">
                         ${studentTags}
                     </div>
                     <div>
                         <span style="color: var(--text-primary);${hl('课型')}">${escapeHtml(course.lessonType)}</span>
                         ${feeText ? '<span style="color: var(--text-primary); margin-left: 6px;' + hl('课时费') + '">' + feeText + '</span>' : ''}
                     </div>
-                    <div style="margin-top: 4px;">
+                    <div style="${detailGap};">
                         <span style="color: var(--text-secondary);${hl('日期')}">${dateText || ''}</span>
                         <span style="color: var(--text-secondary); margin-left: 2px;${hlTime ? hlStyle : ''}">${dateText ? ' · ' : ''}${course.startTime} - ${endTime}</span>
                     </div>
