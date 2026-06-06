@@ -78,11 +78,12 @@ export class ConflictModal {
                     </div>
                 </div>
 
-                ${total > 1 ? this._renderBulkControls() : ''}
-
-                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; justify-content: flex-end;">
-                    <button id="conflict-skip" style="padding: 6px 18px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">跳过</button>
-                    <button id="conflict-override" style="padding: 6px 18px; border-radius: 6px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 13px;">覆盖</button>
+                <div style="padding: 8px 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    ${total > 1 ? this._renderBulkLabel() : '<span></span>'}
+                    <div style="display: flex; gap: 10px;">
+                        <button id="conflict-skip" style="padding: 6px 18px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">跳过</button>
+                        <button id="conflict-override" style="padding: 6px 18px; border-radius: 6px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 13px;">覆盖</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -129,10 +130,10 @@ export class ConflictModal {
                     <span style="font-weight: 700; font-size: 15px; color: var(--text-primary);">时间冲突处理（统一处理）</span>
                     <span style="background-color: rgba(245, 158, 11, 0.1); color: var(--color-warning); padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">${this.conflicts.length} 节冲突</span>
                 </div>
-                <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 12px 16px; min-height: 0;">
-                    <div id="conflict-all-scroll-inner">${allItems}</div>
+                <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 12px 16px 0; min-height: 0;">
+                    <div id="conflict-all-scroll-inner" style="padding-bottom: 12px;">${allItems}</div>
                 </div>
-                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                <div style="padding: 8px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
                     <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
                         <input type="checkbox" id="conflict-bulk-checkbox" checked style="accent-color: var(--color-primary);"> 统一处理
                     </label>
@@ -174,13 +175,11 @@ export class ConflictModal {
     /**
      * 渲染批量操作控件
      */
-    _renderBulkControls() {
+    _renderBulkLabel() {
         return `
-            <div style="padding: 0 16px 6px; display: flex; align-items: center;">
-                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
-                    <input type="checkbox" id="conflict-bulk-checkbox" style="accent-color: var(--color-primary);"> 统一处理
-                </label>
-            </div>
+            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
+                <input type="checkbox" id="conflict-bulk-checkbox" style="accent-color: var(--color-primary);"> 统一处理
+            </label>
         `;
     }
 
