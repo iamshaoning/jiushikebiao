@@ -132,14 +132,14 @@ export class ConflictModal {
                 <div id="conflict-all-scroll" class="scroll-fade-bottom" style="flex: 1; overflow-y: auto; padding: 12px 16px; min-height: 0;">
                     <div id="conflict-all-scroll-inner">${allItems}</div>
                 </div>
-                <div style="padding: 0 16px 6px; display: flex; align-items: center; flex-shrink: 0;">
+                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;">
                     <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: var(--text-primary);">
                         <input type="checkbox" id="conflict-bulk-checkbox" checked style="accent-color: var(--color-primary);"> 统一处理
                     </label>
-                </div>
-                <div style="padding: 10px 16px; border-top: 1px solid var(--border-color); flex-shrink: 0; display: flex; justify-content: flex-end; gap: 10px;">
-                    <button id="conflict-skip" style="padding: 6px 18px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">全部跳过</button>
-                    <button id="conflict-override" style="padding: 6px 18px; border-radius: 6px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 13px;">全部覆盖</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="conflict-skip" style="padding: 6px 18px; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">全部跳过</button>
+                        <button id="conflict-override" style="padding: 6px 18px; border-radius: 6px; border: none; background-color: var(--color-danger); color: #fff; cursor: pointer; font-size: 13px;">全部覆盖</button>
+                    </div>
                 </div>
             </div>
         `;
