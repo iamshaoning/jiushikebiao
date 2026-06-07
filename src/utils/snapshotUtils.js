@@ -155,11 +155,9 @@ const snapshotUtils = {
             try { previousData = JSON.parse(currentDataStr); } catch (e) {}
         }
 
-        // 快照数据（用于重做）
-        const snapshotData = {
-            ...snapshot.data,
-            lastupdated: new Date().toISOString()
-        };
+        // 快照数据（用于重做），使用深拷贝避免嵌套对象被意外修改
+        const snapshotData = JSON.parse(JSON.stringify(snapshot.data));
+        snapshotData.lastupdated = new Date().toISOString();
         
         // 记录快照恢复操作到历史记录
         if (registry.get('historyService')) {

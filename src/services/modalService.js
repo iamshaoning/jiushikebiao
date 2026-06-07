@@ -226,6 +226,7 @@ class ModalService {
         }, 300);
 
         if (this.nestedContainer._keydownHandler) { document.removeEventListener('keydown', this.nestedContainer._keydownHandler); this.nestedContainer._keydownHandler = null; }
+        if (this._conflictKeydownHandler) { document.removeEventListener('keydown', this._conflictKeydownHandler); this._conflictKeydownHandler = null; }
     }
 
     showConfirm(message, onConfirm, type = 'confirm') {

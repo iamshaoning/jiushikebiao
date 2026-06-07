@@ -171,7 +171,7 @@ export class StatisticsRenderService {
 
         // 月份标签
         const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-        const monthLabel = month === 'all' ? '全年' : monthNames[month];
+        const monthLabel = month === 'all' ? '全年' : (monthNames[month] || `${month + 1}月`);
 
         // 构建标题
         let title = '课程详情';

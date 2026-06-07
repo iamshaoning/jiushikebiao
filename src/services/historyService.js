@@ -55,14 +55,14 @@ class HistoryService {
                 return;
             }
 
-            const dataStr = localStorage.getItem(this.recordsKey);
+            const dataStr = localStorage.getItem(this.storageKey);
             if (dataStr) {
                 const storedData = JSON.parse(dataStr);
                 
                 // 检查是否是按用户分组的格式
                 if (storedData && !Array.isArray(storedData)) {
-                    // 只加载当前用户的数据
-                    this.records = storedData[this.currentUserId] || [];
+                    // 只加载当前用户的数据，并截断到 maxRecords
+                    this.records = (storedData[this.currentUserId] || []).slice(0, this.maxRecords);
                 } else {
                     // 旧格式或不是分组格式，清除并重新开始
                     this.records = [];
@@ -91,7 +91,7 @@ class HistoryService {
                 return; // 没有用户ID，不保存
             }
 
-            const dataStr = localStorage.getItem(this.recordsKey);
+            const dataStr = localStorage.getItem(this.storageKey);
             let allHistories = {};
             
             if (dataStr) {
@@ -104,7 +104,7 @@ class HistoryService {
             
             // 只更新当前用户的数据
             allHistories[this.currentUserId] = this.records;
-            localStorage.setItem(this.recordsKey, JSON.stringify(allHistories));
+            localStorage.setItem(this.storageKey, JSON.stringify(allHistories));
         } catch (error) {
             console.error('保存历史记录失败:', error);
         }

@@ -95,34 +95,46 @@ class EventHandlerService {
         const fabContent = document.getElementById('floating-action-bar-content');
         if (!fab || !fabContent) return;
 
-        if (sel.length === 0) {
-            registry.get('modalService').closeAllPopovers();
-            return;
-        }
-        if (sel.length === 1) {
-            const id = isCourse
-                ? (sel[0].dataset.courseId || sel[0].closest('[data-course-id]')?.dataset.courseId)
-                : sel[0].dataset.date;
-            if (id) {
-                fabContent.innerHTML = isCourse
-                    ? this._renderCourseActionButtons(registry.get('utils').escapeHtml(id))
-                    : this._renderCellActionButtons(registry.get('utils').escapeHtml(id));
+        const prevType = fabContent.dataset.type;
+        const isCrossType = prevType && prevType !== type;
+
+        const applyUpdate = () => {
+            if (sel.length === 0) {
+                registry.get('modalService').closeAllPopovers();
+                return;
             }
+            if (sel.length === 1) {
+                const id = isCourse
+                    ? (sel[0].dataset.courseId || sel[0].closest('[data-course-id]')?.dataset.courseId)
+                    : sel[0].dataset.date;
+                if (id) {
+                    fabContent.innerHTML = isCourse
+                        ? this._renderCourseActionButtons(registry.get('utils').escapeHtml(id))
+                        : this._renderCellActionButtons(registry.get('utils').escapeHtml(id));
+                }
+            } else {
+                const ids = Array.from(sel).map(el =>
+                    isCourse
+                        ? (el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId)
+                        : el.dataset.date
+                ).filter(Boolean);
+                if (ids.length) {
+                    fabContent.innerHTML = isCourse
+                        ? this._renderMultiCourseActionButtons(ids)
+                        : this._renderMultiCellActionButtons(ids);
+                }
+            }
+            fabContent.dataset.type = type;
+            fab.classList.add('active');
+            if (registry.get('lucide')) registry.get('lucide').createIcons();
+        };
+
+        // 跨类型切换时延迟执行，避免动画冲突
+        if (isCrossType) {
+            setTimeout(applyUpdate, 180);
         } else {
-            const ids = Array.from(sel).map(el =>
-                isCourse
-                    ? (el.dataset.courseId || el.closest('[data-course-id]')?.dataset.courseId)
-                    : el.dataset.date
-            ).filter(Boolean);
-            if (ids.length) {
-                fabContent.innerHTML = isCourse
-                    ? this._renderMultiCourseActionButtons(ids)
-                    : this._renderMultiCellActionButtons(ids);
-            }
+            applyUpdate();
         }
-        fabContent.dataset.type = type;
-        fab.classList.add('active');
-        if (registry.get('lucide')) registry.get('lucide').createIcons();
     }
 
     /** 渲染机构/年级列表项HTML */
@@ -517,7 +529,7 @@ class EventHandlerService {
                 // Refresh the entire list UI by re-rendering the list
                 const il = document.getElementById(`${itemName}s-list`);
                 if (il) {
-                    il.innerHTML = registry.get('state')[itemName === '机构' ? 'organizations' : 'grades'].map(item => this._renderOrgGradeItem(item, itemName, ct)).join('');
+                    il.innerHTML = registry.get('state')[itemName === '机构' ? 'organizations' : 'grades'].map(item => self._renderOrgGradeItem(item, itemName, ct)).join('');
                     // Re-attach color picker listeners
                     if (registry.get('lucide')) registry.get('lucide').createIcons();
                     il.querySelectorAll(`.${itemName}-name.color-picker-trigger`).forEach(cpt => {

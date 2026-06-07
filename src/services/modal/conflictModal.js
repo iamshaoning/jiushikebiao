@@ -216,9 +216,8 @@ export class ConflictModal {
             }
         };
         document.addEventListener('keydown', keydownHandler);
-        if (this.modal.nestedContainer) {
-            this.modal.nestedContainer._keydownHandler = keydownHandler;
-        }
+        // 存储 handler 引用，确保在非嵌套模式下也能被正确清理
+        this.modal._conflictKeydownHandler = keydownHandler;
     }
 
     _handleAction(action) {
@@ -237,7 +236,7 @@ export class ConflictModal {
     }
 
     _resolveAllSkipped() {
-        if (this.results.length > 0) return;
+        // 跳过所有尚未处理的冲突（已处理的保持不变）
         for (let i = this.currentIndex; i < this.conflicts.length; i++) {
             this.results.push({ conflict: this.conflicts[i], action: 'skip' });
         }
@@ -245,6 +244,11 @@ export class ConflictModal {
     }
 
     _finish() {
+        // 清理 keydown 监听器，防止泄漏
+        if (this.modal._conflictKeydownHandler) {
+            document.removeEventListener('keydown', this.modal._conflictKeydownHandler);
+            this.modal._conflictKeydownHandler = null;
+        }
         const skipped = [];
         const overridden = [];
         this.results.forEach(r => {
