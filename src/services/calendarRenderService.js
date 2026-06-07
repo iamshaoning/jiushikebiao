@@ -36,7 +36,7 @@ export class CalendarRenderService {
         const prevType = fabContent.dataset.type;
         const isCrossType = prevType && prevType !== 'course';
         const show = () => {
-            fabContent.innerHTML = registry.get('eventHandlerService')._renderCourseActionButtons(this.utils.escapeHtml(courseId));
+            fabContent.innerHTML = registry.get('fabHandlerService')._renderCourseActionButtons(this.utils.escapeHtml(courseId));
             fabContent.dataset.type = 'course';
             fab.classList.add('active');
             if (this.lucide) this.lucide.createIcons();

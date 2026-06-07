@@ -20,9 +20,18 @@ export class StatisticsCalculatorService {
     calculateStatistics(year, month, organization = '', utils) {
         const isFullYear = month === 'all';
         const filteredCourses = this.state.courses.filter(course => {
-            const [courseYear, courseMonth] = course.date.split('-').map(Number);
-            if (isFullYear) return courseYear === year;
-            return courseYear === year && courseMonth === month + 1;
+            try {
+                if (!course || !course.date || typeof course.date !== 'string') return false;
+                const parts = course.date.split('-');
+                if (parts.length < 2) return false;
+                const courseYear = Number(parts[0]);
+                const courseMonth = Number(parts[1]);
+                if (isNaN(courseYear) || isNaN(courseMonth)) return false;
+                if (isFullYear) return courseYear === year;
+                return courseYear === year && courseMonth === month + 1;
+            } catch (e) {
+                return false;
+            }
         });
 
         // 初始化统计数据

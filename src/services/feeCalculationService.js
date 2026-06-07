@@ -11,17 +11,23 @@ export class FeeCalculationService {
 
     /**
      * 根据课程时长计算费用
-     * @param {Object} utils - 工具函数对象
+     * @param {string} [lessonType] - 课型（可选，不传则从 DOM 获取）
+     * @param {string} [studentId] - 学生ID（可选，不传则从 DOM 获取）
+     * @param {number} [actualDuration] - 实际时长（可选，不传则从 DOM 获取）
      */
-    calculateFee() {
-        // 检查当前课型
-        const lessonType = document.querySelector('input[name="course-lesson-type"]:checked')?.value;
+    calculateFee(lessonType, studentId, actualDuration) {
+        // 从 DOM 获取缺失的参数（向后兼容）
+        if (lessonType === undefined) {
+            lessonType = document.querySelector('input[name="course-lesson-type"]:checked')?.value;
+        }
         if (lessonType !== '一对一') return; // 只对一对一课程计算费用
 
-        const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
-        if (selectedStudents.length === 0) return;
+        if (studentId === undefined) {
+            const selectedStudents = Array.from(document.querySelectorAll('.student-btn.selected'));
+            if (selectedStudents.length === 0) return;
+            studentId = selectedStudents[0].dataset.id;
+        }
 
-        const studentId = selectedStudents[0].dataset.id;
         const student = this.state.students.find(s => s.id === studentId);
         if (!student) return;
 
@@ -29,10 +35,10 @@ export class FeeCalculationService {
         const baseFee = studentFees['一对一'] ?? 0;
         const rawDuration = studentFees['一对一_duration'] ?? 120;
         const baseDuration = Math.max(1, rawDuration);
-        const actualDuration = this._getActualDuration();
+        const finalDuration = actualDuration ?? this._getActualDuration();
 
         // 按学生预设时长的价格计算实际费用
-        const calculatedFee = (baseFee / baseDuration) * actualDuration;
+        const calculatedFee = (baseFee / baseDuration) * finalDuration;
 
         const feeInput = document.getElementById('course-fee');
         if (feeInput) {

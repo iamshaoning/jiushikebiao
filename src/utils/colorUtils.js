@@ -18,6 +18,11 @@ const colorAssignments = {
     grade: new Map()
 };
 
+const usedColors = {
+    organization: new Set(),
+    grade: new Set()
+};
+
 const nextColorIndex = {
     organization: 0,
     grade: 0
@@ -39,8 +44,22 @@ export function generateColor(text, type = 'organization') {
         hash = ((hash << 5) - hash) + text.charCodeAt(i);
         hash |= 0;
     }
-    const color = colorPalette[Math.abs(hash) % colorPalette.length];
+    let color = colorPalette[Math.abs(hash) % colorPalette.length];
+
+    // 哈希碰撞处理：如果该颜色已被其他文本使用，查找下一个可用颜色
+    if (usedColors[validType].has(color)) {
+        const startIndex = colorPalette.indexOf(color);
+        for (let i = 1; i < colorPalette.length; i++) {
+            const nextColor = colorPalette[(startIndex + i) % colorPalette.length];
+            if (!usedColors[validType].has(nextColor)) {
+                color = nextColor;
+                break;
+            }
+        }
+    }
+
     colorAssignments[validType].set(text, color);
+    usedColors[validType].add(color);
 
     scheduleSyncToState(validType);
     return color;
@@ -48,7 +67,16 @@ export function generateColor(text, type = 'organization') {
 
 export function removeColorAssignment(text, type) {
     if (colorAssignments[type]) {
+        const color = colorAssignments[type].get(text);
         colorAssignments[type].delete(text);
+        if (color && usedColors[type]) {
+            // 检查该颜色是否仍被其他文本使用
+            let stillUsed = false;
+            for (const [, c] of colorAssignments[type]) {
+                if (c === color) { stillUsed = true; break; }
+            }
+            if (!stillUsed) usedColors[type].delete(color);
+        }
         scheduleSyncToState(type);
     }
 }
@@ -64,7 +92,16 @@ export function setColor(text, color, type = 'organization') {
     if (existingColor === color) {
         return;
     }
+    // 更新 usedColors 跟踪
+    if (existingColor && usedColors[validType]) {
+        let stillUsed = false;
+        for (const [key, c] of colorAssignments[validType]) {
+            if (key !== text && c === existingColor) { stillUsed = true; break; }
+        }
+        if (!stillUsed) usedColors[validType].delete(existingColor);
+    }
     colorAssignments[validType].set(text, color);
+    if (usedColors[validType]) usedColors[validType].add(color);
     
     if (registry.get('state')) {
         if (validType === 'organization') {
@@ -154,6 +191,7 @@ export function initColorsFromState() {
             if (existing !== color) {
                 colorAssignments.organization.set(text, color);
             }
+            usedColors.organization.add(color);
             const paletteIndex = colorPalette.indexOf(color);
             if (paletteIndex !== -1 && paletteIndex >= maxOrgIndex) {
                 maxOrgIndex = paletteIndex + 1;
@@ -174,6 +212,7 @@ export function initColorsFromState() {
             if (existing !== color) {
                 colorAssignments.grade.set(text, color);
             }
+            usedColors.grade.add(color);
             const paletteIndex = colorPalette.indexOf(color);
             if (paletteIndex !== -1 && paletteIndex >= maxGradeIndex) {
                 maxGradeIndex = paletteIndex + 1;

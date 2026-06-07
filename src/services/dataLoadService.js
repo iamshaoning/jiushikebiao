@@ -131,18 +131,40 @@ class DataLoadService {
     async _uploadToServer(localData, userId) {
         const data = { userid: userId, students: localData.students, courses: localData.courses, organizations: localData.organizations, grades: localData.grades, organizationColors: localData.organizationColors || {}, gradeColors: localData.gradeColors || {}, lastupdated: localData.lastupdated };
         if (this.currentDeviceId) data.device_id = this.currentDeviceId;
-        try { await this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').upsert(data), 5000, '上传数据超时'); }
+        try { await this._retry(() => this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').upsert(data), 5000, '上传数据超时'), 2, '上传数据'); }
         catch (e) { registry.get('errorHandlerService').handleError(e, '上传数据失败'); }
     }
 
     async _initEmptyOnServer(userId) {
         const data = { userid: userId, students: [], courses: [], organizations: [], grades: [], organizationColors: {}, gradeColors: {}, lastupdated: new Date().toISOString() };
         if (this.currentDeviceId) data.device_id = this.currentDeviceId;
-        try { await this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').insert(data), 5000, '创建初始数据超时'); this.serverStatusService.updateServerStatus('online'); }
+        try { await this._retry(() => this.utils.withTimeout(() => registry.get('supabaseClient').from('coursemanagerdata').insert(data), 5000, '创建初始数据超时'), 2, '创建初始数据'); this.serverStatusService.updateServerStatus('online'); }
         catch (e) { registry.get('errorHandlerService').handleError(e, '创建初始数据失败', true); this.serverStatusService.updateServerStatus('offline'); }
         this.utils.updateStateFromData({});
         this.notificationService.show('欢迎使用玖拾课表！请添加您的第一条数据', 'info', 5000);
         this.utils.refreshAllViews(true);
+    }
+
+    /**
+     * 带重试的异步操作
+     * @param {Function} fn - 异步操作函数
+     * @param {number} maxRetries - 最大重试次数
+     * @param {string} label - 操作标签（用于日志）
+     * @returns {Promise} 操作结果
+     */
+    async _retry(fn, maxRetries = 2, label = '') {
+        let lastError;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return await fn();
+            } catch (e) {
+                lastError = e;
+                if (attempt < maxRetries) {
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                }
+            }
+        }
+        throw lastError;
     }
 
     _handleOffline(localData, isLoggedIn) {

@@ -43,6 +43,10 @@ class PageRenderService {
             const switchPage = () => {
                 if (!this._pendingTransition) return;
                 this._pendingTransition = false;
+                if (this._fallbackTimer) {
+                    clearTimeout(this._fallbackTimer);
+                    this._fallbackTimer = null;
+                }
                 currentPage.removeEventListener('transitionend', switchPage);
                 currentPage.classList.add('hidden');
                 currentPage.style.pointerEvents = '';
@@ -55,6 +59,11 @@ class PageRenderService {
                 targetPage.classList.add('active');
             };
 
+            // Clear any pending fallback timer from previous transitions
+            if (this._fallbackTimer) {
+                clearTimeout(this._fallbackTimer);
+                this._fallbackTimer = null;
+            }
             this._pendingTransition = true;
             currentPage.addEventListener('transitionend', switchPage);
 

@@ -8,6 +8,7 @@ import { registry } from '../../core/registry.js';
 export class CourseFormModal {
     constructor(modalService) {
         this.modal = modalService;
+        this._isConflictChecking = false;
     }
 
     showAddCourse(date) {
@@ -72,6 +73,8 @@ export class CourseFormModal {
                         };
 
                         if (registry.get('utils').checkTimeConflict(newCourse)) {
+                            if (this._isConflictChecking) { resetSaveBtn(); return; }
+                            this._isConflictChecking = true;
                             const conflictingCourses = registry.get('utils').findConflictingCourses(newCourse);
                             registry.get('modalService').conflict.show({
                                 conflicts: [{ newCourse, conflictingCourses }],
@@ -101,6 +104,7 @@ export class CourseFormModal {
                                             registry.get('notificationService').show('课程添加失败', 'error');
                                         }
                                     }
+                                    this._isConflictChecking = false;
                                     resetSaveBtn();
                                 }
                             });

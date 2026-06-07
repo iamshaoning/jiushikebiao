@@ -52,7 +52,7 @@ const snapshotUtils = {
         }
 
         const snapshot = {
-            id: registry.get('utils').generateId ? registry.get('utils').generateId() : `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`,
+            id: registry.get('utils').generateId ? registry.get('utils').generateId() : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substring(2, 11)),
             timestamp: new Date().toISOString(),
             userId: userId,
             data: data,

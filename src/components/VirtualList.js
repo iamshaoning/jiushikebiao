@@ -33,7 +33,9 @@ class VirtualList {
     }
     
     handleScroll(e) {
-        if (this._rafId) return;
+        if (this._rafId) {
+            cancelAnimationFrame(this._rafId);
+        }
         this._rafId = requestAnimationFrame(() => {
             this._rafId = null;
             this.state.scrollTop = e.target.scrollTop;

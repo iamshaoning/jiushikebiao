@@ -28,6 +28,12 @@ class AuthService {
         if (!this.supabaseAuth) {
             throw new Error('认证服务未初始化');
         }
+        if (!email || !password) {
+            throw new Error('邮箱和密码不能为空');
+        }
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            throw new Error('邮箱和密码格式无效');
+        }
 
         const { data, error } = await this.supabaseAuth.signInWithPassword({ email, password });
 
@@ -49,6 +55,15 @@ class AuthService {
     async register(email, password) {
         if (!this.supabaseAuth) {
             throw new Error('认证服务未初始化');
+        }
+        if (!email || !password) {
+            throw new Error('邮箱和密码不能为空');
+        }
+        if (typeof email !== 'string' || typeof password !== 'string') {
+            throw new Error('邮箱和密码格式无效');
+        }
+        if (password.length < 6) {
+            throw new Error('密码应至少包含6个字符');
         }
 
         const { data, error } = await this.supabaseAuth.signUp({ email, password });
