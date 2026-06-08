@@ -2,8 +2,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=1300">
     <title>玖拾课表</title>
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="./src/style.css">
     <script src="https://unpkg.com/lucide@latest" defer></script>
     <script src="https://unpkg.com/chinese-days@latest" defer></script>
@@ -28,7 +28,7 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-4">
                         <div class="flex items-center">
-                            <img src="./logo.png" alt="玖拾课表" class="h-14 w-auto mr-1">
+                            <img src="./pikachu.gif" alt="玖拾课表" class="mr-1">
                             <h1 class="text-2xl font-bold" style="font-size: 26px; color: var(--text-primary);">玖拾课表</h1>
                         </div>
                         <div id="sync-status" class="sync-card">
@@ -363,8 +363,12 @@
     <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center" style="opacity: 0; transition: opacity 0.3s ease-out;">
         <div id="auth-background" class="absolute inset-0" style="background: linear-gradient(-45deg, #8bdeda, #43add0, #998ee0, #e17dc2, #ef9393); background-size: 400% 400%; animation: gradientFlow 15s ease infinite;"></div>
         <div class="relative bg-transparent backdrop-blur-lg rounded-2xl w-full max-w-md p-8 transform transition-all duration-300 ease-out scale-95 opacity-0" id="auth-container">
-            <div class="flex items-center justify-center mb-4">
-                <img src="./logo.png" alt="玖拾课表" class="h-32 w-auto">
+            <div id="pikachu-logo" class="flex items-center justify-center gap-0 mb-4" style="cursor:pointer">
+                <img src="/pikachu.gif" alt="玖拾课表" class="flex-shrink-0">
+                <div class="relative flex-shrink-0 -ml-2">
+                    <img src="/talk.png" alt="PI KA~" class="block">
+                    <img src="/PIKA-typing.gif" alt="PI KA~" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin-left:-6px;margin-top:-7px">
+                </div>
             </div>
             <div id="auth-tabs" class="flex gap-2 mb-8">
                 <button id="login-tab" class="flex-1 py-3 rounded-full border-2 border-blue-500 bg-blue-500/40 text-white font-bold text-center text-lg drop-shadow-md transition-all duration-300 hover:bg-blue-500/50" style="text-shadow: 3px 3px 3px rgba(59, 130, 246, 0.5);">登录</button>

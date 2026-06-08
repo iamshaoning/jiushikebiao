@@ -165,6 +165,15 @@ class AuthUIService {
         authModal.style.opacity = '1';
         authContainer.classList.remove('scale-95', 'opacity-0');
         authContainer.classList.add('scale-100', 'opacity-100');
+
+        // 点击皮卡丘/气泡/打字动画播放声音
+        const pikachuLogo = document.getElementById('pikachu-logo');
+        if (pikachuLogo) {
+            pikachuLogo.onclick = () => {
+                const audio = new Audio('/pikachu.mp3');
+                audio.play().catch(() => {});
+            };
+        }
     }
 
     /**
