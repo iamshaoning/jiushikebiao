@@ -296,7 +296,11 @@ routerService.init();
 eventBindingService.init();
 initService.init();
 
+let lastPikachuPlay = 0;
 document.getElementById('navbar-pikachu')?.addEventListener('click', () => {
+    const now = Date.now();
+    if (now - lastPikachuPlay < 1000) return;
+    lastPikachuPlay = now;
     const audio = new Audio('./pikachu.mp3');
     audio.play().catch(() => {});
 });

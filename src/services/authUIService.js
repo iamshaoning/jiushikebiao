@@ -180,10 +180,14 @@ class AuthUIService {
         if (this._typingTimer) clearInterval(this._typingTimer);
         this._typingTimer = setInterval(randomizeTyping, 3000);
 
-        // 点击皮卡丘/气泡/打字动画播放声音
+        // 点击皮卡丘/气泡/打字动画播放声音（1秒冷却）
         const pikachuLogo = document.getElementById('pikachu-logo');
+        let lastPlayTime = 0;
         if (pikachuLogo) {
             pikachuLogo.onclick = () => {
+                const now = Date.now();
+                if (now - lastPlayTime < 1000) return;
+                lastPlayTime = now;
                 const audio = new Audio('./pikachu.mp3');
                 audio.play().catch(() => {});
             };
