@@ -174,7 +174,7 @@ class AuthUIService {
             let gif;
             do { gif = typingGifs[Math.floor(Math.random() * typingGifs.length)]; }
             while (gif === typingImg.src.split('/').pop());
-            typingImg.src = '/' + gif;
+            typingImg.src = './' + gif;
         };
         randomizeTyping();
         if (this._typingTimer) clearInterval(this._typingTimer);
