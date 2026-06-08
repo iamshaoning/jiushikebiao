@@ -166,11 +166,25 @@ class AuthUIService {
         authContainer.classList.remove('scale-95', 'opacity-0');
         authContainer.classList.add('scale-100', 'opacity-100');
 
+        // 随机打字动画，每次循环重新随机
+        const typingGifs = ['pika-typing.gif', 'happy-typing.gif', 'love-typing.gif'];
+        const typingImg = document.getElementById('typing-gif');
+        const randomizeTyping = () => {
+            if (!typingImg) return;
+            let gif;
+            do { gif = typingGifs[Math.floor(Math.random() * typingGifs.length)]; }
+            while (gif === typingImg.src.split('/').pop());
+            typingImg.src = '/' + gif;
+        };
+        randomizeTyping();
+        if (this._typingTimer) clearInterval(this._typingTimer);
+        this._typingTimer = setInterval(randomizeTyping, 3000);
+
         // 点击皮卡丘/气泡/打字动画播放声音
         const pikachuLogo = document.getElementById('pikachu-logo');
         if (pikachuLogo) {
             pikachuLogo.onclick = () => {
-                const audio = new Audio('/pikachu.mp3');
+                const audio = new Audio('./pikachu.mp3');
                 audio.play().catch(() => {});
             };
         }
@@ -180,6 +194,7 @@ class AuthUIService {
      * 隐藏认证模态框
      */
     hideAuthModal() {
+        if (this._typingTimer) { clearInterval(this._typingTimer); this._typingTimer = null; }
         const authModal = this.elements.authModal;
         const authContainer = this.elements.authContainer;
 

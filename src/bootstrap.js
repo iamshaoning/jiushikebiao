@@ -296,4 +296,9 @@ routerService.init();
 eventBindingService.init();
 initService.init();
 
+document.getElementById('navbar-pikachu')?.addEventListener('click', () => {
+    const audio = new Audio('./pikachu.mp3');
+    audio.play().catch(() => {});
+});
+
 }
