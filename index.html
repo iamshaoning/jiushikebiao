@@ -409,7 +409,33 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- 底部功能栏 -->
+    <div class="fixed bottom-6 left-0 right-0 items-center justify-center gap-8 hidden" id="auth-footer" style="z-index:51; display: flex;">
+        <!-- GitHub -->
+        <a href="https://github.com/iamshaoning/kechengguanlixitong" target="_blank" rel="noopener noreferrer" class="opacity-70 hover:opacity-100 hover:scale-150 transition-all duration-200" title="项目仓库">
+            <img src="./GitHub.svg" alt="GitHub" style="width:24px;height:24px">
+        </a>
+        <!-- 公告板 -->
+        <div class="relative" id="announcement-wrapper">
+            <button id="announcement-btn" class="opacity-70 hover:opacity-100 hover:scale-150 transition-all duration-200" title="公告板">
+                <img src="./Gonggao.svg" alt="公告板" style="width:26px;height:26px">
+            </button>
+        </div>
+        <!-- 微信 -->
+        <div class="relative" id="wechat-wrapper">
+            <button class="opacity-70 hover:opacity-100 hover:scale-150 transition-all duration-200" title="联系我">
+                <img src="./Wechat.svg" alt="微信" style="width:24px;height:24px">
+            </button>
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-8 opacity-0 translate-y-2 pointer-events-none transition-opacity transition-transform duration-300" id="wechat-popup">
+                <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.25);">
+                    <p class="text-white text-2xl text-center mb-3 font-medium" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">iamshaoning</p>
+                    <img src="./weixin.png" alt="微信" class="rounded-lg shadow-lg" style="max-width:none;width:auto;height:auto">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 模态框容器 -->
     <div id="modal-container" class="fixed inset-0 bg-black/50 items-center justify-center hidden opacity-0 transition-opacity duration-400" style="z-index: 40; padding-top: 4rem;">
         <div class="rounded-lg border p-6 w-full max-w-md mx-4 no-shadow transform scale-90 opacity-0 translate-y-4 transition-all duration-400" id="modal-content" style="background-color: var(--bg-secondary); border-color: var(--border-color); transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);">

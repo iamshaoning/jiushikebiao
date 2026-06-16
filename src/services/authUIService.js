@@ -5,6 +5,7 @@
  * @module authUIService
  */
 import { registry } from '../core/registry.js';
+import { subscribeAnnouncements, loadAnnouncements } from './announcementService.js';
 
 class AuthUIService {
     constructor(elements, utils, notificationService, authService, modalService, serverStatusService) {
@@ -161,6 +162,7 @@ class AuthUIService {
 
         authModal.style.display = 'flex';
         authModal.style.pointerEvents = 'auto';
+        document.getElementById('auth-footer')?.classList.remove('hidden');
         authModal.offsetHeight;
         authModal.style.opacity = '1';
         authContainer.classList.remove('scale-95', 'opacity-0');
@@ -192,6 +194,173 @@ class AuthUIService {
                 audio.play().catch(() => {});
             };
         }
+
+        // 微信悬停显示二维码
+        const wechatWrapper = document.getElementById('wechat-wrapper');
+        const wechatPopup = document.getElementById('wechat-popup');
+        if (wechatWrapper && wechatPopup) {
+            let wechatTimer = null;
+            wechatWrapper.onmouseenter = () => {
+                clearTimeout(wechatTimer);
+                wechatTimer = setTimeout(() => {
+                    wechatPopup.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
+                }, 500);
+            };
+            wechatWrapper.onmouseleave = () => {
+                clearTimeout(wechatTimer);
+                wechatPopup.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+            };
+        }
+
+        // 公告板悬停显示
+        const announcementWrapper = document.getElementById('announcement-wrapper');
+        if (announcementWrapper) {
+            let hoverTimer = null;
+            announcementWrapper.onmouseenter = () => {
+                clearTimeout(hoverTimer);
+                hoverTimer = setTimeout(() => {
+                    this._showAnnouncementModal();
+                }, 500);
+            };
+            announcementWrapper.onmouseleave = () => {
+                clearTimeout(hoverTimer);
+                hoverTimer = setTimeout(() => this._closeAnnouncement(), 200);
+            };
+        }
+
+        // 重新渲染 lucide 图标
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    _showAnnouncementModal() {
+        // 如果已存在则关闭
+        const existing = document.getElementById('announcement-panel');
+        if (existing) {
+            this._closeAnnouncement();
+            return;
+        }
+
+        // 遮罩层
+        const overlay = document.createElement('div');
+        overlay.id = 'announcement-overlay';
+        overlay.className = 'fixed inset-0 z-50 transition-opacity duration-200';
+        overlay.style.opacity = '0';
+        overlay.onclick = () => this._closeAnnouncement();
+        document.body.appendChild(overlay);
+
+        const panel = document.createElement('div');
+        panel.id = 'announcement-panel';
+        panel.className = 'fixed z-[60] transform transition-all duration-300 ease-out';
+        panel.style.left = '50%';
+        panel.style.bottom = '80px';
+        panel.style.transform = 'translateX(-50%) translateY(12px) scale(0.95)';
+        panel.style.opacity = '0';
+        panel.style.width = '420px';
+        panel.style.maxWidth = 'calc(100vw - 32px)';
+        panel.style.maxHeight = 'calc(100vh - 400px)';
+        panel.style.height = 'calc(100vh - 400px)';
+        panel.style.borderRadius = '20px';
+        panel.style.background = 'rgba(255,255,255,0.12)';
+        panel.style.backdropFilter = 'blur(24px)';
+        panel.style.webkitBackdropFilter = 'blur(24px)';
+        panel.style.border = '1px solid rgba(255,255,255,0.25)';
+        panel.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.25)';
+        panel.innerHTML = `
+            <div class="flex items-center justify-between p-4 flex-shrink-0">
+                <h3 class="text-xl font-bold" style="color: #ffffff !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3);">公告板</h3>
+                <button class="announcement-close p-1 rounded-lg hover:bg-white/10 transition-colors" style="color: rgba(255,255,255,0.8);">
+                    <i data-lucide="x" style="width:20px;height:20px"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto px-4 pb-4" style="max-height: calc(100vh - 460px);">
+                <div class="announcement-list space-y-3"></div>
+            </div>
+        `;
+        document.body.appendChild(panel);
+
+        panel.querySelector('.announcement-close').onclick = () => this._closeAnnouncement();
+
+        // 悬停面板时保持显示，离开时延迟关闭
+        panel.onmouseenter = () => {
+            clearTimeout(this._announcementHoverTimer);
+        };
+        panel.onmouseleave = () => {
+            this._announcementHoverTimer = setTimeout(() => this._closeAnnouncement(), 200);
+        };
+
+        if (window.lucide) window.lucide.createIcons();
+
+        // 入场动画（从底部弹出）
+        requestAnimationFrame(() => {
+            overlay.style.opacity = '1';
+            panel.style.transform = 'translateX(-50%) translateY(0) scale(1)';
+            panel.style.opacity = '1';
+        });
+
+        const listDiv = panel.querySelector('.announcement-list');
+
+        const renderAnnouncements = (announcements) => {
+            if (!listDiv) return;
+            if (!announcements || announcements.length === 0) {
+                listDiv.innerHTML = '<div class="flex items-center justify-center text-base py-12" style="color: #ffffff !important; white-space: pre-wrap; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">暂无公告</div>';
+                return;
+            }
+            listDiv.innerHTML = announcements.map(a => {
+                const date = new Date(a.created_at);
+                const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+                const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+                return `
+                    <div class="rounded-xl p-4" style="
+                        background: rgba(255,255,255,0.12);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        border: 1px solid rgba(255,255,255,0.15);
+                    ">
+                        <p class="text-base leading-relaxed" style="color: #ffffff !important; white-space: pre-wrap; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">${a.content}</p>
+                        <div class="flex items-center gap-1 mt-2 text-sm font-semibold" style="color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">
+                            <span>${dateStr}</span>
+                            <span>${timeStr}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        // 加载指示
+        listDiv.innerHTML = '<div class="flex items-center justify-center" style="height: calc(100vh - 460px);"><div class="animate-spin rounded-full border-4 border-white/20 border-t-white" style="width:40px;height:40px"></div></div>';
+
+        // 加载全部公告
+        this._allAnnouncements = [];
+        loadAnnouncements().then(announcements => {
+            this._allAnnouncements = announcements;
+            renderAnnouncements(announcements);
+        });
+
+        // 实时订阅新公告
+        this._announcementList = listDiv;
+        this._unsubscribeAnnouncement = subscribeAnnouncements((announcement) => {
+            this._allAnnouncements.unshift(announcement);
+            renderAnnouncements(this._allAnnouncements);
+        });
+    }
+
+    _closeAnnouncement() {
+        clearTimeout(this._announcementHoverTimer);
+        if (this._unsubscribeAnnouncement) {
+            this._unsubscribeAnnouncement();
+            this._unsubscribeAnnouncement = null;
+        }
+        const panel = document.getElementById('announcement-panel');
+        const overlay = document.getElementById('announcement-overlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 200);
+        }
+        if (panel) {
+            panel.style.transform = 'translateX(-50%) translateY(12px) scale(0.95)';
+            panel.style.opacity = '0';
+            setTimeout(() => panel.remove(), 300);
+        }
     }
 
     /**
@@ -202,6 +371,7 @@ class AuthUIService {
         const authModal = this.elements.authModal;
         const authContainer = this.elements.authContainer;
 
+        document.getElementById('auth-footer')?.classList.add('hidden');
         authContainer.classList.remove('scale-100', 'opacity-100');
         authContainer.classList.add('scale-95', 'opacity-0');
         setTimeout(() => {
@@ -401,6 +571,7 @@ class AuthUIService {
      * 隐藏认证模态框的动画效果（公共方法）
      */
     _hideAuthModalAnimated() {
+        document.getElementById('auth-footer')?.classList.add('hidden');
         if (this.elements.authModal) {
             this.elements.authContainer.classList.remove('scale-100', 'opacity-100');
             this.elements.authContainer.classList.add('scale-90', 'opacity-0');
