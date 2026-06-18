@@ -162,7 +162,11 @@ class AuthUIService {
 
         authModal.style.display = 'flex';
         authModal.style.pointerEvents = 'auto';
-        document.getElementById('auth-footer')?.classList.remove('hidden');
+        const footer = document.getElementById('auth-footer');
+        if (footer) {
+            footer.classList.remove('hidden');
+            footer.style.display = 'flex';
+        }
         authModal.offsetHeight;
         authModal.style.opacity = '1';
         authContainer.classList.remove('scale-95', 'opacity-0');
@@ -371,7 +375,11 @@ class AuthUIService {
         const authModal = this.elements.authModal;
         const authContainer = this.elements.authContainer;
 
-        document.getElementById('auth-footer')?.classList.add('hidden');
+        const footer = document.getElementById('auth-footer');
+        if (footer) {
+            footer.classList.add('hidden');
+            footer.style.display = '';
+        }
         authContainer.classList.remove('scale-100', 'opacity-100');
         authContainer.classList.add('scale-95', 'opacity-0');
         setTimeout(() => {
@@ -571,7 +579,11 @@ class AuthUIService {
      * 隐藏认证模态框的动画效果（公共方法）
      */
     _hideAuthModalAnimated() {
-        document.getElementById('auth-footer')?.classList.add('hidden');
+        const footer = document.getElementById('auth-footer');
+        if (footer) {
+            footer.classList.add('hidden');
+            footer.style.display = '';
+        }
         if (this.elements.authModal) {
             this.elements.authContainer.classList.remove('scale-100', 'opacity-100');
             this.elements.authContainer.classList.add('scale-90', 'opacity-0');
