@@ -53,6 +53,15 @@ export async function loadAnnouncements() {
         .select('content, created_at')
         .order('created_at', { ascending: false });
 
-    if (error || !data) return [];
+    if (error) {
+        console.error('[Announcement] 查询失败:', error);
+        const ns = registry.get('notificationService');
+        if (ns) ns.show('公告加载失败，请稍后重试', 'error');
+        return [];
+    }
+    if (!data) {
+        console.warn('[Announcement] 查询结果为空');
+        return [];
+    }
     return data;
 }

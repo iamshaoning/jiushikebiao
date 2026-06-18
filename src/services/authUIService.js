@@ -284,21 +284,21 @@ class AuthUIService {
 
         panel.querySelector('.announcement-close').onclick = () => this._closeAnnouncement();
 
-        // 悬停面板时保持显示，离开时延迟关闭
-        panel.onmouseenter = () => {
-            clearTimeout(this._announcementHoverTimer);
-        };
-        panel.onmouseleave = () => {
-            this._announcementHoverTimer = setTimeout(() => this._closeAnnouncement(), 200);
-        };
-
         if (window.lucide) window.lucide.createIcons();
 
-        // 入场动画（从底部弹出）
+        // 入场动画（从底部弹出），同时绑定悬停事件防止竞态
         requestAnimationFrame(() => {
             overlay.style.opacity = '1';
             panel.style.transform = 'translateX(-50%) translateY(0) scale(1)';
             panel.style.opacity = '1';
+
+            // 悬停面板时保持显示，离开时延迟关闭
+            panel.onmouseenter = () => {
+                clearTimeout(this._announcementHoverTimer);
+            };
+            panel.onmouseleave = () => {
+                this._announcementHoverTimer = setTimeout(() => this._closeAnnouncement(), 200);
+            };
         });
 
         const listDiv = panel.querySelector('.announcement-list');
@@ -423,7 +423,7 @@ class AuthUIService {
         this.setLoginButtonLoading(true);
 
         this.authService.login(email, password)
-            .then((data) => {
+            .then(() => {
                 this.notificationService.show('登录成功', 'success');
                 requestAnimationFrame(() => {
                     this.hideAuthModal();
@@ -458,7 +458,7 @@ class AuthUIService {
         this.setRegisterButtonLoading(true);
 
         this.authService.register(email, password)
-            .then((data) => {
+            .then(() => {
                 this.notificationService.show('注册成功！请前往邮箱验证', 'info', 8000);
                 
                 if (this.elements.authEmail) this.elements.authEmail.value = '';

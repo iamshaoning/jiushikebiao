@@ -7,7 +7,8 @@
 import { bootstrap } from './bootstrap.js';
 
 (function setupViewportScale() {
-    const MIN_WIDTH = 1300;
+    const viewportMeta = document.querySelector('meta[name="viewport"]');
+    const MIN_WIDTH = viewportMeta ? parseInt((viewportMeta.content.match(/width=(\d+)/) || [])[1]) || 1300 : 1300;
 
     const isMobile = window.matchMedia('(pointer: coarse)').matches &&
         !window.matchMedia('(pointer: fine)').matches;

@@ -108,6 +108,12 @@ class ThemeService {
 
         const activeContainer = this.themeSlider.querySelector(`[data-theme="${mode}"]`);
         if (activeContainer) activeContainer.classList.add('active');
+
+        const label = document.getElementById('settings-theme-label');
+        if (label) {
+            const labels = { light: '浅色', auto: '自动', dark: '深色' };
+            label.textContent = labels[mode] || '自动';
+        }
     }
 
     /**

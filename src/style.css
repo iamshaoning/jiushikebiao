@@ -10,15 +10,6 @@
     100% { background-position: 0% 50%; }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeOut {
-    to { opacity: 0; }
-}
-
 @keyframes glow {
     0% { opacity: 1; }
     100% { opacity: 0; }
@@ -1335,6 +1326,7 @@ button:not(:active), .btn:not(:active) {
     font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
+    margin-right: 12px;
 }
 
 .settings-theme-item .theme-slider {
@@ -1474,8 +1466,8 @@ button:not(:active), .btn:not(:active) {
 }
 .theme-slider-indicator.auto { 
   left: 40px; 
-  background-color: rgba(59, 130, 246, 0.3);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  background-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
 }
 .theme-slider-indicator.dark { 
   left: 76px; 
@@ -1484,8 +1476,8 @@ button:not(:active), .btn:not(:active) {
 }
 
 .dark .theme-slider-indicator.auto {
-  background-color: rgba(147, 197, 253, 0.3);
-  box-shadow: 0 2px 8px rgba(147, 197, 253, 0.2);
+  background-color: rgba(74, 222, 128, 0.3);
+  box-shadow: 0 2px 8px rgba(74, 222, 128, 0.2);
 }
 
 .theme-slider-icons {
