@@ -87,7 +87,6 @@ function initElements() {
     elements.settingsBtn = document.getElementById('settings-btn');
     elements.settingsDropdown = document.getElementById('settings-dropdown');
     elements.settingsUserName = document.getElementById('settings-user-name');
-    elements.settingsEmailProvider = document.getElementById('settings-email-provider');
     elements.studentSearch = document.getElementById('student-search');
     elements.main = document.querySelector('main');
     elements.studentsList = document.getElementById('students-list');

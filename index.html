@@ -66,16 +66,24 @@
                     </button>
                     <div id="settings-dropdown" class="settings-dropdown">
                         <div class="settings-dropdown-header">
-                            <div class="settings-avatar">
-                                <i data-lucide="circle-user-round" class="inline-block" style="width: 28px; height: 28px;"></i>
-                            </div>
-                            <div class="settings-header-info">
-                                <span id="settings-user-name" class="settings-user-name"></span>
-                                <div class="settings-header-badge-row">
-                                    <span id="settings-email-provider" class="settings-email-provider-badge"></span>
+                            <div class="settings-avatar" id="profile-avatar-wrapper">
+                                <img id="profile-avatar-img" src="" alt="头像" class="settings-avatar-img" style="display:none">
+                                <div class="settings-avatar-loading" id="profile-avatar-loading" style="display:none">
+                                    <div class="avatar-spinner"></div>
+                                </div>
+                                <div class="settings-avatar-placeholder" id="profile-avatar-placeholder">
+                                    <i data-lucide="circle-user-round" class="inline-block" style="width: 40px; height: 40px;"></i>
+                                </div>
+                                <div class="settings-avatar-overlay">
+                                    <i data-lucide="camera" style="width: 14px; height: 14px;"></i>
                                 </div>
                             </div>
+                            <div class="settings-header-info">
+                                <span id="settings-user-name" class="settings-user-name" title="点击修改昵称"></span>
+                                <input id="settings-nickname-input" class="settings-nickname-input" type="text" maxlength="20" placeholder="输入昵称" style="display:none">
+                            </div>
                         </div>
+                        <input type="file" id="profile-avatar-input" accept="image/jpeg,image/png" style="display:none">
                         <div class="settings-dropdown-divider"></div>
                         <div class="settings-theme-item">
                             <span id="settings-theme-label" class="settings-theme-label">自动模式</span>

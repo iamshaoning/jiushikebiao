@@ -44,6 +44,7 @@ import DatePickerService from './services/datePickerService.js';
 import CustomSelectService from './services/customSelectService.js';
 import ThemeService from './services/themeService.js';
 import AuthUIService from './services/authUIService.js';
+import ProfileService from './services/profileService.js';
 import DataLoadService from './services/dataLoadService.js';
 import ViewRefreshService from './services/viewRefreshService.js';
 import InitService from './services/initService.js';
@@ -234,7 +235,10 @@ registry.set('themeService', themeService);
 const loadSystemService = new LoadSystemService();
 registry.set('loadSystemService', loadSystemService);
 
-const authUIService = new AuthUIService(elements, utils, notificationService, authService, modalService, serverStatusService);
+const profileService = new ProfileService();
+registry.set('profileService', profileService);
+
+const authUIService = new AuthUIService(elements, utils, notificationService, authService, modalService, serverStatusService, profileService);
 registry.set('authUIService', authUIService);
 authUIService.setLoadSystemService(loadSystemService);
 

@@ -8,14 +8,16 @@ import { registry } from '../core/registry.js';
 import { subscribeAnnouncements, loadAnnouncements } from './announcementService.js';
 
 class AuthUIService {
-    constructor(elements, utils, notificationService, authService, modalService, serverStatusService) {
+    constructor(elements, utils, notificationService, authService, modalService, serverStatusService, profileService) {
         this.elements = elements;
         this.utils = utils;
         this.notificationService = notificationService;
         this.authService = authService;
         this.modalService = modalService;
         this.serverStatusService = serverStatusService;
+        this.profileService = profileService;
         this.loadSystemService = null;
+        this._currentUserId = null;
     }
 
     /**
@@ -25,6 +27,7 @@ class AuthUIService {
         this.bindEvents();
         this.setupSettingsDropdown();
         this.setupLogoutButton();
+        this._setupProfileEditing();
     }
 
     /**
@@ -604,23 +607,23 @@ class AuthUIService {
      * 更新已登录用户的UI
      */
     updateUIForAuth(user) {
-        if (this.elements.settingsUserName) {
-            const email = user.email || '';
-            this.elements.settingsUserName.textContent = email.split('@')[0];
-        }
-        if (this.elements.settingsEmailProvider) {
-            const email = user.email || '';
-            const domain = email.split('@')[1] || '';
-            const provider = domain.split('.')[0] || '';
-            this.elements.settingsEmailProvider.textContent = provider ? provider + '邮箱' : '';
-            this.elements.settingsEmailProvider.style.display = provider ? 'inline-block' : 'none';
-        }
+        this._currentUserId = user.id;
+        this._renderProfilePlaceholder(user.email);
 
         if (this.elements.logoutBtn) {
             this.elements.logoutBtn.classList.remove('hidden');
         }
 
         this._hideAuthModalAnimated();
+
+        // 异步加载 profile
+        if (this.profileService && user.id) {
+            this.profileService.loadProfile(user.id).then(profile => {
+                if (profile) {
+                    this._renderProfile(profile);
+                }
+            }).catch(() => {});
+        }
     }
 
     /**
@@ -630,10 +633,6 @@ class AuthUIService {
         if (this.elements.settingsUserName) {
             this.elements.settingsUserName.textContent = '试用用户';
         }
-        if (this.elements.settingsEmailProvider) {
-            this.elements.settingsEmailProvider.style.display = 'none';
-        }
-
         if (this.elements.logoutBtn) {
             this.elements.logoutBtn.classList.remove('hidden');
         }
@@ -788,6 +787,170 @@ class AuthUIService {
      */
     exitTrialMode() {
         this.serverStatusService.setTrialMode(false);
+    }
+
+    /**
+     * 渲染 profile 占位（使用邮箱前缀）
+     */
+    _renderProfilePlaceholder(email) {
+        const nameEl = document.getElementById('settings-user-name');
+        if (nameEl) {
+            nameEl.textContent = '用户';
+        }
+        // 清除旧头像残留，显示默认占位
+        const avatarImg = document.getElementById('profile-avatar-img');
+        const placeholder = document.getElementById('profile-avatar-placeholder');
+        const loading = document.getElementById('profile-avatar-loading');
+        if (avatarImg) {
+            avatarImg.src = '';
+            avatarImg.style.display = 'none';
+        }
+        if (loading) loading.style.display = 'none';
+        if (placeholder) placeholder.style.display = '';
+    }
+
+    /**
+     * 渲染 profile 数据（头像 + 昵称）
+     */
+    _renderProfile(profile) {
+        const nameEl = document.getElementById('settings-user-name');
+        if (nameEl && profile.nickname) {
+            nameEl.textContent = profile.nickname;
+        }
+
+        const avatarImg = document.getElementById('profile-avatar-img');
+        const placeholder = document.getElementById('profile-avatar-placeholder');
+        const loading = document.getElementById('profile-avatar-loading');
+
+        // 头像：通过文件名动态生成签名 URL
+        if (profile.avatar_url) {
+            if (loading) loading.style.display = '';
+            if (placeholder) placeholder.style.display = 'none';
+
+            this.profileService.getAvatarUrl(profile.avatar_url).then(url => {
+                if (url && avatarImg) {
+                    avatarImg.src = url;
+                    avatarImg.style.display = '';
+                    avatarImg.onload = () => {
+                        if (loading) loading.style.display = 'none';
+                    };
+                    avatarImg.onerror = () => {
+                        if (loading) loading.style.display = 'none';
+                        if (placeholder) placeholder.style.display = '';
+                    };
+                } else {
+                    if (loading) loading.style.display = 'none';
+                    if (placeholder) placeholder.style.display = '';
+                }
+            }).catch(() => {
+                if (loading) loading.style.display = 'none';
+                if (placeholder) placeholder.style.display = '';
+            });
+        } else {
+            // 无头像，回退到默认占位，清除旧头像残留
+            if (avatarImg) {
+                avatarImg.src = '';
+                avatarImg.style.display = 'none';
+            }
+            if (loading) loading.style.display = 'none';
+            if (placeholder) placeholder.style.display = '';
+        }
+    }
+
+    /**
+     * 设置 profile 编辑功能（昵称编辑 + 头像上传）
+     */
+    _setupProfileEditing() {
+        const nameEl = document.getElementById('settings-user-name');
+        const inputEl = document.getElementById('settings-nickname-input');
+        const avatarWrapper = document.getElementById('profile-avatar-wrapper');
+        const fileInput = document.getElementById('profile-avatar-input');
+
+        // 昵称编辑：点击切换为输入框
+        if (nameEl && inputEl) {
+            nameEl.addEventListener('click', () => {
+                if (!this._currentUserId) return;
+                inputEl.value = nameEl.textContent;
+                nameEl.style.display = 'none';
+                inputEl.style.display = '';
+                inputEl.focus();
+                inputEl.select();
+            });
+
+            const saveNickname = () => {
+                const newName = inputEl.value.trim();
+                nameEl.style.display = '';
+                inputEl.style.display = 'none';
+
+                if (newName && newName !== nameEl.textContent && this._currentUserId) {
+                    this.profileService.updateNickname(this._currentUserId, newName).then(success => {
+                        if (success) {
+                            nameEl.textContent = newName;
+                        }
+                    }).catch(() => {});
+                }
+            };
+
+            inputEl.addEventListener('blur', saveNickname);
+            inputEl.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    inputEl.blur();
+                } else if (e.key === 'Escape') {
+                    inputEl.value = nameEl.textContent;
+                    inputEl.blur();
+                }
+            });
+        }
+
+        // 头像上传：点击头像区域触发文件选择
+        if (avatarWrapper && fileInput) {
+            avatarWrapper.addEventListener('click', (e) => {
+                if (!this._currentUserId) return;
+                e.stopPropagation();
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', () => {
+                const file = fileInput.files?.[0];
+                if (!file || !this._currentUserId) return;
+
+                // 文件大小限制 200KB
+                if (file.size > 200 * 1024) {
+                    this.notificationService.show('文件大小不能超过 200KB', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+
+                this.profileService.uploadAvatar(this._currentUserId, file).then(url => {
+                    if (url) {
+                        const avatarImg = document.getElementById('profile-avatar-img');
+                        const placeholder = document.getElementById('profile-avatar-placeholder');
+                        const loading = document.getElementById('profile-avatar-loading');
+                        if (loading) loading.style.display = '';
+                        if (placeholder) placeholder.style.display = 'none';
+                        if (avatarImg) {
+                            avatarImg.src = url;
+                            avatarImg.style.display = '';
+                            avatarImg.onload = () => {
+                                if (loading) loading.style.display = 'none';
+                            };
+                            avatarImg.onerror = () => {
+                                if (loading) loading.style.display = 'none';
+                                if (placeholder) placeholder.style.display = '';
+                            };
+                        }
+                        this.notificationService.show('头像已更新', 'success');
+                    } else {
+                        this.notificationService.show('头像上传失败', 'error');
+                    }
+                }).catch(() => {
+                    this.notificationService.show('头像上传失败', 'error');
+                });
+
+                // 重置 file input 以允许重复上传同一文件
+                fileInput.value = '';
+            });
+        }
     }
 }
 
