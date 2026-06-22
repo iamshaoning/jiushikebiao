@@ -914,22 +914,22 @@ class AuthUIService {
                 const file = fileInput.files?.[0];
                 if (!file || !this._currentUserId) return;
 
-                // 文件大小限制 200KB
+                // 文件大小限制 200KB（前端预检，profileService 内部也会校验）
                 if (file.size > 200 * 1024) {
                     this.notificationService.show('文件大小不能超过 200KB', 'error');
                     fileInput.value = '';
                     return;
                 }
 
-                this.profileService.uploadAvatar(this._currentUserId, file).then(url => {
-                    if (url) {
+                this.profileService.uploadAvatar(this._currentUserId, file).then(result => {
+                    if (result.success && result.url) {
                         const avatarImg = document.getElementById('profile-avatar-img');
                         const placeholder = document.getElementById('profile-avatar-placeholder');
                         const loading = document.getElementById('profile-avatar-loading');
                         if (loading) loading.style.display = '';
                         if (placeholder) placeholder.style.display = 'none';
                         if (avatarImg) {
-                            avatarImg.src = url;
+                            avatarImg.src = result.url;
                             avatarImg.style.display = '';
                             avatarImg.onload = () => {
                                 if (loading) loading.style.display = 'none';
@@ -941,7 +941,7 @@ class AuthUIService {
                         }
                         this.notificationService.show('头像已更新', 'success');
                     } else {
-                        this.notificationService.show('头像上传失败', 'error');
+                        this.notificationService.show(result.error || '头像上传失败', 'error');
                     }
                 }).catch(() => {
                     this.notificationService.show('头像上传失败', 'error');

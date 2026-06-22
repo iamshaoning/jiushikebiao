@@ -10,7 +10,7 @@ class EventDispatcherService {
     constructor() {
         this.initialized = false;
     }
-    
+
     init() {
         if (this.initialized) {
             return;
@@ -19,7 +19,13 @@ class EventDispatcherService {
         this._dragState = { active: false, startX: 0, startY: 0, rect: null, selectedCells: [], _justDragged: false };
         this._studentDragState = { active: false, startX: 0, startY: 0, rect: null, touchedRows: [], _justDragged: false };
         this._selectedStudentIds = new Set();
+        // 持久化 mousemove/mouseup 处理函数引用，便于按需 add/removeEventListener
+        this._boundCalendarMouseMove = this._onCalendarMouseMove.bind(this);
+        this._boundCalendarMouseUp = this._onCalendarMouseUp.bind(this);
+        this._boundStudentMouseMove = this._onStudentMouseMove.bind(this);
+        this._boundStudentMouseUp = this._onStudentMouseUp.bind(this);
 
+        // Calendar cell drag selection - mousedown
         document.body.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return;
             const calendarCell = e.target.closest('.calendar-cell');
@@ -32,74 +38,9 @@ class EventDispatcherService {
             this._dragState.startX = e.clientX;
             this._dragState.startY = e.clientY;
             this._dragState.selectedCells = [];
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!this._dragState.active) return;
-            const dx = e.clientX - this._dragState.startX;
-            const dy = e.clientY - this._dragState.startY;
-            if (!this._dragState.rect && (Math.abs(dx) < 5 && Math.abs(dy) < 5)) return;
-
-            if (!this._dragState.rect) {
-                this._dragState.rect = document.createElement('div');
-                this._dragState.rect.className = 'selection-rect';
-                document.body.appendChild(this._dragState.rect);
-                document.querySelectorAll('.calendar-cell-selected').forEach(c => {
-                    c.classList.remove('calendar-cell-selected');
-                });
-                registry.get('modalService').closeAllPopovers();
-            }
-
-            const left = Math.min(e.clientX, this._dragState.startX);
-            const top = Math.min(e.clientY, this._dragState.startY);
-            const width = Math.abs(dx);
-            const height = Math.abs(dy);
-
-            this._dragState.rect.style.left = left + 'px';
-            this._dragState.rect.style.top = top + 'px';
-            this._dragState.rect.style.width = width + 'px';
-            this._dragState.rect.style.height = height + 'px';
-
-            const selRect = { left, top, right: left + width, bottom: top + height };
-
-            document.querySelectorAll('.calendar-cell').forEach(cell => {
-                const cr = cell.getBoundingClientRect();
-                const overlaps = !(cr.right < selRect.left || cr.left > selRect.right || cr.bottom < selRect.top || cr.top > selRect.bottom);
-                if (overlaps) {
-                    cell.classList.add('calendar-cell-selected', 'calendar-cell-selecting');
-                    if (!this._dragState.selectedCells.includes(cell)) {
-                        this._dragState.selectedCells.push(cell);
-                    }
-                } else {
-                    cell.classList.remove('calendar-cell-selected', 'calendar-cell-selecting');
-                    const idx = this._dragState.selectedCells.indexOf(cell);
-                    if (idx !== -1) this._dragState.selectedCells.splice(idx, 1);
-                }
-            });
-        });
-
-        document.addEventListener('mouseup', (e) => {
-            if (!this._dragState.active) return;
-            this._dragState.active = false;
-
-            if (this._dragState.rect) {
-                this._dragState.rect.remove();
-                this._dragState.rect = null;
-
-                document.querySelectorAll('.calendar-cell-selecting').forEach(c => c.classList.remove('calendar-cell-selecting'));
-
-                const selectedCells = document.querySelectorAll('.calendar-cell-selected');
-                if (selectedCells.length >= 1) {
-                    const dates = Array.from(selectedCells).map(c => c.dataset.date);
-                    if (dates.length > 1) {
-                        registry.get('eventHandlerService').handle('calendar-cells-selected', { dates }, e);
-                    }
-                    this._dragState._justDragged = true;
-                    setTimeout(() => { this._dragState._justDragged = false; }, 300);
-                }
-            }
-
-            this._dragState.selectedCells = [];
+            // 拖拽开始时才挂载 mousemove/mouseup，避免全局持续触发
+            document.addEventListener('mousemove', this._boundCalendarMouseMove);
+            document.addEventListener('mouseup', this._boundCalendarMouseUp);
         });
 
         // Student list drag selection - mousedown
@@ -108,103 +49,22 @@ class EventDispatcherService {
             if (this._dragState.active) return;
             if (e.ctrlKey || e.metaKey) return;
 
-            const studentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+            const studentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
             if (!studentRow) return;
             if (e.target.closest('.edit-student') || e.target.closest('.delete-student')) return;
             if (e.target.closest('button')) return;
 
-            // Check if we're on the students page
             const studentsPage = document.getElementById('students-page');
             if (!studentsPage || studentsPage.classList.contains('hidden')) return;
 
-            // Reset calendar drag state in case it's stuck
             this._dragState.active = false;
             this._studentDragState.active = true;
             this._studentDragState.startX = e.clientX;
             this._studentDragState.startY = e.clientY;
             this._studentDragState.touchedRows = [];
-        });
-
-        // Student list drag selection - mousemove
-        document.addEventListener('mousemove', (e) => {
-            if (!this._studentDragState.active && this._dragState.active) return;
-
-            if (this._studentDragState.active) {
-                const dx = e.clientX - this._studentDragState.startX;
-                const dy = e.clientY - this._studentDragState.startY;
-                if (!this._studentDragState.rect && (Math.abs(dx) < 5 && Math.abs(dy) < 5)) return;
-
-                if (!this._studentDragState.rect) {
-                    this._studentDragState.rect = document.createElement('div');
-                    this._studentDragState.rect.className = 'selection-rect';
-                    document.body.appendChild(this._studentDragState.rect);
-                    // Clear previous student selections on drag start
-                    this._clearStudentSelections();
-                }
-
-                const left = Math.min(e.clientX, this._studentDragState.startX);
-                const top = Math.min(e.clientY, this._studentDragState.startY);
-                const width = Math.abs(dx);
-                const height = Math.abs(dy);
-
-                this._studentDragState.rect.style.left = left + 'px';
-                this._studentDragState.rect.style.top = top + 'px';
-                this._studentDragState.rect.style.width = width + 'px';
-                this._studentDragState.rect.style.height = height + 'px';
-
-                const selRect = { left, top, right: left + width, bottom: top + height };
-
-                // Get all student rows (both table and virtual)
-                const rows = [
-                    ...document.querySelectorAll('#students-list tr'),
-                    ...document.querySelectorAll('#students-virtual-container .student-item')
-                ];
-
-                rows.forEach(row => {
-                    const cr = row.getBoundingClientRect();
-                    const overlaps = !(cr.right < selRect.left || cr.left > selRect.right || cr.bottom < selRect.top || cr.top > selRect.bottom);
-                    if (overlaps) {
-                        row.classList.add('student-selected');
-                        if (!this._studentDragState.touchedRows.includes(row)) {
-                            this._studentDragState.touchedRows.push(row);
-                        }
-                    } else {
-                        row.classList.remove('student-selected');
-                        const idx = this._studentDragState.touchedRows.indexOf(row);
-                        if (idx !== -1) this._studentDragState.touchedRows.splice(idx, 1);
-                    }
-                });
-
-                return;
-            }
-        });
-
-        // Student list drag selection - mouseup
-        document.addEventListener('mouseup', (e) => {
-            if (!this._studentDragState.active) return;
-            this._studentDragState.active = false;
-
-            if (this._studentDragState.rect) {
-                this._studentDragState.rect.remove();
-                this._studentDragState.rect = null;
-
-                const selectedRows = document.querySelectorAll('#students-page .student-selected');
-                if (selectedRows.length > 0) {
-                    const ids = [];
-                    selectedRows.forEach(row => {
-                        const sid = row.dataset.studentId;
-                        if (sid) {
-                            ids.push(sid);
-                            this._selectedStudentIds.add(sid);
-                        }
-                    });
-                    this._updateStudentMultiSelectUI();
-                    this._studentDragState._justDragged = true;
-                    setTimeout(() => { this._studentDragState._justDragged = false; }, 300);
-                }
-            }
-
-            this._studentDragState.touchedRows = [];
+            // 拖拽开始时才挂载 mousemove/mouseup，避免全局持续触发
+            document.addEventListener('mousemove', this._boundStudentMouseMove);
+            document.addEventListener('mouseup', this._boundStudentMouseUp);
         });
 
         document.body.addEventListener('contextmenu', (e) => {
@@ -224,7 +84,7 @@ class EventDispatcherService {
                     return;
                 }
             }
-            
+
             const calendarCell = e.target.closest('.calendar-cell');
             if (calendarCell) {
                 if (this._dragState._justDragged) {
@@ -241,10 +101,10 @@ class EventDispatcherService {
                 }
                 e.stopPropagation();
             }
-            
+
             // Student row ctrl+click
             if (e.ctrlKey || e.metaKey) {
-                const studentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+                const studentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
                 if (studentRow && !e.target.closest('.edit-student') && !e.target.closest('.delete-student') && !e.target.closest('button')) {
                     const studentsPage = document.getElementById('students-page');
                     if (studentsPage && !studentsPage.classList.contains('hidden')) {
@@ -257,7 +117,7 @@ class EventDispatcherService {
                     }
                 }
             }
-            
+
             const customOption = e.target.closest('.custom-option');
             if (customOption) {
                 const selectWrapper = customOption.closest('.custom-select');
@@ -267,7 +127,7 @@ class EventDispatcherService {
                 }
                 return;
             }
-            
+
             const target = e.target.closest('[data-action]');
             const courseTagItem = e.target.closest('.course-tag-item');
             const floatingBar = e.target.closest('#floating-action-bar');
@@ -280,9 +140,8 @@ class EventDispatcherService {
                     registry.get('utils').safeAddClass(registry.get('elements').durationDropdown, 'hidden');
                 }
 
-                // Clear student multi-selection when clicking on a student row
                 const studentsPage2 = document.getElementById('students-page');
-                const isStudentRow2 = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+                const isStudentRow2 = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
                 if (studentsPage2 && !studentsPage2.classList.contains('hidden') && isStudentRow2 && this._selectedStudentIds.size > 0) {
                     this._clearStudentSelections();
                     return;
@@ -290,9 +149,8 @@ class EventDispatcherService {
 
                 registry.get('modalService').closeAllPopovers();
 
-                // Clear student multi-selection when clicking outside student rows
                 const studentsPage = document.getElementById('students-page');
-                const isStudentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item');
+                const isStudentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
                 if (studentsPage && !studentsPage.classList.contains('hidden') && !isStudentRow && this._selectedStudentIds.size > 0) {
                     this._clearStudentSelections();
                 }
@@ -336,6 +194,155 @@ class EventDispatcherService {
             const action = target.dataset.action;
             registry.get('eventHandlerService').handle(action, { ...target.dataset }, e);
         });
+    }
+
+    _onCalendarMouseMove(e) {
+        if (!this._dragState.active) return;
+        const dx = e.clientX - this._dragState.startX;
+        const dy = e.clientY - this._dragState.startY;
+        if (!this._dragState.rect && (Math.abs(dx) < 5 && Math.abs(dy) < 5)) return;
+
+        if (!this._dragState.rect) {
+            this._dragState.rect = document.createElement('div');
+            this._dragState.rect.className = 'selection-rect';
+            document.body.appendChild(this._dragState.rect);
+            document.querySelectorAll('.calendar-cell-selected').forEach(c => {
+                c.classList.remove('calendar-cell-selected');
+            });
+            registry.get('modalService').closeAllPopovers();
+        }
+
+        const left = Math.min(e.clientX, this._dragState.startX);
+        const top = Math.min(e.clientY, this._dragState.startY);
+        const width = Math.abs(dx);
+        const height = Math.abs(dy);
+
+        this._dragState.rect.style.left = left + 'px';
+        this._dragState.rect.style.top = top + 'px';
+        this._dragState.rect.style.width = width + 'px';
+        this._dragState.rect.style.height = height + 'px';
+
+        const selRect = { left, top, right: left + width, bottom: top + height };
+
+        document.querySelectorAll('.calendar-cell').forEach(cell => {
+            const cr = cell.getBoundingClientRect();
+            const overlaps = !(cr.right < selRect.left || cr.left > selRect.right || cr.bottom < selRect.top || cr.top > selRect.bottom);
+            if (overlaps) {
+                cell.classList.add('calendar-cell-selected', 'calendar-cell-selecting');
+                if (!this._dragState.selectedCells.includes(cell)) {
+                    this._dragState.selectedCells.push(cell);
+                }
+            } else {
+                cell.classList.remove('calendar-cell-selected', 'calendar-cell-selecting');
+                const idx = this._dragState.selectedCells.indexOf(cell);
+                if (idx !== -1) this._dragState.selectedCells.splice(idx, 1);
+            }
+        });
+    }
+
+    _onCalendarMouseUp(e) {
+        if (!this._dragState.active) return;
+        this._dragState.active = false;
+        // 拖拽结束移除监听器，避免持续触发
+        document.removeEventListener('mousemove', this._boundCalendarMouseMove);
+        document.removeEventListener('mouseup', this._boundCalendarMouseUp);
+
+        if (this._dragState.rect) {
+            this._dragState.rect.remove();
+            this._dragState.rect = null;
+
+            document.querySelectorAll('.calendar-cell-selecting').forEach(c => c.classList.remove('calendar-cell-selecting'));
+
+            const selectedCells = document.querySelectorAll('.calendar-cell-selected');
+            if (selectedCells.length >= 1) {
+                const dates = Array.from(selectedCells).map(c => c.dataset.date);
+                if (dates.length > 1) {
+                    registry.get('eventHandlerService').handle('calendar-cells-selected', { dates }, e);
+                }
+                this._dragState._justDragged = true;
+                setTimeout(() => { this._dragState._justDragged = false; }, 300);
+            }
+        }
+
+        this._dragState.selectedCells = [];
+    }
+
+    _onStudentMouseMove(e) {
+        if (!this._studentDragState.active) return;
+
+        const dx = e.clientX - this._studentDragState.startX;
+        const dy = e.clientY - this._studentDragState.startY;
+        if (!this._studentDragState.rect && (Math.abs(dx) < 5 && Math.abs(dy) < 5)) return;
+
+        if (!this._studentDragState.rect) {
+            this._studentDragState.rect = document.createElement('div');
+            this._studentDragState.rect.className = 'selection-rect';
+            document.body.appendChild(this._studentDragState.rect);
+            this._clearStudentSelections();
+        }
+
+        const left = Math.min(e.clientX, this._studentDragState.startX);
+        const top = Math.min(e.clientY, this._studentDragState.startY);
+        const width = Math.abs(dx);
+        const height = Math.abs(dy);
+
+        this._studentDragState.rect.style.left = left + 'px';
+        this._studentDragState.rect.style.top = top + 'px';
+        this._studentDragState.rect.style.width = width + 'px';
+        this._studentDragState.rect.style.height = height + 'px';
+
+        const selRect = { left, top, right: left + width, bottom: top + height };
+
+        const rows = [
+            ...document.querySelectorAll('#students-list tr'),
+            ...document.querySelectorAll('#students-virtual-container .student-item'),
+            ...document.querySelectorAll('#students-multi-col-container .student-card')
+        ];
+
+        rows.forEach(row => {
+            const cr = row.getBoundingClientRect();
+            const overlaps = !(cr.right < selRect.left || cr.left > selRect.right || cr.bottom < selRect.top || cr.top > selRect.bottom);
+            if (overlaps) {
+                row.classList.add('student-selected');
+                if (!this._studentDragState.touchedRows.includes(row)) {
+                    this._studentDragState.touchedRows.push(row);
+                }
+            } else {
+                row.classList.remove('student-selected');
+                const idx = this._studentDragState.touchedRows.indexOf(row);
+                if (idx !== -1) this._studentDragState.touchedRows.splice(idx, 1);
+            }
+        });
+    }
+
+    _onStudentMouseUp(e) {
+        if (!this._studentDragState.active) return;
+        this._studentDragState.active = false;
+        // 拖拽结束移除监听器，避免持续触发
+        document.removeEventListener('mousemove', this._boundStudentMouseMove);
+        document.removeEventListener('mouseup', this._boundStudentMouseUp);
+
+        if (this._studentDragState.rect) {
+            this._studentDragState.rect.remove();
+            this._studentDragState.rect = null;
+
+            const selectedRows = document.querySelectorAll('#students-page .student-selected');
+            if (selectedRows.length > 0) {
+                const ids = [];
+                selectedRows.forEach(row => {
+                    const sid = row.dataset.studentId;
+                    if (sid) {
+                        ids.push(sid);
+                        this._selectedStudentIds.add(sid);
+                    }
+                });
+                this._updateStudentMultiSelectUI();
+                this._studentDragState._justDragged = true;
+                setTimeout(() => { this._studentDragState._justDragged = false; }, 300);
+            }
+        }
+
+        this._studentDragState.touchedRows = [];
     }
 
     /**

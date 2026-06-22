@@ -266,11 +266,23 @@ export class ConflictModal {
         if (!course) return '';
 
         const h = (str) => registry.get('utils').escapeHtml(str) || '';
-        const primaryColor = course.colors?.[0] || 'var(--color-secondary)';
+        // 颜色值白名单校验：仅允许 hex、rgb/rgba、var(--xxx)、color-mix 等安全格式
+        const safeColor = (c) => {
+            if (typeof c !== 'string') return 'var(--color-secondary)';
+            const trimmed = c.trim();
+            // 允许 var(--xxx) 及 CSS 变量
+            if (/^var\(--[a-zA-Z0-9-]+\)$/.test(trimmed)) return trimmed;
+            // 允许 #hex（3/4/6/8位）
+            if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(trimmed)) return trimmed;
+            // 允许 rgb()/rgba()
+            if (/^rgba?\(\s*\d+(\.\d+)?%?\s*,\s*\d+(\.\d+)?%?\s*,\s*\d+(\.\d+)?%?\s*(,\s*[\d.]+\s*)?\)$/.test(trimmed)) return trimmed;
+            return 'var(--color-secondary)';
+        };
+        const primaryColor = safeColor(course.colors?.[0] || 'var(--color-secondary)');
         const namesArray = Array.isArray(course.studentNames) ? course.studentNames : (course.studentNames || '').split('、').filter(n => n);
 
         const studentTags = namesArray.map((name, i) => {
-            const color = course.colors?.[i] || primaryColor;
+            const color = safeColor(course.colors?.[i] || primaryColor);
             return `<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:10px;font-weight:500;background-color:color-mix(in srgb,${color} 20%,transparent);color:${color};max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;">${h(name)}</span>`;
         }).join('');
 

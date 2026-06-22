@@ -23,11 +23,6 @@ const usedColors = {
     grade: new Set()
 };
 
-const nextColorIndex = {
-    organization: 0,
-    grade: 0
-};
-
 let syncTimeout = null;
 let pendingSyncTypes = new Set();
 
@@ -184,44 +179,26 @@ export function initColorsFromState() {
     
     if (orgColors) {
         const orgEntries = Object.entries(orgColors);
-        let maxOrgIndex = 0;
-        
+
         orgEntries.forEach(([text, color]) => {
             const existing = colorAssignments.organization.get(text);
             if (existing !== color) {
                 colorAssignments.organization.set(text, color);
             }
             usedColors.organization.add(color);
-            const paletteIndex = colorPalette.indexOf(color);
-            if (paletteIndex !== -1 && paletteIndex >= maxOrgIndex) {
-                maxOrgIndex = paletteIndex + 1;
-            }
         });
-        
-        if (maxOrgIndex > 0) {
-            nextColorIndex.organization = maxOrgIndex;
-        }
     }
-    
+
     if (gradeColors) {
         const gradeEntries = Object.entries(gradeColors);
-        let maxGradeIndex = 0;
-        
+
         gradeEntries.forEach(([text, color]) => {
             const existing = colorAssignments.grade.get(text);
             if (existing !== color) {
                 colorAssignments.grade.set(text, color);
             }
             usedColors.grade.add(color);
-            const paletteIndex = colorPalette.indexOf(color);
-            if (paletteIndex !== -1 && paletteIndex >= maxGradeIndex) {
-                maxGradeIndex = paletteIndex + 1;
-            }
         });
-        
-        if (maxGradeIndex > 0) {
-            nextColorIndex.grade = maxGradeIndex;
-        }
     }
 }
 

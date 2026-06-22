@@ -14,6 +14,20 @@ const CONSTANTS = {
 };
 
 const stateUtils = {
+    /**
+     * 获取当前用户ID（轻量级，不抛异常）
+     */
+    _getUserId: async () => {
+        try {
+            const auth = registry.get('supabaseAuth');
+            if (!auth) return null;
+            const { data } = await auth.getSession();
+            return data?.session?.user?.id || null;
+        } catch {
+            return null;
+        }
+    },
+    
     saveData: async () => {
         try {
             const currentState = registry.get('state');
@@ -29,6 +43,16 @@ const stateUtils = {
                 gradeColors: currentState.gradeColors || {},
                 lastupdated: isoDateTimeString
             };
+            
+            // 尝试获取当前用户ID并写入本地数据，确保账号隔离检测能正常工作
+            try {
+                const userId = await stateUtils._getUserId();
+                if (userId) {
+                    appData.userid = userId;
+                }
+            } catch (e) {
+                // 获取用户ID失败不影响数据保存
+            }
             
             currentState.lastupdated = appData.lastupdated;
             

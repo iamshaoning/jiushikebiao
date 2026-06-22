@@ -38,7 +38,13 @@ class EventHandlerService {
             const ed = registry.get('eventDispatcherService');
             if (!ed) return;
             const sid = payload.studentId;
-            const row = document.querySelector(`[data-student-id="${CSS.escape(sid)}"]`);
+            const rows = document.querySelectorAll(`[data-student-id="${CSS.escape(sid)}"]`);
+            // 优先选择可见元素（多列/单列切换时隐藏的旧元素仍留在 DOM 中）
+            let row = null;
+            for (const r of rows) {
+                if (r.offsetParent !== null) { row = r; break; }
+            }
+            if (!row) row = rows[0];
             if (!row) return;
             if (ed._selectedStudentIds.has(sid)) {
                 ed._selectedStudentIds.delete(sid);

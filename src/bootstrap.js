@@ -145,6 +145,12 @@ registry.set('viewRefreshService', viewRefreshService);
 
 const state = registry.get('state');
 
+// 提前实例化服务，避免 TDZ 风险（utils 中引用这些服务）
+const conflictCheckService = new ConflictCheckService(state);
+registry.set('conflictCheckService', conflictCheckService);
+const feeCalculationService = new FeeCalculationService(state);
+registry.set('feeCalculationService', feeCalculationService);
+
 const utils = {
     // ---- 核心工具 (coreUtils) ----
     generateId: coreUtils.generateId, escapeHtml: coreUtils.escapeHtml,
@@ -225,6 +231,9 @@ const utils = {
 
 registry.set('utils', utils);
 
+// 初始化防抖保存函数，避免 setState 在 initDebouncedSave 前调用 null
+utils.initDebouncedSave();
+
 const dataLoadService = new DataLoadService(state, notificationService, serverStatusService, utils);
 registry.set('dataLoadService', dataLoadService);
 utils.loadData = () => dataLoadService.loadData();
@@ -253,12 +262,34 @@ const statisticsCalculatorService = new StatisticsCalculatorService(state);
 registry.set('statisticsCalculatorService', statisticsCalculatorService);
 const statisticsRenderService = new StatisticsRenderService(state, elements, chartService, statisticsCalculatorService);
 registry.set('statisticsRenderService', statisticsRenderService);
-const conflictCheckService = new ConflictCheckService(state);
-const feeCalculationService = new FeeCalculationService(state);
 const calendarRenderService = new CalendarRenderService(state, elements, utils);
 registry.set('calendarRenderService', calendarRenderService);
 const listRenderService = new ListRenderService(state, elements, utils);
 registry.set('listRenderService', listRenderService);
+
+// 学生列表布局切换（单按钮循环三种状态）
+const layoutCycle = ['single', 'double', 'triple'];
+const layoutLabels = { single: '1', double: '2', triple: '3' };
+const studentLayoutBtn = document.querySelector('#student-layout-toggle .student-layout-btn');
+if (studentLayoutBtn) {
+    // 初始化按钮状态
+    const savedLayout = localStorage.getItem('studentListLayout') || 'single';
+    studentLayoutBtn.dataset.layout = savedLayout;
+    studentLayoutBtn.classList.toggle('active', savedLayout !== 'single');
+    studentLayoutBtn.textContent = layoutLabels[savedLayout];
+
+    studentLayoutBtn.addEventListener('click', () => {
+        const current = studentLayoutBtn.dataset.layout || 'single';
+        const idx = layoutCycle.indexOf(current);
+        const next = layoutCycle[(idx + 1) % 3];
+        listRenderService.setLayout(next);
+        // 更新按钮数字和状态
+        studentLayoutBtn.dataset.layout = next;
+        studentLayoutBtn.textContent = layoutLabels[next];
+        studentLayoutBtn.classList.toggle('active', next !== 'single');
+    });
+}
+
 const pageRenderService = new PageRenderService(elements);
 registry.set('pageRenderService', pageRenderService);
 const eventBindingService = new EventBindingService(elements, state, utils, render, modalService, notificationService);

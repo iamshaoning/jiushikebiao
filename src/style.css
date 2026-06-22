@@ -594,6 +594,14 @@ textarea[readonly],
   border-color: var(--border-color) !important;
 }
 
+#students-page thead th {
+  background-color: var(--bg-content);
+}
+
+.dark #students-page thead th {
+  background-color: var(--bg-content) !important;
+}
+
 /* ------------------------------
    11. 按钮样式
    ------------------------------ */
@@ -1716,4 +1724,187 @@ button:not(:active), .btn:not(:active) {
 
 .scroll-fade-bottom.scrolled-to-bottom::after {
     opacity: 0;
+}
+
+/* ------------------------------
+   22. 学生列表布局切换样式
+   ------------------------------ */
+
+.student-layout-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--bg-content);
+    border: 1.5px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: var(--text-secondary);
+    position: relative;
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    user-select: none;
+}
+
+.student-layout-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: var(--layout-color, var(--color-primary));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.student-layout-btn:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+/* 三种布局模式的不同配色 */
+.student-layout-btn[data-layout="single"] { --layout-color: var(--color-success); }
+.student-layout-btn[data-layout="double"] { --layout-color: var(--color-primary); }
+.student-layout-btn[data-layout="triple"] { --layout-color: #8b5cf6; }
+
+.student-layout-btn.active {
+    border-color: var(--layout-color);
+    color: var(--layout-color);
+    background: var(--bg-content);
+}
+
+.student-layout-btn.active::after {
+    opacity: 0.12;
+}
+
+/* 多列学生网格容器 */
+#students-multi-col-container {
+    display: none;
+}
+
+#students-multi-col-container.active {
+    display: block;
+}
+
+.students-grid {
+    column-gap: 16px;
+}
+
+.students-grid.cols-2 {
+    column-count: 2;
+}
+
+.students-grid.cols-3 {
+    column-count: 3;
+}
+
+/* 机构分组卡片 */
+.student-org-group {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.student-org-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-content);
+    color: var(--text-primary);
+}
+
+.student-org-group-header .org-count {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-secondary);
+}
+
+.student-org-group-body {
+    /* 学生卡片列表 */
+}
+
+.student-card {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.1s ease;
+    cursor: default;
+}
+
+.student-card:last-child {
+    border-bottom: none;
+}
+
+.student-card:hover {
+    background-color: var(--bg-content);
+}
+
+.student-card .student-card-name {
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.student-card .student-card-fee {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.student-card .student-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-self: end;
+}
+
+.student-card .student-card-actions button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.student-card .student-card-actions button:hover {
+    transform: scale(1.1);
+    background-color: var(--bg-primary);
+}
+
+.student-card .student-card-actions button:active {
+    transform: scale(0.95);
+}
+
+/* 多列模式下的选中状态 */
+.student-card.student-selected {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -1px;
+}
+
+/* 多列模式下隐藏编辑/删除按钮（多选模式） */
+.students-multi-selecting .student-card .student-card-actions button {
+    opacity: 0.3;
+    pointer-events: none;
 }

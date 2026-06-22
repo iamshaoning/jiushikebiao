@@ -533,7 +533,7 @@ class HistoryService {
                 success = this.undoDeleteStudents(action);
                 break;
             case 'restore-snapshot':
-                success = this.undoRestoreSnapshot(action);
+                success = await this.undoRestoreSnapshot(action);
                 break;
         }
 
@@ -648,7 +648,7 @@ class HistoryService {
                 success = this.redoDeleteStudents(action);
                 break;
             case 'restore-snapshot':
-                success = this.redoRestoreSnapshot(action);
+                success = await this.redoRestoreSnapshot(action);
                 break;
         }
 
@@ -784,7 +784,7 @@ class HistoryService {
     /**
      * 撤销快照恢复（还原到快照恢复前的数据）
      */
-    undoRestoreSnapshot(action) {
+    async undoRestoreSnapshot(action) {
         if (!registry.get('state') || !action.previousData) return false;
 
         const prevData = action.previousData;
@@ -799,7 +799,8 @@ class HistoryService {
             draft.lastupdated = prevData.lastupdated;
         }, ['students', 'courses', 'organizations', 'grades', 'organizationColors', 'gradeColors', 'calendar']);
 
-        localStorage.setItem('coursemanagerdata', JSON.stringify(prevData));
+        // 通过 stateUtils.saveData 统一持久化，保证一致性与服务器同步
+        await registry.get('utils').saveData();
 
         return true;
     }
@@ -807,7 +808,7 @@ class HistoryService {
     /**
      * 重做快照恢复（重新应用快照数据）
      */
-    redoRestoreSnapshot(action) {
+    async redoRestoreSnapshot(action) {
         if (!registry.get('state') || !action.snapshotData) return false;
 
         const snapData = action.snapshotData;
@@ -822,7 +823,8 @@ class HistoryService {
             draft.lastupdated = snapData.lastupdated;
         }, ['students', 'courses', 'organizations', 'grades', 'organizationColors', 'gradeColors', 'calendar']);
 
-        localStorage.setItem('coursemanagerdata', JSON.stringify(snapData));
+        // 通过 stateUtils.saveData 统一持久化，保证一致性与服务器同步
+        await registry.get('utils').saveData();
 
         return true;
     }

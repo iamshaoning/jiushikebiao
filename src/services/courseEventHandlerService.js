@@ -118,12 +118,8 @@ class CourseEventHandlerService {
                                             draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
                                             draft.courses.push(...allToAdd);
                                         }, 'courses');
-                                        if (overriddenCourses.length > 0) {
-                                            registry.get('historyService').recordBatchAddCourses(overriddenCourses);
-                                        }
-                                        if (coursesToAdd.length > 0) {
-                                            registry.get('historyService').recordBatchAddCourses(coursesToAdd);
-                                        }
+                                        // 合并所有新增课程为一次历史记录，避免双重记录
+                                        registry.get('historyService').recordBatchAddCourses(allToAdd);
                                         await registry.get('utils').saveData();
                                         registry.get('modalService').hide();
                                         const skippedCount = skipped.length;
@@ -223,12 +219,8 @@ class CourseEventHandlerService {
                             draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
                             draft.courses.push(...allCoursesToAdd);
                         }, 'courses');
-                        if (overriddenCourses.length > 0) {
-                            registry.get('historyService').recordBatchPasteCourses(overriddenCourses);
-                        }
-                        if (allToAdd.length > 0) {
-                            registry.get('historyService').recordBatchPasteCourses(allToAdd);
-                        }
+                        // 合并所有新增课程为一次历史记录，避免双重记录
+                        registry.get('historyService').recordBatchPasteCourses(allCoursesToAdd);
                         await registry.get('utils').saveData();
                         const skippedCount = skipped.length;
                         const addedCount = allCoursesToAdd.length;

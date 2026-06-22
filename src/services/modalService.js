@@ -193,6 +193,8 @@ class ModalService {
         }, 400);
 
         if (this._boundKeydownHandler) { document.removeEventListener('keydown', this._boundKeydownHandler); this._boundKeydownHandler = null; }
+        // 同步清理 conflict 模态框可能残留的 keydown 监听器，防止泄漏
+        if (this._conflictKeydownHandler) { document.removeEventListener('keydown', this._conflictKeydownHandler); this._conflictKeydownHandler = null; }
         this.eventListeners.forEach(({ element, type, listener }) => { if (element) element.removeEventListener(type, listener); });
         this.eventListeners = [];
         if (this.setTimeoutId) { clearTimeout(this.setTimeoutId); this.setTimeoutId = null; }

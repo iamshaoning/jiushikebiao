@@ -132,12 +132,8 @@ const clipboardUtils = {
                             draft.courses.push(...allCoursesToAdd);
                         }, 'courses');
                         await registry.get('utils').saveData();
-                        if (overriddenCourses.length > 0) {
-                            registry.get('historyService').recordPasteCourses(overriddenCourses);
-                        }
-                        if (coursesToAdd.length > 0) {
-                            registry.get('historyService').recordPasteCourses(coursesToAdd);
-                        }
+                        // 合并所有新增课程为一次历史记录，避免双重记录
+                        registry.get('historyService').recordPasteCourses(allCoursesToAdd);
                         const skippedCount = skipped.length;
                         let msg = `成功粘贴 ${allCoursesToAdd.length} 节课程`;
                         if (skippedCount > 0) msg += `，跳过 ${skippedCount} 节`;

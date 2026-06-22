@@ -40,19 +40,31 @@ class DataLoadService {
 
     _shouldCreateLoginSnapshot(localData, isLoggedIn, currentUserId) {
         if (!localData || !isLoggedIn || !currentUserId) return false;
-        if (localData.userid && localData.userid !== currentUserId) return false;
+        // 严格检查：本地数据必须明确属于当前用户，否则不允许创建快照
+        if (!localData.userid || localData.userid !== currentUserId) return false;
         return true;
     }
 
     _isOtherAccount(localData, currentUserId) { return localData && currentUserId && localData.userid !== currentUserId; }
 
     _clearStateForNewAccount() {
+        // 清空当前状态中的所有数据
         this.state.students = [];
         this.state.courses = [];
         this.state.organizations = [];
         this.state.grades = [];
         this.state.organizationColors = {};
         this.state.gradeColors = {};
+        
+        // 清理旧的 Realtime 通道，避免切换账号后旧通道处理其他用户的数据
+        if (registry.get('realtimeChannel')) {
+            try {
+                registry.get('realtimeChannel').unsubscribe();
+            } catch (error) {
+                console.error('取消旧实时监听器订阅失败:', error);
+            }
+            registry.set('realtimeChannel', null);
+        }
     }
 
     _setupRealtimeChannel(userId) {

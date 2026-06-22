@@ -16,7 +16,33 @@ export class ListRenderService {
         this._cachedStudents = null;
         this._lastSearchTerm = '';
         this._virtualList = null;
+        this._layout = localStorage.getItem('studentListLayout') || 'single';
         
+    }
+
+    /**
+     * 获取当前布局模式
+     */
+    getLayout() {
+        return this._layout;
+    }
+
+    /**
+     * 设置布局模式
+     * @param {string} layout - 'single' | 'double' | 'triple'
+     */
+    setLayout(layout) {
+        this._layout = layout;
+        localStorage.setItem('studentListLayout', layout);
+        // 同步按钮状态
+        const btn = document.querySelector('#student-layout-toggle .student-layout-btn');
+        if (btn) {
+            btn.dataset.layout = layout;
+            btn.textContent = { single: '1', double: '2', triple: '3' }[layout];
+            btn.classList.toggle('active', layout !== 'single');
+        }
+        this.resetStudentCache();
+        this.students();
     }
 
     /**
@@ -80,6 +106,7 @@ export class ListRenderService {
         
         // 渲染学生列表
         if (filteredStudents.length === 0) {
+            this._hideMultiColContainer();
             const tableEl = studentsList.closest('table');
             if (tableEl) tableEl.style.display = '';
             const vlistContainer = document.getElementById('students-virtual-container');
@@ -101,6 +128,16 @@ export class ListRenderService {
             }
             return;
         }
+
+        // 多列布局模式
+        if (this._layout === 'double' || this._layout === 'triple') {
+            this._renderMultiColumn(filteredStudents);
+            return;
+        }
+
+        // 单列模式 — 先恢复表格容器显示
+        this._hideMultiColContainer();
+
         const VirtualList = registry.get('VirtualList');
         if (VirtualList && filteredStudents.length > 50) {
             // 对于大型列表使用虚拟滚动 — 不能在 tbody 中使用 div 定位，改用独立容器
@@ -176,11 +213,11 @@ export class ListRenderService {
                             ${this.utils.escapeHtml(student.grade || '未设置')}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <td class="px-6 py-4 whitespace-nowrap">
                         ${feeDisplay}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
-                        <div class="flex items-center justify-center">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div class="flex items-center">
                             <button class="edit-student w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-student" data-id="${this.utils.escapeHtml(id)}">
                                 <i data-lucide="square-pen" class="inline-block" style="width: 18px; height: 18px; color: var(--color-success);"></i>
                             </button>
@@ -241,11 +278,11 @@ export class ListRenderService {
                 <div style="flex:1;min-width:0;">
                     <span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,${gradeColor} 20%,transparent);color:${gradeColor};">${this.utils.escapeHtml(student.grade || '未设置')}</span>
                 </div>
-                <div style="flex:0 0 auto;text-align:center;">
+                <div style="flex:1;min-width:0;">
                     <div class="text-sm" style="color:var(--text-secondary);">${feeDisplay}</div>
                 </div>
-                <div style="flex:0 0 auto;text-align:center;">
-                    <div class="flex items-center justify-center">
+                <div style="flex:1;min-width:0;">
+                    <div class="flex items-center">
                         <button class="edit-student w-8 h-8 rounded-full flex items-center justify-center cursor-pointer mr-2 hover:scale-110 active:scale-95 transition-transform" data-action="edit-student" data-id="${this.utils.escapeHtml(id)}">
                             <i data-lucide="square-pen" class="inline-block" style="width:18px;height:18px;color:var(--color-success);"></i>
                         </button>
@@ -253,6 +290,133 @@ export class ListRenderService {
                             <i data-lucide="trash-2" class="inline-block" style="width:18px;height:18px;color:var(--color-danger);"></i>
                         </button>
                     </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * 隐藏多列容器，恢复表格显示
+     */
+    _hideMultiColContainer() {
+        const multiCol = document.getElementById('students-multi-col-container');
+        if (multiCol) multiCol.classList.remove('active');
+        if (this._virtualList) {
+            this._virtualList.destroy();
+            this._virtualList = null;
+        }
+        const vlistContainer = document.getElementById('students-virtual-container');
+        if (vlistContainer) vlistContainer.style.display = 'none';
+        const tableWrapper = this.elements.studentsList.closest('.rounded-xl');
+        if (tableWrapper) tableWrapper.style.display = '';
+    }
+
+    /**
+     * 渲染多列布局（按机构分组）
+     */
+    _renderMultiColumn(students) {
+        const studentsList = this.elements.studentsList;
+        
+        // 隐藏表格和虚拟列表（同时隐藏外层 wrapper 避免出现灰色边框线）
+        const tableWrapper = studentsList.closest('.rounded-xl');
+        if (tableWrapper) tableWrapper.style.display = 'none';
+        const vlistContainer = document.getElementById('students-virtual-container');
+        if (vlistContainer) vlistContainer.style.display = 'none';
+        if (this._virtualList) {
+            this._virtualList.destroy();
+            this._virtualList = null;
+        }
+
+        // 获取或创建多列容器
+        let multiCol = document.getElementById('students-multi-col-container');
+        if (!multiCol) {
+            multiCol = document.createElement('div');
+            multiCol.id = 'students-multi-col-container';
+            if (tableWrapper) {
+                tableWrapper.insertAdjacentElement('afterend', multiCol);
+            } else {
+                studentsList.parentElement.insertAdjacentElement('afterend', multiCol);
+            }
+        }
+        multiCol.classList.add('active');
+
+        // 按机构分组
+        const groups = {};
+        students.forEach(s => {
+            const org = s.organization || '未分配';
+            if (!groups[org]) groups[org] = [];
+            groups[org].push(s);
+        });
+
+        // 对分组键排序
+        const sortedOrgs = Object.keys(groups).sort((a, b) => a.localeCompare(b));
+
+        const colsClass = this._layout === 'triple' ? 'cols-3' : 'cols-2';
+        
+        let html = `<div class="students-grid ${colsClass}">`;
+        
+        sortedOrgs.forEach(org => {
+            const orgStudents = groups[org];
+            const orgColor = this.utils.generateColor(org, 'organization');
+            
+            html += `<div class="student-org-group">`;
+            html += `<div class="student-org-group-header">`;
+            html += `<span class="px-2 py-0.5 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,${orgColor} 20%,transparent);color:${orgColor};">${this.utils.escapeHtml(org)}</span>`;
+            html += `<span class="org-count">${orgStudents.length}人</span>`;
+            html += `</div>`;
+            html += `<div class="student-org-group-body">`;
+            
+            orgStudents.forEach(student => {
+                html += this._renderStudentCard(student);
+            });
+            
+            html += `</div></div>`;
+        });
+        
+        html += `</div>`;
+        multiCol.innerHTML = html;
+
+        // 初始化 Lucide 图标
+        if (registry.get('lucide')) {
+            registry.get('lucide').createIcons({ nodes: [multiCol] });
+        }
+
+        // 恢复多选状态
+        const ed = registry.get('eventDispatcherService');
+        if (ed && ed._selectedStudentIds && ed._selectedStudentIds.size > 0) {
+            const cards = multiCol.querySelectorAll('.student-card');
+            cards.forEach(card => {
+                if (ed._selectedStudentIds.has(card.dataset.studentId)) {
+                    card.classList.add('student-selected');
+                }
+            });
+            ed._updateStudentMultiSelectUI();
+        }
+    }
+
+    /**
+     * 渲染单个学生卡片（多列模式）
+     */
+    _renderStudentCard(student) {
+        const name = student.name || '未命名';
+        const fees = student.fees ?? { '一对一': 0 };
+        const oneOnOneFee = fees['一对一'] ?? 0;
+        const oneOnOneDuration = fees['一对一_duration'] ?? 120;
+        const id = student.id || '';
+        const gradeColor = this.utils.generateColor(student.grade || '未设置', 'grade');
+
+        return `
+            <div class="student-card" data-student-id="${this.utils.escapeHtml(id)}">
+                <span class="student-card-name">${this.utils.escapeHtml(name)}</span>
+                <span class="px-2 py-0.5 text-xs font-medium rounded-full justify-self-center" style="background-color:color-mix(in srgb,${gradeColor} 20%,transparent);color:${gradeColor};">${this.utils.escapeHtml(student.grade || '未设置')}</span>
+                <span class="student-card-fee justify-self-center">${Math.round(oneOnOneFee)}元/${oneOnOneDuration}分钟</span>
+                <div class="student-card-actions">
+                    <button class="edit-student" data-action="edit-student" data-id="${this.utils.escapeHtml(id)}" title="编辑">
+                        <i data-lucide="square-pen" style="width:16px;height:16px;color:var(--color-success);"></i>
+                    </button>
+                    <button class="delete-student" data-action="delete-student" data-id="${this.utils.escapeHtml(id)}" title="删除">
+                        <i data-lucide="trash-2" style="width:16px;height:16px;color:var(--color-danger);"></i>
+                    </button>
                 </div>
             </div>
         `;

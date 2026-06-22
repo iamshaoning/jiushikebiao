@@ -83,7 +83,8 @@ export class HistoryModal {
                     const success = await registry.get('historyService').undoAction(id);
                     if (success) {
                         registry.get('utils').refreshAllViews(true);
-                        this.modal.hide();
+                        // 重新渲染历史模态框，让用户看到撤销后的状态变化
+                        await this.show();
                         registry.get('notificationService').show('操作已撤销', 'success');
                         await registry.get('utils').saveData();
                     } else {
@@ -99,7 +100,8 @@ export class HistoryModal {
                     const success = await registry.get('historyService').redoAction(id);
                     if (success) {
                         registry.get('utils').refreshAllViews(true);
-                        this.modal.hide();
+                        // 重新渲染历史模态框，让用户看到重做后的状态变化
+                        await this.show();
                         registry.get('notificationService').show('操作已重做', 'success');
                         await registry.get('utils').saveData();
                     } else {

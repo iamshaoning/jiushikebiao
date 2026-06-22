@@ -32,16 +32,17 @@ export class FeeCalculationService {
         if (!student) return;
 
         const studentFees = student.fees ?? {};
-        const baseFee = studentFees['一对一'] ?? 0;
-        const rawDuration = studentFees['一对一_duration'] ?? 120;
-        const baseDuration = Math.max(1, rawDuration);
+        const baseFee = Number(studentFees['一对一']) || 0;
+        const rawDuration = Number(studentFees['一对一_duration']);
+        // 严格校验时长，避免 NaN/0 导致费用计算异常
+        const baseDuration = (Number.isFinite(rawDuration) && rawDuration > 0) ? rawDuration : 120;
         const finalDuration = actualDuration ?? this._getActualDuration();
 
         // 按学生预设时长的价格计算实际费用
         const calculatedFee = (baseFee / baseDuration) * finalDuration;
 
         const feeInput = document.getElementById('course-fee');
-        if (feeInput) {
+        if (feeInput && Number.isFinite(calculatedFee)) {
             feeInput.value = calculatedFee.toFixed(2);
         }
     }

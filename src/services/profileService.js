@@ -7,6 +7,10 @@
 import { registry } from '../core/registry.js';
 
 const BUCKET = 'Profile';
+// 头像上传安全限制：与 Supabase Storage bucket 配置保持一致
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+const ALLOWED_EXTENSIONS = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
+const MAX_FILE_SIZE = 200 * 1024; // 200KB
 
 class ProfileService {
     constructor() {
@@ -19,6 +23,26 @@ class ProfileService {
 
     _getAuth() {
         return registry.get('supabaseAuth');
+    }
+
+    /**
+     * 校验头像文件类型与大小
+     * @returns {{valid: boolean, error?: string}}
+     */
+    _validateAvatarFile(file) {
+        if (!file) return { valid: false, error: '未选择文件' };
+        if (file.size > MAX_FILE_SIZE) {
+            return { valid: false, error: `文件大小不能超过 ${MAX_FILE_SIZE / 1024}KB` };
+        }
+        // 同时校验 MIME 类型与扩展名，避免伪造
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+            return { valid: false, error: '仅支持 JPEG/JPG/PNG/GIF/WEBP 格式' };
+        }
+        if (file.type && !ALLOWED_MIME_TYPES.includes(file.type.toLowerCase())) {
+            return { valid: false, error: '仅支持 JPEG/JPG/PNG/GIF/WEBP 格式' };
+        }
+        return { valid: true };
     }
 
     /**
@@ -156,10 +180,15 @@ class ProfileService {
 
     /**
      * 上传头像，自动删除旧文件，存储文件名到 avatar_url
+     * @returns {Promise<{success: boolean, url?: string, error?: string}>}
      */
     async uploadAvatar(userId, file) {
         const client = this._getClient();
-        if (!client || !userId) return null;
+        if (!client || !userId) return { success: false, error: '服务未初始化' };
+
+        // 前端预校验，避免无效上传消耗带宽
+        const validation = this._validateAvatarFile(file);
+        if (!validation.valid) return { success: false, error: validation.error };
 
         try {
             // 删除旧头像文件
@@ -178,7 +207,7 @@ class ProfileService {
 
             if (uploadError) {
                 console.error('[Profile] 头像上传失败:', uploadError.message, uploadError);
-                return null;
+                return { success: false, error: '头像上传失败' };
             }
 
             // 存储文件名（非完整 URL），显示时动态生成签名 URL
@@ -189,7 +218,7 @@ class ProfileService {
 
             if (updateError) {
                 console.error('[Profile] 更新头像文件名失败:', updateError);
-                return null;
+                return { success: false, error: '头像更新失败' };
             }
 
             if (this._profile) {
@@ -197,10 +226,11 @@ class ProfileService {
             }
 
             // 返回即时可用的签名 URL
-            return await this.getAvatarUrl(fileName);
+            const url = await this.getAvatarUrl(fileName);
+            return { success: true, url };
         } catch (err) {
             console.error('[Profile] 头像上传异常:', err);
-            return null;
+            return { success: false, error: '头像上传异常' };
         }
     }
 

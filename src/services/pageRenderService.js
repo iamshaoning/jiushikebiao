@@ -35,6 +35,12 @@ class PageRenderService {
         // Same page, no transition needed
         if (currentPage === targetPage) return;
 
+        // 切换页面时重置滚动位置到顶部
+        window.scrollTo(0, 0);
+        // 同时重置主内容区的滚动位置（兼容不同滚动容器）
+        const mainEl = document.querySelector('main');
+        if (mainEl) mainEl.scrollTop = 0;
+
         // Fade out current page first, then fade in target page
         if (currentPage) {
             currentPage.classList.remove('active');

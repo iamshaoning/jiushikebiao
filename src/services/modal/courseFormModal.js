@@ -187,7 +187,54 @@ export class CourseFormModal {
                             updatedAt: new Date().toISOString()
                         };
 
-                        if (registry.get('utils').checkTimeConflict(updatedCourse)) return fail('该时间段已有课程安排');
+                        if (registry.get('utils').checkTimeConflict(updatedCourse)) {
+                            if (this._isConflictChecking) { resetSaveBtn(); return; }
+                            this._isConflictChecking = true;
+                            const conflictingCourses = registry.get('utils').findConflictingCourses(updatedCourse);
+                            registry.get('modalService').conflict.show({
+                                conflicts: [{ newCourse: updatedCourse, conflictingCourses }],
+                                isSingleAdd: true,
+                                onResolve: async ({ skipped, overridden }) => {
+                                    if (overridden.length > 0) {
+                                        try {
+                                            // 删除被覆盖的冲突课程
+                                            const deleteIds = new Set();
+                                            overridden.forEach(o => {
+                                                o.conflictingCourses.forEach(c => deleteIds.add(c.id));
+                                            });
+                                            if (deleteIds.size > 0) {
+                                                const deletedCourses = registry.get('state').courses.filter(c => deleteIds.has(c.id));
+                                                registry.get('historyService').recordBatchDeleteCourses(deletedCourses);
+                                            }
+                                            const courseIndex = registry.get('state').courses.findIndex(c => c.id === courseId);
+                                            if (courseIndex === -1) {
+                                                registry.get('notificationService').show('课程不存在', 'error');
+                                                this._isConflictChecking = false;
+                                                resetSaveBtn();
+                                                return;
+                                            }
+                                            const oldCourse = JSON.parse(JSON.stringify(registry.get('state').courses[courseIndex]));
+                                            registry.get('setState')(draft => {
+                                                draft.courses = draft.courses.filter(c => !deleteIds.has(c.id));
+                                                const idx = draft.courses.findIndex(c => c.id === courseId);
+                                                if (idx !== -1) draft.courses[idx] = updatedCourse;
+                                                else draft.courses.push(updatedCourse);
+                                            }, 'courses');
+                                            registry.get('historyService').recordUpdateCourse(oldCourse, updatedCourse, '');
+                                            await registry.get('utils').saveData();
+                                            this.modal.hide();
+                                            registry.get('notificationService').show('课程编辑成功', 'success');
+                                        } catch (error) {
+                                            registry.get('errorHandlerService').log('error', '课程编辑失败', error);
+                                            registry.get('notificationService').show('课程编辑失败', 'error');
+                                        }
+                                    }
+                                    this._isConflictChecking = false;
+                                    resetSaveBtn();
+                                }
+                            });
+                            return;
+                        }
 
                         const courseIndex = registry.get('state').courses.findIndex(c => c.id === courseId);
                         if (courseIndex === -1) { resetSaveBtn(); registry.get('notificationService').show('课程不存在', 'error'); return; }
