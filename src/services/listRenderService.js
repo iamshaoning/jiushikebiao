@@ -16,7 +16,10 @@ export class ListRenderService {
         this._cachedStudents = null;
         this._lastSearchTerm = '';
         this._virtualList = null;
-        this._layout = localStorage.getItem('studentListLayout') || 'single';
+        // 校验布局合法性，避免 localStorage 被篡改导致后续逻辑出错
+        const validLayouts = ['single', 'double', 'triple'];
+        const savedLayout = localStorage.getItem('studentListLayout');
+        this._layout = validLayouts.includes(savedLayout) ? savedLayout : 'single';
         
     }
 
@@ -300,7 +303,11 @@ export class ListRenderService {
      */
     _hideMultiColContainer() {
         const multiCol = document.getElementById('students-multi-col-container');
-        if (multiCol) multiCol.classList.remove('active');
+        if (multiCol) {
+            multiCol.classList.remove('active');
+            // 清理 innerHTML，避免隐藏的 DOM 残留干扰选择器查询和内存占用
+            multiCol.innerHTML = '';
+        }
         if (this._virtualList) {
             this._virtualList.destroy();
             this._virtualList = null;

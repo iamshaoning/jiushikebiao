@@ -51,6 +51,15 @@ const snapshotUtils = {
             return;
         }
 
+        // 校验数据归属，避免将其他用户的数据保存为当前用户的快照
+        // 旧数据可能没有 userid 字段，此时允许创建（向后兼容）
+        if (data.userid && data.userid !== userId) {
+            if (type === 'manual' && registry.get('notificationService')) {
+                registry.get('notificationService').show('数据归属不匹配，无法创建快照', 'warning');
+            }
+            return;
+        }
+
         const snapshot = {
             id: registry.get('utils').generateId ? registry.get('utils').generateId() : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now() + '_' + Math.random().toString(36).substring(2, 11)),
             timestamp: new Date().toISOString(),

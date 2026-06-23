@@ -95,11 +95,7 @@ class ModalService {
         this.content.classList.remove('scale-90', 'opacity-0', 'translate-y-4');
         this.content.classList.add('scale-100', 'opacity-100', 'translate-y-0');
 
-        this.content.querySelectorAll('.close-modal, [data-action="close-modal"]').forEach(btn => {
-            const h = () => this.hide();
-            btn.addEventListener('click', h);
-            this.eventListeners.push({ element: btn, type: 'click', listener: h });
-        });
+        // close-modal 统一由下方 actionListener 委托处理，避免重复绑定导致 hide() 被调用两次
 
         const actionListener = (e) => {
             if (e.target.closest('.close-modal')) { this.hide(); e.stopPropagation(); return; }
@@ -225,9 +221,11 @@ class ModalService {
         this._nestedHideTimer = setTimeout(() => {
             this._nestedHideTimer = null;
             this.nestedContainer.style.display = 'none';
+            // 清理 innerHTML，避免 DOM 残留占用内存和干扰选择器查询
+            this.nestedContent.innerHTML = '';
         }, 300);
 
-        if (this.nestedContainer._keydownHandler) { document.removeEventListener('keydown', this.nestedContainer._keydownHandler); this.nestedContainer._keydownHandler = null; }
+        // 同步清理 conflict 模态框可能残留的 keydown 监听器
         if (this._conflictKeydownHandler) { document.removeEventListener('keydown', this._conflictKeydownHandler); this._conflictKeydownHandler = null; }
     }
 

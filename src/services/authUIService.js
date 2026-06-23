@@ -725,6 +725,8 @@ class AuthUIService {
                     .then(() => {
                         this.cleanupRealtimeChannel();
                         this.serverStatusService.stopMonitoring();
+                        // 清理本地数据与内存状态，避免下一用户登录时看到上一用户的数据残留
+                        this._cleanupUserData();
 
                         if (this.elements.nav && this.elements.main) {
                             this.elements.nav.style.display = 'none';
@@ -741,6 +743,7 @@ class AuthUIService {
                     });
             } else {
                 this.serverStatusService.stopMonitoring();
+                this._cleanupUserData();
 
                 if (this.elements.nav && this.elements.main) {
                     this.elements.nav.style.display = 'none';
@@ -752,6 +755,42 @@ class AuthUIService {
                 this.notificationService.show('登出成功', 'success');
             }
         }, 'confirm');
+    }
+
+    /**
+     * 清理当前用户的本地数据与内存状态
+     * 注意：历史记录和快照按 userId 分组存储，保留在 localStorage 中供下次登录使用
+     */
+    _cleanupUserData() {
+        // 清理 localStorage 中的当前用户业务数据
+        localStorage.removeItem('coursemanagerdata');
+
+        // 清理内存状态
+        this._currentUserId = null;
+
+        const profileService = registry.get('profileService');
+        if (profileService) profileService._profile = null;
+
+        const historyService = registry.get('historyService');
+        if (historyService) {
+            historyService.records = [];
+            historyService.currentUserId = null;
+        }
+
+        const stateService = registry.get('stateService');
+        if (stateService) {
+            stateService.state.students = [];
+            stateService.state.courses = [];
+            stateService.state.organizations = [];
+            stateService.state.grades = [];
+            stateService.state.organizationColors = {};
+            stateService.state.gradeColors = {};
+            stateService.state.lastupdated = null;
+        }
+
+        // 清理学生列表布局选择和多列容器残留
+        const multiCol = document.getElementById('students-multi-col-container');
+        if (multiCol) multiCol.innerHTML = '';
     }
 
     /**

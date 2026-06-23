@@ -293,11 +293,12 @@ class EventDispatcherService {
 
         const selRect = { left, top, right: left + width, bottom: top + height };
 
+        // 仅查询可见行，避免隐藏的 DOM 残留（如单列/多列切换时）被误判为选中
         const rows = [
             ...document.querySelectorAll('#students-list tr'),
             ...document.querySelectorAll('#students-virtual-container .student-item'),
             ...document.querySelectorAll('#students-multi-col-container .student-card')
-        ];
+        ].filter(r => r.offsetParent !== null);
 
         rows.forEach(row => {
             const cr = row.getBoundingClientRect();
@@ -326,7 +327,8 @@ class EventDispatcherService {
             this._studentDragState.rect.remove();
             this._studentDragState.rect = null;
 
-            const selectedRows = document.querySelectorAll('#students-page .student-selected');
+            // 仅选择可见的行，避免隐藏 DOM 残留干扰
+            const selectedRows = [...document.querySelectorAll('#students-page .student-selected')].filter(r => r.offsetParent !== null);
             if (selectedRows.length > 0) {
                 const ids = [];
                 selectedRows.forEach(row => {
@@ -349,6 +351,7 @@ class EventDispatcherService {
      * Clear all student selections
      */
     _clearStudentSelections() {
+        // 清理所有选中状态（包括隐藏的 DOM 残留）
         document.querySelectorAll('#students-page .student-selected').forEach(row => {
             row.classList.remove('student-selected');
         });

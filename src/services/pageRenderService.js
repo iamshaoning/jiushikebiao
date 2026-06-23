@@ -46,7 +46,10 @@ class PageRenderService {
             currentPage.classList.remove('active');
             currentPage.style.pointerEvents = 'none';
 
-            const switchPage = () => {
+            const switchPage = (e) => {
+                // transitionend 会冒泡，只处理 currentPage 自身的 transition 结束事件
+                // setTimeout 调用时 e 为 undefined，正常执行
+                if (e && e.target !== currentPage) return;
                 if (!this._pendingTransition) return;
                 this._pendingTransition = false;
                 if (this._fallbackTimer) {

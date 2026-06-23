@@ -94,31 +94,72 @@ export class SnapshotModal {
                 document.querySelectorAll('.overwrite-snapshot').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const snapshotId = btn.getAttribute('data-id');
-                        this.modal.showConfirm('确定要覆盖此快照吗？', async () => {
+                        this._showNestedConfirm('确定要覆盖此快照吗？', 'warning', async () => {
                             try {
                                 await registry.get('utils').deleteSnapshot(snapshotId, false);
                                 await registry.get('utils').createSnapshot('manual', false);
                                 registry.get('notificationService').show('快照覆盖成功', 'success');
+                                this.modal.hideNested();
                                 setTimeout(() => this.show(), 500);
                             } catch (error) {
                                 registry.get('notificationService').show('快照覆盖失败', 'error');
+                                this.modal.hideNested();
                             }
-                        }, 'warning');
+                        });
                     });
                 });
 
                 document.querySelectorAll('.delete-snapshot').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         const snapshotId = btn.getAttribute('data-id');
-                        this.modal.showConfirm('确定要删除此快照吗？', async () => {
+                        this._showNestedConfirm('确定要删除此快照吗？', 'delete', async () => {
                             try {
                                 await registry.get('utils').deleteSnapshot(snapshotId);
+                                this.modal.hideNested();
                                 setTimeout(() => this.show(), 500);
                             } catch (error) {
                                 registry.get('notificationService').show('快照删除失败', 'error');
+                                this.modal.hideNested();
                             }
-                        }, 'delete');
+                        });
                     });
+                });
+            }
+        });
+    }
+
+    /**
+     * 在快照管理模态框上方显示嵌套确认对话框
+     * @param {string} message - 确认消息
+     * @param {string} type - 'confirm' | 'delete' | 'warning'
+     * @param {Function} onConfirm - 确认回调
+     */
+    _showNestedConfirm(message, type, onConfirm) {
+        const typeConfig = {
+            confirm: { icon: 'badge-question-mark', bgStyle: 'background-color: rgba(59, 130, 246, 0.1);', textStyle: 'color: var(--color-primary);', btnText: '确定', btnStyle: 'background-color: var(--color-primary);' },
+            delete: { icon: 'triangle-alert', bgStyle: 'background-color: rgba(239, 68, 68, 0.1);', textStyle: 'color: var(--color-danger);', btnText: '删除', btnStyle: 'background-color: var(--color-danger);' },
+            warning: { icon: 'circle-alert', bgStyle: 'background-color: rgba(245, 158, 11, 0.1);', textStyle: 'color: var(--color-warning);', btnText: '确定', btnStyle: 'background-color: var(--color-warning);' }
+        };
+        const cfg = typeConfig[type] || typeConfig.confirm;
+
+        const content = `<div class="p-6"><div class="text-center mb-6"><div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style="${cfg.bgStyle}"><i data-lucide="${cfg.icon}" class="text-2xl inline-block" style="${cfg.textStyle} width: 24px; height: 24px;"></i></div><p style="color: var(--text-primary);">${message}</p></div><div class="flex space-x-3"><button id="nested-cancel-confirm" class="flex-1 px-4 py-2 rounded-lg transition-colors" style="border: 1px solid var(--border-color); color: var(--text-primary); background-color: var(--bg-secondary);">取消</button><button id="nested-accept-confirm" class="flex-1 px-4 py-2 text-white rounded-lg transition-colors" style="${cfg.btnStyle}">${cfg.btnText}</button></div></div>`;
+
+        this.modal.showNested(content, {
+            onShow: () => {
+                if (registry.get('lucide')) registry.get('lucide').createIcons();
+                const cancelBtn = document.getElementById('nested-cancel-confirm');
+                const acceptBtn = document.getElementById('nested-accept-confirm');
+                if (!cancelBtn || !acceptBtn) return;
+                cancelBtn.addEventListener('click', () => this.modal.hideNested());
+                acceptBtn.addEventListener('click', async () => {
+                    acceptBtn.disabled = true;
+                    try {
+                        await onConfirm();
+                    } catch (error) {
+                        registry.get('errorHandlerService').log('error', '操作失败', error);
+                        registry.get('notificationService').show('操作失败', 'error');
+                        this.modal.hideNested();
+                    }
                 });
             }
         });

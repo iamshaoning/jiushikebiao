@@ -2,7 +2,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/GitHub-Pages-blue?logo=github" alt="GitHub Pages">
-  <img src="https://img.shields.io/badge/Cloudflare-Pages-blue?logo=cloudflare" alt="Cloudflare Pages">
 </p>
 
 <p align="center"><strong>面向课外辅导教师的课程管理与统计系统</strong></p>
@@ -27,27 +26,7 @@
 
 | 平台 | 地址 |
 |------|------|
-| **Cloudflare Pages** | [kechengguanlixitong.pages.dev](https://kechengguanlixitong.pages.dev) |
-| **GitHub Pages** | [iamshaoning.github.io/kechengguanlixitong](https://iamshaoning.github.io/kechengguanlixitong) |
-
----
-
-## 预览
-
-<p align="center">
-  <img src="public/预览1.png" alt="日历排课页面" width="80%">
-</p>
-<p align="center"><em>日历排课页面 — 月历视图、课程标签、快捷排课</em></p>
-
-<p align="center">
-  <img src="public/预览2.png" alt="学生管理页面" width="80%">
-</p>
-<p align="center"><em>学生管理页面 — 学生列表、搜索、机构与年级管理</em></p>
-
-<p align="center">
-  <img src="public/预览3.png" alt="费用统计页面" width="80%">
-</p>
-<p align="center"><em>费用统计页面 — 数据概览、图表分布、机构明细</em></p>
+| **GitHub Pages** | [iamshaoning.github.io/jiushikebiao](https://iamshaoning.github.io/jiushikebiao) |
 
 ---
 
@@ -65,7 +44,8 @@
 ### 学生管理
 
 - **学生档案**：增删改查学生基本信息
-- **快速检索**：按姓名关键词搜索
+- **快速检索**：按姓名或机构关键词搜索
+- **布局切换**：支持单列表格 / 双列 / 三列卡片三种排列方式，按机构分组显示
 - **机构管理**：自定义机构名称，支持增删改，可分配专属颜色标签
 - **年级管理**：自定义年级名称，支持增删改，可分配专属颜色标签
 - **默认费用**：预设一对一课时费，排课时自动带入
@@ -84,7 +64,7 @@
 - **操作反馈**：全局通知提示 + 服务器连接状态指示器
 - **开源字体**：采用霞鹜文楷（LXGW WenKai）开源中文字体
 - **操作记录**：在本地保存有操作记录，可以单条撤销或者重做
-- **快照系统**：在本地可自动和手动保存和恢复快照，防止数据意错误变更
+- **快照系统**：在本地可自动和手动保存和恢复快照，防止数据意外变更
 
 ---
 
@@ -128,6 +108,16 @@
 
 ---
 
+## 技术栈
+
+- **前端框架**：原生 HTML / CSS / JavaScript，Vite 构建
+- **后端服务**：Supabase（认证、PostgreSQL 数据库、实时数据同步）
+- **部署平台**：GitHub Pages
+- **开源字体**：霞鹜文楷（LXGW WenKai）
+- **图标库**：Lucide Icons
+
+---
+
 ## 注意事项
 
 - **网络依赖**：登录与数据同步功能需要网络连接
@@ -140,7 +130,7 @@
 
 ## 联系方式
 
-如有问题或建议，欢迎通过 [GitHub](https://github.com/iamshaoning) 联系作者。
+如有问题或建议，欢迎通过 [GitHub Issues](https://github.com/iamshaoning/jiushikebiao/issues) 反馈。
 
 ---
 

@@ -123,7 +123,11 @@ routerService.register('/statistics', () => { registry.get('render').page('stati
 document.querySelectorAll('[data-page]').forEach(button => {
     button.addEventListener('click', () => {
         // Close any open modals/popovers before switching pages
-        if (registry.get('modalService')) registry.get('modalService').hide();
+        if (registry.get('modalService')) {
+            registry.get('modalService').hide();
+            // 清理日历选中状态、课程标签选中、浮动操作栏，避免切换页面后残留
+            registry.get('modalService').closeAllPopovers();
+        }
         if (registry.get('eventDispatcherService')) registry.get('eventDispatcherService').clearAllStudentSelections();
         const page = button.dataset.page;
         let path = '/';
@@ -272,8 +276,9 @@ const layoutCycle = ['single', 'double', 'triple'];
 const layoutLabels = { single: '1', double: '2', triple: '3' };
 const studentLayoutBtn = document.querySelector('#student-layout-toggle .student-layout-btn');
 if (studentLayoutBtn) {
-    // 初始化按钮状态
-    const savedLayout = localStorage.getItem('studentListLayout') || 'single';
+    // 初始化按钮状态（校验合法性，避免 localStorage 被篡改导致按钮显示 undefined）
+    const rawSaved = localStorage.getItem('studentListLayout');
+    const savedLayout = layoutCycle.includes(rawSaved) ? rawSaved : 'single';
     studentLayoutBtn.dataset.layout = savedLayout;
     studentLayoutBtn.classList.toggle('active', savedLayout !== 'single');
     studentLayoutBtn.textContent = layoutLabels[savedLayout];
