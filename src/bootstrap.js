@@ -273,7 +273,7 @@ registry.set('listRenderService', listRenderService);
 
 // 学生列表布局切换（单按钮循环三种状态）
 const layoutCycle = ['single', 'double', 'triple'];
-const layoutLabels = { single: '1', double: '2', triple: '3' };
+const layoutLabels = { single: '1列', double: '2列', triple: '3列' };
 const studentLayoutBtn = document.querySelector('#student-layout-toggle .student-layout-btn');
 if (studentLayoutBtn) {
     // 初始化按钮状态（校验合法性，避免 localStorage 被篡改导致按钮显示 undefined）

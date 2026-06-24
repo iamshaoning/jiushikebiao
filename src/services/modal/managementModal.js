@@ -18,7 +18,7 @@ export class ManagementModal {
             <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">${title}</h3>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="${itemName === '机构' ? 'school' : 'graduation-cap'}" class="inline-block" style="width: 18px; height: 18px;"></i>${title}</h3>
                     </div>
                     <div class="mb-4">
                         <label class="block text-sm font-medium mb-1" style="color: var(--text-primary);">名称 <span class="text-xs font-normal" style="color: var(--text-secondary);">(支持批量添加，用空格/逗号/顿号分隔)</span></label>

@@ -38,7 +38,34 @@
 @tailwind utilities;
 
 @layer base {
-  * {
+  /* 全局禁用文字选择，仅输入框保持可选 */
+  body,
+  html,
+  h1, h2, h3, h4, h5, h6,
+  p, span, div, a,
+  th, td, li,
+  button,
+  .nav-item,
+  .settings-btn,
+  .settings-dropdown-item,
+  .settings-dropdown-item-danger,
+  .settings-dropdown-item-blue,
+  .calendar-cell,
+  .course-tag-item,
+  .student-card,
+  .student-layout-btn,
+  .custom-select-trigger,
+  .custom-option,
+  .color-picker-item,
+  .fab-btn,
+  .sync-card,
+  .theme-slider,
+  .theme-slider-indicator,
+  .theme-slider-icons [data-theme],
+  .settings-avatar,
+  .settings-user-name,
+  .student-org-group-header,
+  img {
     user-select: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
@@ -65,7 +92,8 @@
     --color-warning-90: rgba(245, 158, 11, 0.9);
     --color-info: #06b6d4;
     --color-info-90: rgba(6, 182, 212, 0.9);
-    --color-hover: #9400D3;
+    /* hover 强调色：暖橙色，与蓝色选中态明显区分 */
+    --color-hover: #f97316;
     --color-purple: #8b5cf6;
     --color-pink: #ec4899;
     --color-green: #22c55e;
@@ -73,6 +101,8 @@
     --color-cyan: #0891b2;
     --color-purple-light: #d946ef;
     --color-gold: #FAF408;
+    /* 今日标记色：琥珀色，避免与"危险/删除"红色语义冲突 */
+    --color-today: #f59e0b;
 
     /* 浅色模式颜色 */
     --bg-primary: #f0f0f0;
@@ -84,6 +114,20 @@
     --text-primary: #444444;
     --text-secondary: #555555;
     --border-color: #cccccc;
+
+    /* === 设计 Token：统一圆角/时长/缓动/阴影 === */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --duration-fast: 0.15s;
+    --duration-normal: 0.25s;
+    --duration-slow: 0.4s;
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
   }
 
   .dark {
@@ -96,6 +140,10 @@
     --text-primary: #bbbbbb;
     --text-secondary: #cccccc;
     --border-color: #555555;
+    /* 深色模式下阴影更深 */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
   }
 
   body.theme-transitioning,
@@ -209,78 +257,94 @@ input:focus, textarea:focus, select:focus, button:not(.nav-item):focus {
    ------------------------------ */
 
 #auth-modal {
-    color: white !important;
+    color: white;
 }
 
 #auth-container {
-    background: transparent !important;
-    backdrop-filter: blur-lg !important;
+    background: transparent;
+    backdrop-filter: blur(20px);
 }
 
 #login-tab {
-    background: rgba(59, 130, 246, 0.4);
-    border-color: var(--color-primary);
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.5);
     color: white;
 }
 
 #register-tab {
-    background: rgba(147, 51, 234, 0.4);
-    border-color: transparent;
-    color: white;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
 }
 
 #login-submit {
-    background: linear-gradient(to right, rgba(6, 182, 212, 0.8), rgba(59, 130, 246, 0.8)) !important;
-    border-color: rgba(6, 182, 212, 0.5) !important;
-    color: white !important;
-    box-shadow: 0 10px 15px -3px rgba(6, 182, 212, 0.3) !important;
+    background: #3b82f6;
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
 }
 
 #register-submit {
-    background: linear-gradient(to right, rgba(147, 51, 234, 0.8), rgba(236, 72, 153, 0.8)) !important;
-    border-color: rgba(236, 72, 153, 0.5) !important;
-    color: white !important;
-    box-shadow: 0 10px 15px -3px rgba(236, 72, 153, 0.3) !important;
+    background: #8b5cf6;
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35);
 }
 
 #login-tab:hover {
-    background: rgba(59, 130, 246, 0.5) !important;
+    background: rgba(59, 130, 246, 0.35);
 }
 
 #register-tab:hover {
-    background: rgba(147, 51, 234, 0.5) !important;
+    background: rgba(255, 255, 255, 0.14);
 }
 
 #login-submit:hover {
-    background: linear-gradient(to right, rgba(6, 182, 212, 0.9), rgba(59, 130, 246, 0.9)) !important;
-    box-shadow: 0 20px 25px -5px rgba(6, 182, 212, 0.4) !important;
+    background: #2563eb;
+    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.45);
+    transform: translateY(-1px);
 }
 
 #register-submit:hover {
-    background: linear-gradient(to right, rgba(147, 51, 234, 0.9), rgba(236, 72, 153, 0.9)) !important;
-    box-shadow: 0 20px 25px -5px rgba(236, 72, 153, 0.4) !important;
+    background: #7c3aed;
+    box-shadow: 0 12px 28px rgba(139, 92, 246, 0.45);
+    transform: translateY(-1px);
+}
+
+#login-submit:active,
+#register-submit:active {
+    transform: translateY(0);
 }
 
 /* 登录模态框固定样式 - 不随深浅色模式变化 */
 #auth-modal,
 #auth-container,
 #auth-form {
-    background: transparent !important;
-    --tw-text-opacity: 1 !important;
+    background: transparent;
+    --tw-text-opacity: 1;
 }
 
 #auth-email,
 #auth-password {
-    color: #ffffff !important;
+    color: #ffffff;
     background-color: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+#auth-email:focus,
+#auth-password:focus {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 #auth-email::placeholder,
 #auth-password::placeholder {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.125rem;
+    font-weight: 600;
 }
-
 
 #auth-form input::placeholder,
 #auth-form input::-webkit-input-placeholder,
@@ -288,7 +352,7 @@ input:focus, textarea:focus, select:focus, button:not(.nav-item):focus {
 #auth-form input:-ms-input-placeholder {
     font-size: 1.125rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* ------------------------------
@@ -302,70 +366,77 @@ nav, header {
 
 .nav-item {
     position: relative;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-    overflow: hidden;
+    color: var(--text-secondary);
+    transition: color var(--duration-fast) var(--ease-smooth);
+    border-radius: var(--radius-md);
+    overflow: visible;
 }
 
+.nav-item:hover {
+    color: var(--text-primary);
+}
+
+/* 底部指示条：默认不可见，悬停时从中部向两侧展开 */
 .nav-item::before {
     content: '';
     position: absolute;
     bottom: 0;
     left: 50%;
     width: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-purple));
-    transition: width 0.15s ease;
-    transform: translateX(-50%);
-    border-radius: 3px 3px 0 0;
+    height: 2px;
+    background: var(--color-primary);
+    transition: width var(--duration-normal) var(--ease-smooth), left var(--duration-normal) var(--ease-smooth);
+    border-radius: 1px;
+    z-index: 1;
 }
 
 .nav-item:hover::before {
-    width: 80%;
+    width: 60%;
+    left: 20%;
 }
 
-.nav-item.active::before {
-    width: 100%;
-}
-
-.nav-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background-color: var(--bg-primary) !important;
-}
-
-.nav-item i {
-    transition: transform 0.15s ease;
-}
-
-.nav-item:hover i {
-    transform: scale(1.1);
+/* 四边外框：默认不可见，选中时从底部向上展开至全框 */
+.nav-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path var(--duration-slow) var(--ease-smooth);
+    z-index: 0;
+    pointer-events: none;
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
-  color: var(--color-primary) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    color: var(--color-primary) !important;
+    background-color: transparent !important;
+    font-weight: 600;
+}
+
+.nav-item.active::after {
+    clip-path: inset(0 0 0 0);
 }
 
 .nav-item.active i {
-  color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
 }
 
-
 .dark .nav-item:hover {
-  background-color: var(--bg-primary) !important;
+    color: var(--text-primary);
 }
 
 .dark .nav-item.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%) !important;
-  color: var(--color-primary) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    color: var(--color-primary) !important;
+    background-color: transparent !important;
+}
+
+.dark .nav-item.active::after {
+    border-color: var(--color-primary);
 }
 
 .dark .nav-item.active i {
-  color: var(--color-primary) !important;
+    color: var(--color-primary) !important;
 }
 
 /* ------------------------------
@@ -622,7 +693,7 @@ button.border-gray-200 {
 
 
 button, .btn {
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition: opacity var(--duration-fast) var(--ease-smooth), transform var(--duration-fast) var(--ease-smooth);
 }
 
 button:hover, .btn:hover {
@@ -650,12 +721,12 @@ button:not(:active), .btn:not(:active) {
     padding: 8px 32px 8px 12px;
     background: var(--bg-input);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.25s ease;
+    transition: all var(--duration-normal) var(--ease-smooth);
     font-size: 14px;
     line-height: 1.5;
     white-space: nowrap;
@@ -699,14 +770,14 @@ button:not(:active), .btn:not(:active) {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-top: none;
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     transform: translateY(-10px);
-    transition: max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+    transition: max-height var(--duration-normal) var(--ease-smooth), opacity var(--duration-normal) var(--ease-smooth), transform var(--duration-normal) var(--ease-smooth);
     z-index: 100;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
     pointer-events: none;
 }
 
@@ -718,7 +789,7 @@ button:not(:active), .btn:not(:active) {
     scrollbar-width: none;
     -ms-overflow-style: none;
     pointer-events: auto;
-    transition: max-height 0.25s ease, opacity 0.25s ease, transform 0.25s ease, pointer-events 0s 0.25s;
+    transition: max-height var(--duration-normal) var(--ease-smooth), opacity var(--duration-normal) var(--ease-smooth), transform var(--duration-normal) var(--ease-smooth), pointer-events 0s var(--duration-normal);
 }
 
 .custom-select-options.open::-webkit-scrollbar {
@@ -728,7 +799,7 @@ button:not(:active), .btn:not(:active) {
 .custom-option {
     padding: 8px 12px;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background var(--duration-fast) var(--ease-smooth);
     font-size: 14px;
     text-align: center;
     white-space: nowrap;
@@ -845,12 +916,12 @@ button:not(:active), .btn:not(:active) {
     background: var(--bg-secondary);
     color: var(--text-primary);
     padding: 4px 10px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.78rem;
     white-space: nowrap;
     pointer-events: none;
     z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: var(--shadow-sm);
     display: none;
 }
 .css-pie-legend {
@@ -927,25 +998,24 @@ button:not(:active), .btn:not(:active) {
 }
 
 #toggle-privacy {
-  background-color: var(--bg-secondary) !important;
+  background-color: var(--bg-content) !important;
   border-color: var(--border-color) !important;
+  border-width: 1.5px !important;
+  border-style: solid !important;
+  color: var(--text-secondary) !important;
+  transition: all var(--duration-normal) var(--ease-smooth) !important;
 }
 
 #toggle-privacy:hover {
-  background-color: var(--bg-content) !important;
-}
-
-#toggle-privacy i {
+  background-color: var(--bg-primary) !important;
+  border-color: var(--text-secondary) !important;
   color: var(--text-primary) !important;
 }
 
 #toggle-privacy.active {
-  background: rgba(155, 50, 255, 0.2) !important;
+  background: rgba(139, 92, 246, 0.12) !important;
   border-color: var(--color-purple) !important;
-}
-
-#toggle-privacy.active i {
-  color: var(--text-primary) !important;
+  color: var(--color-purple) !important;
 }
 
 .dark .grid.grid-cols-7.border-b {
@@ -980,13 +1050,13 @@ button:not(:active), .btn:not(:active) {
 
 .today-border,
 .dark .today-border {
-  box-shadow: inset 0 0 0 2px var(--color-danger) !important;
-  transition: all 0.15s ease-in-out !important;
+  box-shadow: inset 0 0 0 2px var(--color-today) !important;
+  transition: all var(--duration-fast) var(--ease-smooth) !important;
 }
 
 .calendar-cell-selected {
     box-shadow: inset 0 0 0 2px var(--color-primary) !important;
-    transition: all 0.15s ease-in-out !important;
+    transition: all var(--duration-fast) var(--ease-smooth) !important;
 }
 
 .calendar-cell.calendar-cell-selecting {
@@ -998,7 +1068,7 @@ button:not(:active), .btn:not(:active) {
     position: fixed;
     border: 2px solid var(--color-primary);
     background-color: color-mix(in srgb, var(--color-primary) 15%, transparent);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     pointer-events: none;
     z-index: 30;
 }
@@ -1007,11 +1077,40 @@ button:not(:active), .btn:not(:active) {
     background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
-/* Student multi-select styles */
-#students-list tr.student-selected,
+/* 学生表格 border-collapse，确保选中行相邻边框不叠加 */
+#students-page table {
+    border-collapse: collapse;
+}
+
+/* ========== 学生选中状态 ========== */
+
+/* 单列表格：用 box-shadow inset 绘制选中框，不改变盒模型，避免行高变化导致画面抖动 */
+/* 所有 td 画上下边，首尾 td 补左右边，整行形成一个完整外框 */
+#students-list tr.student-selected td {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, var(--bg-secondary));
+    box-shadow: inset 0 2px 0 var(--color-primary), inset 0 -2px 0 var(--color-primary);
+}
+#students-list tr.student-selected td:first-child {
+    box-shadow: inset 2px 2px 0 var(--color-primary), inset 2px -2px 0 var(--color-primary);
+}
+#students-list tr.student-selected td:last-child {
+    box-shadow: inset -2px 2px 0 var(--color-primary), inset -2px -2px 0 var(--color-primary);
+}
+/* 相邻选中行：当前行去掉顶部 shadow，避免与上一行底部叠加 */
+#students-list tr.student-selected + tr.student-selected td {
+    box-shadow: inset 0 -2px 0 var(--color-primary);
+}
+#students-list tr.student-selected + tr.student-selected td:first-child {
+    box-shadow: inset 2px 0 0 var(--color-primary), inset 2px -2px 0 var(--color-primary);
+}
+#students-list tr.student-selected + tr.student-selected td:last-child {
+    box-shadow: inset -2px 0 0 var(--color-primary), inset -2px -2px 0 var(--color-primary);
+}
+
 .student-item.student-selected {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, var(--bg-secondary));
     outline: 2px solid var(--color-primary);
-    outline-offset: -1px;
+    outline-offset: -2px;
 }
 
 .students-multi-selecting .edit-student,
@@ -1037,8 +1136,8 @@ button:not(:active), .btn:not(:active) {
   color: white !important;
   font-weight: bold !important;
   border: 2px solid var(--color-primary) !important;
-  border-radius: 0.375rem !important;
-  transition: all 0.15s ease-in-out !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all var(--duration-fast) var(--ease-smooth) !important;
 }
 
 /* ------------------------------
@@ -1055,11 +1154,11 @@ button:not(:active), .btn:not(:active) {
 }
 
 .modal-backdrop {
-    transition: opacity 0.25s ease-in-out;
+    transition: opacity var(--duration-normal) var(--ease-smooth);
 }
 
 .modal-content {
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all var(--duration-normal) var(--ease-bounce);
 }
 
 .dark .modal-content,
@@ -1079,9 +1178,9 @@ button:not(:active), .btn:not(:active) {
 .color-picker-item {
     width: 100%;
     height: 2rem;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-sm);
     border: none;
-    transition: all 0.15s ease-in-out;
+    transition: all var(--duration-fast) var(--ease-smooth);
     align-items: center;
     justify-content: center;
     position: relative;
@@ -1131,14 +1230,14 @@ button:not(:active), .btn:not(:active) {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: all var(--duration-fast) var(--ease-smooth);
     z-index: 30;
 }
 
 .settings-btn:hover {
     background: var(--bg-primary);
     transform: scale(1.05);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .settings-btn:active {
@@ -1150,30 +1249,16 @@ button:not(:active), .btn:not(:active) {
     color: var(--text-primary);
 }
 
-#snapshot-btn {
-    background: rgba(59, 130, 246, 0.1);
-    border-color: var(--color-primary);
+.nav-tabs-container {
+    gap: 35px;
 }
 
-#snapshot-btn i {
-    color: var(--color-primary);
-}
-
-#snapshot-btn:hover {
-    background: rgba(59, 130, 246, 0.2);
-}
-
-#history-btn {
-    background: rgba(245, 158, 11, 0.1);
-    border-color: var(--color-warning);
-}
-
-#history-btn i {
+#history-btn.settings-dropdown-item {
     color: var(--color-warning);
 }
 
-#history-btn:hover {
-    background: rgba(245, 158, 11, 0.2);
+#history-btn.settings-dropdown-item:hover {
+    background: rgba(245, 158, 11, 0.1);
 }
 
 .settings-dropdown-container {
@@ -1189,15 +1274,15 @@ button:not(:active), .btn:not(:active) {
     width: 200px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     display: flex;
     flex-direction: column;
     padding: 8px 0;
     z-index: 31;
     opacity: 0;
     transform: translateY(-10px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity var(--duration-normal) var(--ease-smooth), transform var(--duration-normal) var(--ease-smooth);
     pointer-events: none;
     visibility: hidden;
 }
@@ -1285,7 +1370,7 @@ button:not(:active), .btn:not(:active) {
     background: rgba(0, 0, 0, 0.4);
     border-radius: 50%;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity var(--duration-normal) var(--ease-smooth);
     color: #fff;
 }
 
@@ -1299,7 +1384,7 @@ button:not(:active), .btn:not(:active) {
     color: var(--text-primary);
     background: var(--bg-content);
     border: 1px solid var(--color-primary);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 2px 8px;
     max-width: 100%;
     outline: none;
@@ -1319,8 +1404,8 @@ button:not(:active), .btn:not(:active) {
     text-align: center;
     cursor: pointer;
     padding: 2px 6px;
-    border-radius: 4px;
-    transition: background 0.15s;
+    border-radius: var(--radius-sm);
+    transition: background var(--duration-fast) var(--ease-smooth);
 }
 
 .settings-user-name:hover {
@@ -1333,7 +1418,7 @@ button:not(:active), .btn:not(:active) {
     gap: 10px;
     padding: 10px 16px;
     cursor: pointer;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--duration-fast) var(--ease-smooth);
     font-size: 14px;
 }
 
@@ -1414,19 +1499,16 @@ button:not(:active), .btn:not(:active) {
     max-width: 150px;
     height: 38px;
     padding: 0 12px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    overflow: hidden;
-    transition: all 0.15s ease;
+    transition: border-color var(--duration-fast) var(--ease-smooth);
     display: inline-flex;
     align-items: center;
 }
 
 .sync-card:hover {
-    background: rgba(255,255,255,0.08);
     transform: translateY(-1px);
 }
 
@@ -1454,7 +1536,7 @@ button:not(:active), .btn:not(:active) {
     position: absolute;
     inset: 3px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.05);
+    background: transparent;
 }
 
 .sync-icon .sync-dot {
@@ -1479,24 +1561,20 @@ button:not(:active), .btn:not(:active) {
 
 .sync-card.sync-success {
     border-color: rgba(34,197,94,0.8);
-    box-shadow: inset 0 0 8px rgba(34,197,94,0.2);
 }
 
 .sync-card.sync-error {
     border-color: rgba(239,68,68,0.8);
-    box-shadow: inset 0 0 8px rgba(239,68,68,0.2);
 }
 
 .sync-card.sync-syncing {
     border-color: rgba(59,130,246,0.8);
-    box-shadow: inset 0 0 8px rgba(59,130,246,0.2);
 }
 
 .sync-card.sync-trial,
 /* 试用模式状态，cardClass 为空时直接通过状态判断 */
 #sync-status:not(.sync-success):not(.sync-error):not(.sync-syncing) {
     border-color: rgba(156,163,175,0.8) !important;
-    box-shadow: inset 0 0 8px rgba(156,163,175,0.2) !important;
 }
 
 .sync-icon .sync-dot.sync-trial {
@@ -1525,7 +1603,7 @@ button:not(:active), .btn:not(:active) {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  transition: left 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+  transition: left var(--duration-normal) var(--ease-smooth), background-color var(--duration-normal) var(--ease-smooth), box-shadow var(--duration-normal) var(--ease-smooth);
   z-index: 1;
 }
 
@@ -1562,7 +1640,7 @@ button:not(:active), .btn:not(:active) {
 
 .theme-slider-icons [data-theme] {
   color: var(--text-primary);
-  transition: color 0.15s ease;
+  transition: color var(--duration-fast) var(--ease-smooth);
   cursor: pointer;
   width: 36px;
   height: 36px;
@@ -1586,7 +1664,7 @@ button:not(:active), .btn:not(:active) {
     min-height: 2.2rem;
     position: relative;
     opacity: 1 !important;
-    border-radius: 0.375rem;
+    border-radius: var(--radius-sm);
 }
 
 .course-tag-item > .tag-content {
@@ -1598,17 +1676,19 @@ button:not(:active), .btn:not(:active) {
     content: '';
     position: absolute;
     top: 0; right: 0; bottom: 0; left: 0;
+    /* 使用 inset 阴影替代 border-width 变化，避免重排导致内容抖动 */
     border: 0px solid var(--tag-theme-color);
-    border-radius: 0.375rem;
+    box-shadow: inset 0 0 0 0 var(--tag-theme-color);
+    border-radius: var(--radius-sm);
     pointer-events: none;
     box-sizing: border-box;
     z-index: 5;
-    transition: border-width 0.15s ease-out;
+    transition: box-shadow var(--duration-fast) var(--ease-smooth);
 }
 
 .course-tag-item:hover::after,
 .course-tag-item.is-selected::after {
-    border-width: 2px;
+    box-shadow: inset 0 0 0 2px var(--tag-theme-color);
 }
 
 /* ------------------------------
@@ -1616,7 +1696,7 @@ button:not(:active), .btn:not(:active) {
    ------------------------------ */
 
 .page {
-    transition: opacity 0.2s ease-out;
+    transition: opacity var(--duration-normal) var(--ease-smooth);
     opacity: 0;
     will-change: opacity;
 }
@@ -1643,7 +1723,7 @@ button:not(:active), .btn:not(:active) {
     z-index: 40;
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+    transition: transform var(--duration-normal) var(--ease-bounce), opacity var(--duration-normal) var(--ease-smooth);
 }
 
 .floating-action-bar.active {
@@ -1657,15 +1737,15 @@ button:not(:active), .btn:not(:active) {
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.06);
     backdrop-filter: blur(12px);
 }
 
 .dark .floating-action-bar-content {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .floating-action-bar-content .fab-btn {
@@ -1674,13 +1754,13 @@ button:not(:active), .btn:not(:active) {
     justify-content: center;
     gap: 6px;
     padding: 8px 14px;
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     font-size: 13px;
     font-weight: 500;
     color: white;
     cursor: pointer;
     border: none;
-    transition: transform 0.15s ease, opacity 0.15s ease;
+    transition: transform var(--duration-fast) var(--ease-smooth), opacity var(--duration-fast) var(--ease-smooth);
     white-space: nowrap;
 }
 
@@ -1719,7 +1799,7 @@ button:not(:active), .btn:not(:active) {
     background: linear-gradient(to bottom, transparent 0%, var(--bg-secondary) 70%);
     pointer-events: none;
     z-index: 2;
-    transition: opacity 0.15s ease;
+    transition: opacity var(--duration-fast) var(--ease-smooth);
 }
 
 .scroll-fade-bottom.scrolled-to-bottom::after {
@@ -1731,8 +1811,9 @@ button:not(:active), .btn:not(:active) {
    ------------------------------ */
 
 .student-layout-btn {
-    width: 36px;
-    height: 36px;
+    height: 40px;
+    min-width: 52px;
+    padding: 0 14px;
     border-radius: 8px;
     background: var(--bg-content);
     border: 1.5px solid var(--border-color);
@@ -1740,23 +1821,11 @@ button:not(:active), .btn:not(:active) {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all var(--duration-normal) var(--ease-smooth);
     color: var(--text-secondary);
-    position: relative;
-    overflow: hidden;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     user-select: none;
-}
-
-.student-layout-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: 6px;
-    background: var(--layout-color, var(--color-primary));
-    opacity: 0;
-    transition: opacity 0.2s ease;
 }
 
 .student-layout-btn:hover {
@@ -1773,11 +1842,7 @@ button:not(:active), .btn:not(:active) {
 .student-layout-btn.active {
     border-color: var(--layout-color);
     color: var(--layout-color);
-    background: var(--bg-content);
-}
-
-.student-layout-btn.active::after {
-    opacity: 0.12;
+    background: color-mix(in srgb, var(--layout-color) 12%, var(--bg-content));
 }
 
 /* 多列学生网格容器 */
@@ -1805,7 +1870,7 @@ button:not(:active), .btn:not(:active) {
 .student-org-group {
     break-inside: avoid;
     margin-bottom: 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
     overflow: hidden;
@@ -1830,10 +1895,6 @@ button:not(:active), .btn:not(:active) {
     color: var(--text-secondary);
 }
 
-.student-org-group-body {
-    /* 学生卡片列表 */
-}
-
 .student-card {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1841,7 +1902,7 @@ button:not(:active), .btn:not(:active) {
     gap: 4px;
     padding: 10px 14px;
     border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.1s ease;
+    transition: background-color var(--duration-fast) var(--ease-smooth);
     cursor: default;
 }
 
@@ -1885,26 +1946,55 @@ button:not(:active), .btn:not(:active) {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.15s ease, background-color 0.15s ease;
+    transition: background-color var(--duration-fast) var(--ease-smooth), transform var(--duration-fast) var(--ease-smooth);
 }
 
 .student-card .student-card-actions button:hover {
+    background-color: var(--bg-secondary);
     transform: scale(1.1);
-    background-color: var(--bg-primary);
 }
 
 .student-card .student-card-actions button:active {
     transform: scale(0.95);
 }
 
-/* 多列模式下的选中状态 */
+/* 多列卡片：用 box-shadow inset 绘制选中框，不改变盒模型，避免行高变化导致画面抖动 */
 .student-card.student-selected {
-    outline: 2px solid var(--color-primary);
-    outline-offset: -1px;
+    background-color: color-mix(in srgb, var(--color-primary) 8%, var(--bg-secondary));
+    box-shadow: inset 2px 0 0 var(--color-primary), inset -2px 0 0 var(--color-primary), inset 0 2px 0 var(--color-primary), inset 0 -2px 0 var(--color-primary);
+    position: relative;
+    z-index: 1;
+}
+/* 相邻选中卡片：后一张去掉顶部 shadow，避免与上一张底部叠加 */
+.student-card.student-selected + .student-card.student-selected {
+    box-shadow: inset 2px 0 0 var(--color-primary), inset -2px 0 0 var(--color-primary), inset 0 -2px 0 var(--color-primary);
+    z-index: 2;
+}
+
+/* 机构分组最后一张卡片选中时，底部圆角跟随分组容器 */
+.student-org-group .student-card:last-child.student-selected {
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 /* 多列模式下隐藏编辑/删除按钮（多选模式） */
 .students-multi-selecting .student-card .student-card-actions button {
     opacity: 0.3;
     pointer-events: none;
+}
+
+/* 学生列表操作按钮悬停效果统一（单列表格 + 多列卡片） */
+#students-list .edit-student,
+#students-list .delete-student {
+    transition: background-color var(--duration-fast) var(--ease-smooth), transform var(--duration-fast) var(--ease-smooth);
+}
+
+#students-list .edit-student:hover,
+#students-list .delete-student:hover {
+    background-color: var(--bg-secondary);
+    transform: scale(1.1);
+}
+
+#students-list .edit-student:active,
+#students-list .delete-student:active {
+    transform: scale(0.95);
 }

@@ -156,7 +156,7 @@ class ExportService {
         // 学生课量数据
         html += `<div class="section"><h2>学生课量数据</h2>`;
         if (sections.student.length > 0) {
-            html += `<div class="table-wrap"><table><colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr><th>学生姓名</th><th>所属机构</th><th>年级</th><th>上课节数</th><th>课时费</th></tr></thead><tbody>`;
+            html += `<div class="table-wrap"><table><colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr><th>学生姓名</th><th>所属机构</th><th>年级</th><th>课节数</th><th>课时费</th></tr></thead><tbody>`;
             sections.student.forEach(r => html += `<tr><td>${this.escapeHtml(r.日期)}</td><td>${getOrgBadge(r.时间)}</td><td>${getGradeBadge(r.学生姓名)}</td><td>${r.所属机构 || ''} 节</td><td>¥${r.年级 || '0'}</td></tr>`);
             html += `</tbody></table></div>`;
         } else {
@@ -268,7 +268,7 @@ tbody tr:hover{background:#fafafa}
 
         rows.push({});
         rows.push({ 日期: '学生课量数据' });
-        rows.push({ 日期: '学生姓名', 时间: '所属机构', 学生姓名: '年级', 所属机构: '上课节数', 年级: '课时费' });
+        rows.push({ 日期: '学生姓名', 时间: '所属机构', 学生姓名: '年级', 所属机构: '课节数', 年级: '课时费' });
 
         Object.entries(studentStats).map(([sid, stats]) => { const st = state.students.find(s => s.id === sid); return { name: st?.name || '未知学生', organization: st?.organization || '未分配', grade: st?.grade || '未设置', courses: stats.courses, fee: stats.fee }; }).sort((a, b) => b.courses - a.courses).forEach(s => rows.push({ 日期: s.name, 时间: s.organization, 学生姓名: s.grade, 所属机构: s.courses, 年级: s.fee.toFixed(0) }));
 

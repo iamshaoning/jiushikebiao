@@ -20,7 +20,6 @@ const elements = {
     settingsBtn: null,
     settingsDropdown: null,
     settingsUserName: null,
-    settingsEmailProvider: null,
     studentSearch: null,
     main: null,
     studentsList: null,

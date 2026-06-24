@@ -99,7 +99,7 @@ export class StatisticsRenderService {
         const c = this.elements.studentDataContainer; if (!c) return;
         const sorted = Object.entries(studentStats).map(function([sid, s]) { const st = this.state.students.find(function(s) { return s.id === sid; }); return { id: sid, name: st ? st.name : '未知', organization: st ? st.organization : '', grade: st ? st.grade : '', courses: s.courses, fee: s.fee }; }.bind(this)).sort(function(a, b) { return b.courses - a.courses; });
         if (sorted.length > 0) {
-            let html = '<div class="overflow-x-auto"><table class="min-w-full divide-y" style="border-color:var(--border-color);table-layout:fixed"><colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr style="background-color:var(--bg-secondary)"><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">学生姓名</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">所属机构</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">年级</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">上课节数</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">课时费</th></tr></thead><tbody class="divide-y" style="border-color:var(--border-color)">';
+            let html = '<div class="overflow-x-auto"><table class="min-w-full divide-y" style="border-color:var(--border-color);table-layout:fixed"><colgroup><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup><thead><tr style="background-color:var(--bg-secondary)"><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">学生姓名</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">所属机构</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">年级</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">课节数</th><th class="px-4 py-3 text-left text-base font-semibold" style="color:var(--text-secondary)">课时费</th></tr></thead><tbody class="divide-y" style="border-color:var(--border-color)">';
             sorted.forEach(function(s) { const oc = utils.generateColor(s.organization, 'organization'), gc = utils.generateColor(s.grade, 'grade'); html += '<tr><td class="px-4 py-3" style="color:var(--text-primary)">' + utils.escapeHtml(s.name) + '</td><td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,' + oc + ' 20%,transparent);color:' + oc + '">' + utils.escapeHtml(s.organization) + '</span></td><td class="px-4 py-3"><span class="px-2 py-1 text-xs font-medium rounded-full" style="background-color:color-mix(in srgb,' + gc + ' 20%,transparent);color:' + gc + '">' + utils.escapeHtml(s.grade) + '</span></td><td class="px-4 py-3"><span class="cursor-pointer hover:underline font-medium" style="color:var(--color-primary)" data-action="show-course-detail" data-student-id="' + s.id + '">' + s.courses + '节</span></td><td class="px-4 py-3" style="color:var(--text-primary)">¥' + s.fee.toFixed(0) + '</td></tr>'; });
             html += '</tbody></table></div>';
             c.innerHTML = '<div class="flex justify-between items-center mb-4"><h3 class="text-lg font-semibold" style="color:var(--text-primary)">学生课量数据</h3></div>' + html;
@@ -174,10 +174,10 @@ export class StatisticsRenderService {
         const monthLabel = month === 'all' ? '全年' : (monthNames[month] || `${month + 1}月`);
 
         // 构建标题
-        let title = '课程详情';
+        let title = '课节数详情';
         if (detailFilter.studentId) {
             const st = this.state.students.find(s => s.id === detailFilter.studentId);
-            title = st ? utils.escapeHtml(st.name) + ' 的课程' : '课程详情';
+            title = st ? utils.escapeHtml(st.name) + ' 的课节详情' : '课节数详情';
         } else if (detailFilter.lessonType) {
             const parts = [];
             if (detailFilter.org) parts.push(detailFilter.org);
@@ -189,7 +189,7 @@ export class StatisticsRenderService {
 
         if (courses.length === 0) {
             registry.get('modalService').show(
-                '<div class="text-center py-6"><h3 class="text-lg font-semibold mb-2" style="color:var(--text-primary)">' + title + '</h3><p class="text-sm mb-1" style="color:var(--text-secondary)">' + year + '年' + monthLabel + '</p><p style="color:var(--text-secondary)">暂无可显示的课程</p></div>'
+                '<div class="text-center py-6"><h3 class="text-lg font-semibold mb-2" style="color:var(--text-primary); display: flex; align-items: center; gap: 6px; justify-content: center;"><i data-lucide="list" class="inline-block" style="width: 18px; height: 18px;"></i>' + title + '</h3><p class="text-sm mb-1" style="color:var(--text-secondary)">' + year + '年' + monthLabel + '</p><p style="color:var(--text-secondary)">暂无可显示的课程</p></div>'
             );
             return;
         }
@@ -198,7 +198,7 @@ export class StatisticsRenderService {
         // 标题区
         html += '<div style="min-width:400px">';
         html += '<div class="mb-4 px-1">';
-        html += '<h3 class="text-lg font-semibold" style="color:var(--text-primary)">' + title + '</h3></div>';
+        html += '<h3 class="text-lg font-semibold" style="color:var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="list" class="inline-block" style="width: 18px; height: 18px;"></i>' + title + '</h3></div>';
 
         // 课统计信息条
         const oneOnOneCount = courses.filter(c => c.lessonType !== '多人课').length;

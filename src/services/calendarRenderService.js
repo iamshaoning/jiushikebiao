@@ -166,7 +166,7 @@ export class CalendarRenderService {
         const dateInfo = this.getDateInfo(dateStr);
         const todayClass = isToday ? 'today-border relative z-10 today-cell' : '';
         const bgColor = isCurrentMonth ? 'var(--bg-secondary)' : 'var(--bg-content)';
-        const textColor = isCurrentMonth ? (isToday ? 'var(--color-danger)' : 'var(--text-secondary)') : 'var(--text-secondary)';
+        const textColor = isCurrentMonth ? (isToday ? 'var(--color-today)' : 'var(--text-secondary)') : 'var(--text-secondary)';
 
         cell.className = `calendar-cell ${todayClass} border p-2 min-h-28 hover-cell cursor-pointer overflow-visible`;
         cell.style.backgroundColor = bgColor;
@@ -182,7 +182,7 @@ export class CalendarRenderService {
 
         // 构建日期头部HTML
         const holidayTag = this._getHolidayTag(dateInfo);
-        const todayTag = isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-danger); color: white;">今</span>' : '';
+        const todayTag = isToday ? '<span class="mr-2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium" style="background-color: var(--color-today); color: white;">今</span>' : '';
         const scheduleTag = this._getScheduleTag(dateInfo, dateStr);
         const fontWeight = isCurrentMonth && isToday ? 'font-bold' : '';
 

@@ -41,7 +41,7 @@ export class ListRenderService {
         const btn = document.querySelector('#student-layout-toggle .student-layout-btn');
         if (btn) {
             btn.dataset.layout = layout;
-            btn.textContent = { single: '1', double: '2', triple: '3' }[layout];
+            btn.textContent = { single: '1列', double: '2列', triple: '3列' }[layout];
             btn.classList.toggle('active', layout !== 'single');
         }
         this.resetStudentCache();
@@ -100,7 +100,8 @@ export class ListRenderService {
                 filteredStudents = this._cachedStudents;
             }
             
-            // 更新缓存状态
+            // 更新缓存状态：仅在无搜索词时缓存完整列表
+            // 有搜索词时不更新 _cachedStudents，避免下次相同搜索词命中错误缓存
             this._lastSearchTerm = searchTerm;
         } else {
             // 使用缓存的结果

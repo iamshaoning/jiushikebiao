@@ -24,7 +24,7 @@ export class StudentFormModal {
             <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">${title}</h3>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="${isEdit ? 'square-pen' : 'user-plus'}" class="inline-block" style="width: 18px; height: 18px;"></i>${title}</h3>
                     </div>
                     <form id="${formId}">
                         ${isEdit ? `<input type="hidden" id="${pfx}student-id" value="${student.id}">` : ''}
@@ -203,7 +203,7 @@ export class StudentFormModal {
             <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
                 <div class="p-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">批量编辑学生</h3>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="pencil" class="inline-block" style="width: 18px; height: 18px;"></i>批量编辑学生</h3>
                         <p class="text-xs mt-1" style="color: var(--text-secondary);">将新数据应用到已选择的 ${students.length} 位学生</p>
                     </div>
                     <form id="batch-edit-student-form">

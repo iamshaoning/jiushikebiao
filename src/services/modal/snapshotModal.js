@@ -62,7 +62,7 @@ export class SnapshotModal {
             return `<div class="mb-6"><h4 class="font-medium mb-2" style="color: var(--text-primary);">手动快照 (最多3个)</h4><div>${html.join('')}</div></div>`;
         };
 
-        const content = `<div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);"><div class="p-6"><div class="mb-6"><h3 class="text-lg font-semibold" style="color: var(--text-primary);">快照管理</h3></div><div class="max-h-[75vh] overflow-y-auto">${generateSnapshotHtml(loginSnapshots, '登录快照', 'login', false)}${generateSnapshotHtml(autoSnapshots, '自动快照 (每15分钟)', 'auto', false)}${generateManualHtml(manualSnapshots)}</div></div></div>`;
+        const content = `<div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);"><div class="p-6"><div class="mb-6"><h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="gallery-vertical-end" class="inline-block" style="width: 18px; height: 18px;"></i>快照管理</h3></div><div class="max-h-[75vh] overflow-y-auto">${generateSnapshotHtml(loginSnapshots, '登录快照', 'login', false)}${generateSnapshotHtml(autoSnapshots, '自动快照 (每15分钟)', 'auto', false)}${generateManualHtml(manualSnapshots)}</div></div></div>`;
 
         this.modal.show(content, {
             onShow: () => {

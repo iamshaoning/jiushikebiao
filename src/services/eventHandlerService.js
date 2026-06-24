@@ -155,7 +155,119 @@ class EventHandlerService {
     _setupOrgGradeHandlers() { const self = this; return {
         'manage-organizations': () => { registry.get('modalService').showManageOrganizations(); },
         'manage-grades': () => { registry.get('modalService').showManageGrades(); },
-        'edit-org-inline': (p, e) => { if (!e || !e.target) return; const itemName = p.itemName, item = p.item; const cfg = registry.get('currentManagementModalConfig'); if (!cfg) return; const el = e.target.closest(`[data-${itemName}]`); if (!el) return; const nip = document.getElementById(`new-${itemName}`), ab = document.getElementById(`add-${itemName}`); if (!nip || !ab) return; const oiv = nip.value; nip.value = item; nip.focus(); nip.select(); const obt = ab.textContent; ab.textContent = '保存'; ab.classList.remove('bg-primary'); ab.style.backgroundColor = 'var(--color-success)'; cfg.editingItem = { itemName, originalItem: item, itemElement: el, originalInputValue: oiv, originalBtnText: obt }; if (ab._originalClickHandler) ab.removeEventListener('click', ab._originalClickHandler); const cancelEdit = () => { nip.value = oiv; ab.textContent = obt; ab.style.backgroundColor = 'var(--color-primary)'; nip.onkeydown = (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); const beb = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`); if (beb) beb.click(); } }; ab.onclick = ab._originalClickHandler || null; delete cfg.editingItem; }; ab.onclick = async (ev) => { ev.preventDefault(); ev.stopPropagation(); const nn = nip.value.trim(); if (!nn) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; } if (nn === item) { cancelEdit(); return; } if (cfg.items.includes(nn)) { registry.get('notificationService').show(`该${itemName}名称已存在`, 'warning'); return; } if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } self._isSaving = true; ab.disabled = true; nip.disabled = true; try { const idx = cfg.items.indexOf(item); if (cfg.editItem && idx !== -1) { const r = cfg.editItem(idx, nn); if (r === false) { cancelEdit(); return; } }; await registry.get('utils').saveData(); registry.get('notificationService').show(`${itemName}修改成功`, 'success'); if (cfg.updateUI) cfg.updateUI(); cancelEdit(); } catch (err) { registry.get('errorHandlerService').log('error', `${itemName}修改失败`, err); registry.get('notificationService').show(`${itemName}修改失败`, 'error'); cancelEdit(); } finally { self._isSaving = false; ab.disabled = false; nip.disabled = false; } }; },
+        'edit-org-inline': (p, e) => {
+            if (!e || !e.target) return;
+            const itemName = p.itemName, item = p.item;
+            const cfg = registry.get('currentManagementModalConfig');
+            if (!cfg) return;
+            const el = e.target.closest(`[data-${itemName}]`);
+            if (!el) return;
+            const nip = document.getElementById(`new-${itemName}`), ab = document.getElementById(`add-${itemName}`);
+            if (!nip || !ab) return;
+
+            // 如果已经在编辑中，先取消之前的编辑
+            if (cfg.editingItem && ab._cancelEditHandler) {
+                ab._cancelEditHandler();
+            }
+
+            // 获取编辑按钮本身
+            const editBtn = el.querySelector('[data-action="edit-org-inline"]');
+            const editBtnIcon = editBtn?.querySelector('[data-lucide]');
+
+            const oiv = nip.value;
+            nip.value = item;
+            nip.focus();
+            nip.select();
+            const obt = ab.textContent;
+            ab.textContent = '保存';
+            ab.classList.remove('bg-primary');
+            ab.style.backgroundColor = 'var(--color-success)';
+            cfg.editingItem = { itemName, originalItem: item, itemElement: el, originalInputValue: oiv, originalBtnText: obt };
+
+            // 将编辑按钮变为取消按钮
+            if (editBtn) {
+                editBtn.dataset.action = 'cancel-edit-inline';
+                editBtn.dataset.item = item;
+                if (editBtnIcon) {
+                    editBtnIcon.setAttribute('data-lucide', 'x');
+                    editBtnIcon.style.color = 'var(--color-danger)';
+                }
+                if (registry.get('lucide')) registry.get('lucide').createIcons({ nodes: [editBtn] });
+            }
+
+            if (!ab._originalClickHandler) ab._originalClickHandler = ab.onclick || function(){};
+
+            const cancelEdit = () => {
+                nip.value = oiv;
+                ab.textContent = obt;
+                ab.style.backgroundColor = 'var(--color-primary)';
+                ab.classList.add('bg-primary');
+                nip.onkeydown = (ev) => {
+                    if (ev.key === 'Enter') {
+                        ev.preventDefault();
+                        const beb = document.querySelector(`[data-action="add-org-inline"][data-item-name="${itemName}"]`);
+                        if (beb) beb.click();
+                    }
+                };
+                ab.onclick = ab._originalClickHandler || null;
+                // 恢复编辑按钮
+                if (editBtn) {
+                    editBtn.dataset.action = 'edit-org-inline';
+                    const icon = editBtn.querySelector('[data-lucide]');
+                    if (icon) {
+                        icon.setAttribute('data-lucide', 'square-pen');
+                        icon.style.color = 'var(--color-success)';
+                    }
+                    if (registry.get('lucide')) registry.get('lucide').createIcons({ nodes: [editBtn] });
+                }
+                delete cfg.editingItem;
+                ab._cancelEditHandler = null;
+            };
+            ab._cancelEditHandler = cancelEdit;
+
+            // Enter 键直接保存
+            nip.onkeydown = (ev) => {
+                if (ev.key === 'Enter') { ev.preventDefault(); ev.stopPropagation(); ab.click(); }
+            };
+
+            ab.onclick = async (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                const nn = nip.value.trim();
+                if (!nn) { registry.get('notificationService').show(`请输入${itemName}名称`, 'warning'); return; }
+                if (nn === item) { cancelEdit(); return; }
+                if (cfg.items.includes(nn)) { registry.get('notificationService').show(`该${itemName}名称已存在`, 'warning'); return; }
+                if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; }
+                self._isSaving = true;
+                ab.disabled = true;
+                nip.disabled = true;
+                try {
+                    const idx = cfg.items.indexOf(item);
+                    if (cfg.editItem && idx !== -1) {
+                        const r = cfg.editItem(idx, nn);
+                        if (r === false) { cancelEdit(); return; }
+                    }
+                    await registry.get('utils').saveData();
+                    registry.get('notificationService').show(`${itemName}修改成功`, 'success');
+                    if (cfg.updateUI) cfg.updateUI();
+                    cancelEdit();
+                } catch (err) {
+                    registry.get('errorHandlerService').log('error', `${itemName}修改失败`, err);
+                    registry.get('notificationService').show(`${itemName}修改失败`, 'error');
+                    cancelEdit();
+                } finally {
+                    self._isSaving = false;
+                    ab.disabled = false;
+                    nip.disabled = false;
+                }
+            };
+        },
+        'cancel-edit-inline': (p, e) => {
+            const cfg = registry.get('currentManagementModalConfig');
+            if (!cfg || !cfg.editingItem) return;
+            const ab = document.getElementById(`add-${cfg.editingItem.itemName}`);
+            if (ab && ab._cancelEditHandler) ab._cancelEditHandler();
+        },
         'delete-org-inline': async (p, e) => { if (!e || !e.target) return; const itemName = p.itemName, item = p.item; const cfg = registry.get('currentManagementModalConfig'); if (!cfg) return; if (self._isSaving) { registry.get('notificationService').show('正在保存中，请稍候...', 'info'); return; } const ci = cfg.items.find(i => i === item || i === p[itemName]), di = ci || item; if (cfg.onDelete?.(di)) { registry.get('notificationService').show(`该${itemName}正在被使用，无法删除`, 'warning'); return; } self._isSaving = true; const ib = document.getElementById(`new-${itemName}`); if (ib) ib.disabled = true; const rowElem = e.target.closest(`[data-${itemName}]`); try { const idx = cfg.items.indexOf(di); if (idx !== -1) { cfg.deleteItem?.(di); await registry.get('utils').saveData(); if (rowElem) rowElem.remove(); registry.get('notificationService').show(`${itemName}删除成功`, 'success'); cfg.updateUI?.(); } } finally { self._isSaving = false; if (ib) { ib.disabled = false; ib.focus(); } } },
         'add-org-inline': async (p, e) => {
             const itemName = p.itemName;

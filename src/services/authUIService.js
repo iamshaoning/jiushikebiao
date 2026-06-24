@@ -202,37 +202,66 @@ class AuthUIService {
             };
         }
 
-        // 微信悬停显示二维码
-        const wechatWrapper = document.getElementById('wechat-wrapper');
-        const wechatPopup = document.getElementById('wechat-popup');
-        if (wechatWrapper && wechatPopup) {
-            let wechatTimer = null;
-            wechatWrapper.onmouseenter = () => {
+        // 微信悬停显示二维码（cloneNode 清理旧监听，避免重复绑定）
+        const wechatWrapperOld = document.getElementById('wechat-wrapper');
+        if (wechatWrapperOld) {
+            const wechatWrapper = wechatWrapperOld.cloneNode(true);
+            wechatWrapperOld.parentNode.replaceChild(wechatWrapper, wechatWrapperOld);
+            const wechatPopup = wechatWrapper.querySelector('#wechat-popup');
+            if (wechatPopup) {
+                let wechatTimer = null;
+            const showWechat = () => {
                 clearTimeout(wechatTimer);
                 wechatTimer = setTimeout(() => {
                     wechatPopup.classList.remove('opacity-0', 'translate-y-2', 'pointer-events-none');
                 }, 500);
             };
-            wechatWrapper.onmouseleave = () => {
+            const hideWechat = () => {
                 clearTimeout(wechatTimer);
-                wechatPopup.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+                wechatTimer = setTimeout(() => {
+                    if (!wechatPopup.matches(':hover')) {
+                        wechatPopup.classList.add('opacity-0', 'translate-y-2', 'pointer-events-none');
+                    }
+                }, 300);
             };
+                wechatWrapper.addEventListener('mouseenter', showWechat);
+                wechatWrapper.addEventListener('mouseleave', hideWechat);
+                wechatPopup.addEventListener('mouseenter', () => clearTimeout(wechatTimer));
+                wechatPopup.addEventListener('mouseleave', hideWechat);
+            }
         }
 
         // 公告板悬停显示
         const announcementWrapper = document.getElementById('announcement-wrapper');
         if (announcementWrapper) {
-            let hoverTimer = null;
-            announcementWrapper.onmouseenter = () => {
-                clearTimeout(hoverTimer);
-                hoverTimer = setTimeout(() => {
+            // 先清除旧的事件监听（避免重复绑定）
+            const newWrapper = announcementWrapper.cloneNode(true);
+            announcementWrapper.parentNode.replaceChild(newWrapper, announcementWrapper);
+            
+            let timer = null;
+            const showPanel = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
                     this._showAnnouncementModal();
                 }, 500);
             };
-            announcementWrapper.onmouseleave = () => {
-                clearTimeout(hoverTimer);
-                hoverTimer = setTimeout(() => this._closeAnnouncement(), 200);
+            const hidePanel = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    const panel = document.getElementById('announcement-panel');
+                    if (panel && !panel.matches(':hover')) {
+                        this._closeAnnouncement();
+                    }
+                }, 300);
             };
+            
+            newWrapper.addEventListener('mouseenter', showPanel);
+            newWrapper.addEventListener('mouseleave', hidePanel);
+            
+            // 将定时器引用暴露到 this，以便面板的 mouseenter 也能清除它
+            this._announceTimerRef = () => timer;
+            this._clearAnnounceTimer = () => { clearTimeout(timer); };
+            this._hideAnnouncePanel = hidePanel;
         }
 
         // 重新渲染 lucide 图标
@@ -274,7 +303,7 @@ class AuthUIService {
         panel.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.25)';
         panel.innerHTML = `
             <div class="flex items-center justify-between p-4 flex-shrink-0">
-                <h3 class="text-xl font-bold" style="color: #ffffff !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3);">公告板</h3>
+                <h3 class="text-xl font-bold" style="color: #ffffff !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 6px;"><i data-lucide="megaphone" class="inline-block" style="width: 22px; height: 22px;"></i>公告板</h3>
                 <button class="announcement-close p-1 rounded-lg hover:bg-white/10 transition-colors" style="color: rgba(255,255,255,0.8);">
                     <i data-lucide="x" style="width:20px;height:20px"></i>
                 </button>
@@ -295,13 +324,14 @@ class AuthUIService {
             panel.style.transform = 'translateX(-50%) translateY(0) scale(1)';
             panel.style.opacity = '1';
 
-            // 悬停面板时保持显示，离开时延迟关闭
-            panel.onmouseenter = () => {
-                clearTimeout(this._announcementHoverTimer);
-            };
-            panel.onmouseleave = () => {
-                this._announcementHoverTimer = setTimeout(() => this._closeAnnouncement(), 200);
-            };
+            // 鼠标进入面板：清除关闭定时器，保持显示
+            panel.addEventListener('mouseenter', () => {
+                if (this._clearAnnounceTimer) this._clearAnnounceTimer();
+            });
+            // 鼠标离开面板：延迟关闭
+            panel.addEventListener('mouseleave', () => {
+                if (this._hideAnnouncePanel) this._hideAnnouncePanel();
+            });
         });
 
         const listDiv = panel.querySelector('.announcement-list');
@@ -341,6 +371,8 @@ class AuthUIService {
         loadAnnouncements().then(announcements => {
             this._allAnnouncements = announcements;
             renderAnnouncements(announcements);
+        }).catch(() => {
+            renderAnnouncements([]);
         });
 
         // 实时订阅新公告
@@ -352,7 +384,6 @@ class AuthUIService {
     }
 
     _closeAnnouncement() {
-        clearTimeout(this._announcementHoverTimer);
         if (this._unsubscribeAnnouncement) {
             this._unsubscribeAnnouncement();
             this._unsubscribeAnnouncement = null;
@@ -415,7 +446,11 @@ class AuthUIService {
                     this.hideAuthModal();
                     this.updateUIForTrialUser();
                     this.resetAuthUI();
-                    this.loadSystemService.loadSystem(true);
+                    if (this.loadSystemService) {
+                        // 重置标志位，确保即使之前已加载过系统，也能重新进入试用模式
+                        this.loadSystemService.systemLoaded = false;
+                        this.loadSystemService.loadSystem(true);
+                    }
                 });
             }, 1000);
 
@@ -676,10 +711,13 @@ class AuthUIService {
         if (this.elements.settingsBtn && this.elements.settingsDropdown) {
             this.elements.settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
+                // 清除所有选中状态：日历格子、课程标签、学生列表、浮动操作栏
+                const eventDispatcher = registry.get('eventDispatcherService');
+                if (eventDispatcher?.clearAllSelections) eventDispatcher.clearAllSelections();
                 const dropdown = this.elements.settingsDropdown;
                 dropdown.style.visibility = 'visible';
                 dropdown.classList.toggle('show');
-            }, { once: false });
+            });
 
             this.elements.settingsDropdown.addEventListener('click', (e) => {
                 e.stopPropagation();

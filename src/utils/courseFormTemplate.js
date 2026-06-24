@@ -18,7 +18,7 @@ export function getCourseFormTemplate(isEdit, data = {}) {
     return `
         <div class="rounded-lg shadow-xl w-full max-w-md mx-4" style="background-color: var(--bg-secondary);">
             <div class="p-6">
-                <div class="mb-4"><h3 class="text-lg font-semibold" style="color: var(--text-primary);">${title}</h3></div>
+                <div class="mb-4"><h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="${isEdit ? 'square-pen' : 'calendar-plus'}" class="inline-block" style="width: 18px; height: 18px;"></i>${title}</h3></div>
                 <form id="${isEdit ? 'edit-course-form' : 'add-course-form'}">
                     ${idInput}
                     <div class="mb-4">

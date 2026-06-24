@@ -49,7 +49,7 @@ class EventBindingService {
 
         if (this.elements.statisticsYearWrapper) {
             this.elements.statisticsYearWrapper.addEventListener('change', (e) => {
-                const year = parseInt(e.detail.value) || new Date().getFullYear();
+                const year = parseInt(e.detail?.value) || new Date().getFullYear();
                 const { month, organization } = this.utils.getStatisticsParams();
                 this.render.statistics(year, month, organization);
             });
@@ -57,7 +57,7 @@ class EventBindingService {
 
         if (this.elements.statisticsMonthWrapper) {
             this.elements.statisticsMonthWrapper.addEventListener('change', (e) => {
-                const monthValue = e.detail.value;
+                const monthValue = e.detail?.value;
                 const month = monthValue === 'all' ? 'all' : parseInt(monthValue);
                 if (month !== 'all' && isNaN(month)) return;
                 const { year, organization } = this.utils.getStatisticsParams();
@@ -68,7 +68,7 @@ class EventBindingService {
         if (this.elements.statisticsOrganizationWrapper) {
             this.elements.statisticsOrganizationWrapper.addEventListener('change', (e) => {
                 const { year, month } = this.utils.getStatisticsParams();
-                const organization = e.detail.value;
+                const organization = e.detail?.value;
                 this.render.statistics(year, month, organization);
             });
         }
@@ -100,6 +100,13 @@ class EventBindingService {
         if (!this.elements.syncStatus) return;
 
         this.elements.syncStatus.addEventListener('click', async () => {
+            // 试用模式下禁用同步功能
+            const serverStatusService = registry.get('serverStatusService');
+            if (serverStatusService?.isTrialMode) {
+                this.notificationService.show('试用模式下不支持数据同步', 'info');
+                return;
+            }
+
             if (this.utils.compareLocalAndServerData) {
                 const hasDiff = await this.utils.compareLocalAndServerData();
                 if (hasDiff) {
@@ -141,10 +148,7 @@ class EventBindingService {
         });
 
         if (trigger) {
-            const triggerText = trigger.querySelector('span');
-            if (triggerText) {
-                triggerText.textContent = '全部机构';
-            }
+            trigger.textContent = '全部机构';
         }
     }
 
@@ -154,7 +158,7 @@ class EventBindingService {
     bindCalendarDropdownEvents() {
         if (this.elements.calendarYearWrapper) {
             this.elements.calendarYearWrapper.addEventListener('change', (e) => {
-                const year = parseInt(e.detail.value) || this.state.currentDate.getFullYear();
+                const year = parseInt(e.detail?.value) || this.state.currentDate.getFullYear();
                 const month = this.state.currentDate.getMonth();
                 this.state.currentDate = new Date(year, month, 1);
                 this.render.calendar();
@@ -163,7 +167,7 @@ class EventBindingService {
 
         if (this.elements.calendarMonthWrapper) {
             this.elements.calendarMonthWrapper.addEventListener('change', (e) => {
-                const month = parseInt(e.detail.value);
+                const month = parseInt(e.detail?.value);
                 if (isNaN(month)) return;
                 const year = this.state.currentDate.getFullYear();
                 this.state.currentDate = new Date(year, month, 1);

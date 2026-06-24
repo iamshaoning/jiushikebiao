@@ -73,6 +73,26 @@ class ModalService {
 
         if (this.nestedContainer && this.nestedContainer.style.display === 'flex') this.hideNested();
 
+        // 如果模态框当前可见，先播放退出动画再显示新内容
+        if (this.container.style.display === 'flex' && this.content.classList.contains('opacity-100')) {
+            // 退出动画
+            this.content.classList.remove('scale-100', 'opacity-100', 'translate-y-0');
+            this.content.classList.add('scale-90', 'opacity-0', 'translate-y-4');
+
+            if (this._boundKeydownHandler) { document.removeEventListener('keydown', this._boundKeydownHandler); this._boundKeydownHandler = null; }
+            this.eventListeners.forEach(({ element, type, listener }) => { if (element) element.removeEventListener(type, listener); });
+            this.eventListeners = [];
+
+            setTimeout(() => {
+                this._showContent(content, options);
+            }, 200);
+            return;
+        }
+
+        this._showContent(content, options);
+    }
+
+    _showContent(content, options = {}) {
         // 清理之前的事件监听器，避免重复绑定
         this.eventListeners.forEach(({ element, type, listener }) => { if (element) element.removeEventListener(type, listener); });
         this.eventListeners = [];
@@ -122,7 +142,19 @@ class ModalService {
         const mouseUpHandler = (e) => {
             if (mouseDownPos && e.target === this.container) {
                 const dx = Math.abs(e.clientX - mouseDownPos.x), dy = Math.abs(e.clientY - mouseDownPos.y);
-                if (dx < 5 && dy < 5 && !e.target.closest('input[type="date"]') && !e.target.closest('input[type="time"]')) this.hide();
+                if (dx < 5 && dy < 5 && !e.target.closest('input[type="date"]') && !e.target.closest('input[type="time"]')) {
+                    // 如果机构/年级管理模态框正在编辑中，点击遮罩取消编辑而非关闭
+                    const cfg = registry.get('currentManagementModalConfig');
+                    if (cfg && cfg.editingItem) {
+                        const ab = document.getElementById(`add-${cfg.editingItem.itemName}`);
+                        if (ab && ab._cancelEditHandler) {
+                            ab._cancelEditHandler();
+                            mouseDownPos = null;
+                            return;
+                        }
+                    }
+                    this.hide();
+                }
                 mouseDownPos = null;
             }
         };

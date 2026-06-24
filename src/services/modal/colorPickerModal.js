@@ -17,7 +17,7 @@ export class ColorPickerModal {
 
         const content = `
             <div class="mb-4">
-                <h3 class="text-lg font-semibold" style="color: var(--text-primary);">选择颜色</h3>
+                <h3 class="text-lg font-semibold" style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;"><i data-lucide="palette" class="inline-block" style="width: 18px; height: 18px;"></i>选择颜色</h3>
                 <p class="text-sm" style="color: var(--text-secondary);">为 "${registry.get('utils').escapeHtml(itemName)}" 选择一个颜色</p>
             </div>
 

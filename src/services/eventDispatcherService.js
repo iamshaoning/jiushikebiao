@@ -140,20 +140,13 @@ class EventDispatcherService {
                     registry.get('utils').safeAddClass(registry.get('elements').durationDropdown, 'hidden');
                 }
 
-                const studentsPage2 = document.getElementById('students-page');
-                const isStudentRow2 = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
-                if (studentsPage2 && !studentsPage2.classList.contains('hidden') && isStudentRow2 && this._selectedStudentIds.size > 0) {
+                const studentsPage = document.getElementById('students-page');
+                const isStudentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
+                if (studentsPage && !studentsPage.classList.contains('hidden') && this._selectedStudentIds.size > 0) {
                     this._clearStudentSelections();
-                    return;
                 }
 
                 registry.get('modalService').closeAllPopovers();
-
-                const studentsPage = document.getElementById('students-page');
-                const isStudentRow = e.target.closest('#students-list tr') || e.target.closest('.student-item') || e.target.closest('.student-card');
-                if (studentsPage && !studentsPage.classList.contains('hidden') && !isStudentRow && this._selectedStudentIds.size > 0) {
-                    this._clearStudentSelections();
-                }
 
                 return;
             }
@@ -258,9 +251,12 @@ class EventDispatcherService {
                 const dates = Array.from(selectedCells).map(c => c.dataset.date);
                 if (dates.length > 1) {
                     registry.get('eventHandlerService').handle('calendar-cells-selected', { dates }, e);
+                    this._dragState._justDragged = true;
+                    setTimeout(() => { this._dragState._justDragged = false; }, 300);
+                } else {
+                    // 单选拖拽：清除选中状态，让后续 click 正常触发
+                    selectedCells.forEach(c => c.classList.remove('calendar-cell-selected'));
                 }
-                this._dragState._justDragged = true;
-                setTimeout(() => { this._dragState._justDragged = false; }, 300);
             }
         }
 
@@ -357,6 +353,22 @@ class EventDispatcherService {
         });
         this._selectedStudentIds.clear();
         this._updateStudentMultiSelectUI();
+    }
+
+    /**
+     * 清除所有选中状态（日历格子、课程标签、学生列表、拖拽状态）
+     */
+    clearAllSelections() {
+        // 日历格子
+        document.querySelectorAll('.calendar-cell-selected').forEach(c => c.classList.remove('calendar-cell-selected'));
+        this._dragState.selectedCells = [];
+        this._dragState._justDragged = false;
+        // 课程标签
+        document.querySelectorAll('.course-tag-item.is-selected').forEach(el => el.classList.remove('is-selected'));
+        // 学生列表 + 浮动操作栏
+        this._clearStudentSelections();
+        const fab = document.getElementById('floating-action-bar');
+        if (fab) fab.classList.remove('active');
     }
 
     /**

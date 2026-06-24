@@ -24,43 +24,34 @@
     <nav class="shadow-sm border-b" style="display: none; background-color: var(--bg-secondary); border-color: var(--border-color); position: sticky; top: 0; z-index: 50;">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-4">
-                        <div class="flex items-center">
-                            <img src="./pikachu.gif" alt="玖拾课表" class="mr-1 cursor-pointer" id="navbar-pikachu">
-                            <h1 class="text-2xl font-bold" style="font-size: 26px; color: var(--text-primary);">玖拾课表</h1>
-                        </div>
-                        <div id="sync-status" class="sync-card">
-                            <div class="sync-row">
-                                <div id="sync-icon" class="sync-icon"><div class="sync-dot"></div></div>
-                                <div>
-                                    <div id="sync-title" class="sync-title">已同步</div>
-                                </div>
+                <div class="flex items-center">
+                    <img src="./pikachu.gif" alt="玖拾课表" class="mr-1 cursor-pointer" id="navbar-pikachu">
+                    <h1 class="text-2xl font-bold" style="font-size: 26px; color: var(--text-primary);">玖拾课表</h1>
+                </div>
+                <div class="flex-1 flex justify-center">
+                    <div class="flex items-center nav-tabs-container">
+                        <button data-page="calendar-page" class="nav-item px-3 py-2 rounded-md font-semibold active" style="width: 120px; height: 44px; font-size: 16px;">
+                            <i data-lucide="calendar-check" class="mr-1.5 inline-block" style="width: 20px; height: 20px;"></i> 日历排课
+                        </button>
+                        <button data-page="students-page" class="nav-item px-3 py-2 rounded-md font-semibold" style="width: 120px; height: 44px; font-size: 16px;">
+                            <i data-lucide="users-round" class="mr-1.5 inline-block" style="width: 20px; height: 20px;"></i> 学生管理
+                        </button>
+                        <button data-page="statistics-page" class="nav-item px-3 py-2 rounded-md font-semibold" style="width: 120px; height: 44px; font-size: 16px;">
+                            <i data-lucide="chart-column" class="mr-1.5 inline-block" style="width: 20px; height: 20px;"></i> 费用统计
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div id="sync-status" class="sync-card">
+                        <div class="sync-row">
+                            <div id="sync-icon" class="sync-icon"><div class="sync-dot"></div></div>
+                            <div>
+                                <div id="sync-title" class="sync-title">已同步</div>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="flex-1 flex justify-end">
-                    <div class="flex items-center space-x-4">
-                        <button data-page="calendar-page" class="nav-item px-3 py-2 rounded-md text-sm font-semibold active" style="width: 105px; height: 40px;">
-                            <i data-lucide="calendar-check" class="mr-1 inline-block" style="width: 16px; height: 16px;"></i> 日历排课
-                        </button>
-                        <button data-page="students-page" class="nav-item px-3 py-2 rounded-md text-sm font-semibold" style="width: 105px; height: 40px;">
-                            <i data-lucide="users-round" class="mr-1 inline-block" style="width: 16px; height: 16px;"></i> 学生管理
-                        </button>
-                        <button data-page="statistics-page" class="nav-item px-3 py-2 rounded-md text-sm font-semibold" style="width: 105px; height: 40px;">
-                            <i data-lucide="chart-column" class="mr-1 inline-block" style="width: 16px; height: 16px;"></i> 费用统计
-                        </button>
-                        <button id="history-btn" data-action="open-history" class="settings-btn">
-                            <i data-lucide="history" style="width: 18px; height: 18px;"></i>
-                        </button>
-                        <button id="snapshot-btn" data-action="open-snapshot-manager" class="settings-btn">
-                            <i data-lucide="gallery-vertical-end" style="width: 18px; height: 18px;"></i>
-                        </button>
-                    </div>
-                </div>
-                <!-- 设置下拉菜单 -->
-                <div class="settings-dropdown-container ml-4">
+                    <!-- 设置下拉菜单 -->
+                    <div class="settings-dropdown-container">
                     <button id="settings-btn" class="settings-btn">
                         <i data-lucide="cog" style="width: 18px; height: 18px;"></i>
                     </button>
@@ -97,12 +88,23 @@
                             </div>
                         </div>
                         <div class="settings-dropdown-divider"></div>
-                        <div class="settings-dropdown-row">
-                            <div id="logout-btn" class="settings-dropdown-item settings-dropdown-item-danger" style="width: 100%; height: 100%;">
-                                <i data-lucide="power" class="inline-block" style="width: 16px; height: 16px;"></i>
-                                <span>退出</span>
-                            </div>
+                    <div class="settings-dropdown-row">
+                        <div id="snapshot-btn" data-action="open-snapshot-manager" class="settings-dropdown-item settings-dropdown-item-blue" style="width: 100%; height: 100%;">
+                            <i data-lucide="gallery-vertical-end" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            <span>快照</span>
                         </div>
+                        <div id="history-btn" data-action="open-history" class="settings-dropdown-item settings-dropdown-item-blue" style="width: 100%; height: 100%;">
+                            <i data-lucide="history" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            <span>历史</span>
+                        </div>
+                    </div>
+                    <div class="settings-dropdown-divider"></div>
+                    <div class="settings-dropdown-row">
+                        <div id="logout-btn" class="settings-dropdown-item settings-dropdown-item-danger" style="width: 100%; height: 100%;">
+                            <i data-lucide="power" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            <span>退出</span>
+                        </div>
+                    </div>
                     </div>
                     </div>
                 </div>
@@ -117,7 +119,7 @@
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold" style="color: var(--text-primary);">日历排课</h2>
                 <div class="flex items-center space-x-4 mr-4">
-                    <button id="toggle-privacy" data-action="toggle-privacy" title="隐私模式" style="background-color: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); border-width: 1px; border-style: solid;" class="w-8 h-8 rounded-full transition-colors flex items-center justify-center">
+                    <button id="toggle-privacy" data-action="toggle-privacy" title="隐私模式" class="w-8 h-8 rounded-full transition-colors flex items-center justify-center">
                         <i data-lucide="paw-print" class="inline-block" style="width: 16px; height: 16px;"></i>
                     </button>
                     <button id="prev-month" data-action="prev-month" style="background-color: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); border-width: 1px; border-style: solid;" class="w-8 h-8 rounded-full transition-colors flex items-center justify-center">
@@ -164,15 +166,20 @@
         <div id="students-page" class="page hidden">
             <!-- 页面标题和添加按钮 -->
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold" style="color: var(--text-primary);">学生管理</h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-2xl font-bold" style="color: var(--text-primary);">学生管理</h2>
+                </div>
                 <div class="flex items-center space-x-3">
-                    <button id="manage-organizations-btn" data-action="manage-organizations" style="background-color: var(--color-primary);" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                    <div class="flex items-center" id="student-layout-toggle">
+                        <button class="student-layout-btn" data-layout="single" title="切换排列方式">1列</button>
+                    </div>
+                    <button id="manage-organizations-btn" data-action="manage-organizations" style="background-color: #6366f1;" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
                         <i data-lucide="school" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 机构管理
                     </button>
-                    <button id="manage-grades-btn" data-action="manage-grades" style="background-color: var(--color-primary);" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                    <button id="manage-grades-btn" data-action="manage-grades" style="background-color: #8b5cf6;" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
                         <i data-lucide="graduation-cap" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 年级管理
                     </button>
-                    <button id="add-student-btn" data-action="add-student-main" style="background-color: var(--color-primary);" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                    <button id="add-student-btn" data-action="add-student-main" style="background-color: #a855f7;" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
                         <i data-lucide="user-plus" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 添加学生
                     </button>
                 </div>
@@ -184,9 +191,6 @@
                     <div class="flex-grow">
 
                         <input type="text" id="student-search" name="student-search-12345" placeholder="输入姓名、机构进行搜索" class="w-full px-4 py-2 border rounded-lg" style="border-color: var(--border-color); background-color: var(--bg-input); color: var(--text-primary);" autocomplete="off" autocorrect="off" autocapitalize="off" formnovalidate>
-                    </div>
-                    <div class="flex items-center gap-1" id="student-layout-toggle">
-                        <button class="student-layout-btn" data-layout="single" title="切换排列方式">1</button>
                     </div>
                 </div>
             </form>
@@ -263,7 +267,7 @@
                     </div>
                     <div class="relative flex">
                         <button id="export-statistics" data-action="export-data" style="background-color: var(--color-success);" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
-                            <i data-lucide="arrow-down-to-line" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 导出数据
+                            <i data-lucide="arrow-down-to-line" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 导出报表
                         </button>
                     </div>
                 </div>
@@ -380,8 +384,8 @@
                 </div>
             </div>
             <div id="auth-tabs" class="flex gap-2 mb-8">
-                <button id="login-tab" class="flex-1 py-3 rounded-full border-2 border-blue-500 bg-blue-500/40 text-white font-bold text-center text-lg drop-shadow-md transition-all duration-300 hover:bg-blue-500/50" style="text-shadow: 3px 3px 3px rgba(59, 130, 246, 0.5);">登录</button>
-                <button id="register-tab" class="flex-1 py-3 rounded-full border-2 border-transparent bg-purple-500/40 text-white font-semibold text-center text-lg drop-shadow-md transition-all duration-300 hover:bg-purple-500/50" style="text-shadow: 3px 3px 3px rgba(147, 51, 234, 0.5);">注册</button>
+                <button id="login-tab" class="flex-1 py-3 rounded-full border-2 border-blue-500/50 bg-blue-500/25 text-white font-bold text-center text-lg transition-all duration-300 hover:bg-blue-500/35">登录</button>
+                <button id="register-tab" class="flex-1 py-3 rounded-full border-2 border-white/20 bg-white/8 text-white/70 font-semibold text-center text-lg transition-all duration-300 hover:bg-white/14">注册</button>
             </div>
             
             <!-- 共用表单容器 -->
@@ -397,7 +401,7 @@
                 <div class="relative">
                     <!-- 登录按钮 -->
                     <div id="login-btn-container" class="transition-all duration-700 ease-in-out opacity-100">
-                        <button id="login-submit" class="w-full bg-gradient-to-r from-cyan-500/80 to-blue-600/80 backdrop-blur-md text-white font-bold text-lg py-4 rounded-full border border-cyan-400/50 shadow-lg shadow-cyan-500/30 transition-all duration-300 hover:from-cyan-400/90 hover:to-blue-500/90 hover:shadow-xl hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                        <button id="login-submit" class="w-full bg-blue-500 text-white font-bold text-lg py-4 rounded-full shadow-lg shadow-blue-500/35 transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/45 hover:-translate-y-px active:translate-y-0 flex items-center justify-center gap-2">
                             <span id="login-btn-text">登 录</span>
                             <span id="login-loading" class="hidden ml-2">
                                 <i data-lucide="loader-circle" class="inline-block animate-spin" style="width: 16px; height: 16px;"></i>
@@ -407,7 +411,7 @@
                     
                     <!-- 注册按钮 -->
                     <div id="register-btn-container" class="absolute top-0 left-0 w-full transition-all duration-700 ease-in-out opacity-0 pointer-events-none">
-                        <button id="register-submit" class="w-full bg-gradient-to-r from-purple-600/80 to-pink-500/80 backdrop-blur-md text-white font-bold text-lg py-4 rounded-full border border-pink-400/50 shadow-lg shadow-pink-500/30 transition-all duration-300 hover:from-purple-500/90 hover:to-pink-400/90 hover:shadow-xl hover:shadow-pink-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center">
+                        <button id="register-submit" class="w-full bg-purple-500 text-white font-bold text-lg py-4 rounded-full shadow-lg shadow-purple-500/35 transition-all duration-300 hover:bg-purple-600 hover:shadow-xl hover:shadow-purple-500/45 hover:-translate-y-px active:translate-y-0 flex items-center justify-center">
                             <span id="register-btn-text">注 册</span>
                             <span id="register-loading" class="hidden ml-2">
                                 <i data-lucide="loader-circle" class="inline-block animate-spin" style="width: 16px; height: 16px;"></i>
