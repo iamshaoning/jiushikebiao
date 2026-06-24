@@ -326,7 +326,7 @@ input:focus, textarea:focus, select:focus, button:not(.nav-item):focus {
 
 #auth-email,
 #auth-password {
-    color: #ffffff;
+    color: #ffffff !important;
     background-color: rgba(255, 255, 255, 0.1) !important;
     backdrop-filter: blur(8px) !important;
     -webkit-backdrop-filter: blur(8px) !important;
@@ -833,7 +833,7 @@ button:not(:active), .btn:not(:active) {
 #duration-dropdown button:hover,
 #start-time-container button:hover,
 #course-date-container button:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
+  background: var(--bg-tertiary) !important;
 }
 
 /* 下拉菜单固定宽度 */
@@ -952,7 +952,10 @@ button:not(:active), .btn:not(:active) {
   color: var(--text-primary) !important;
 }
 
-.dark .custom-select-trigger:hover,
+.dark .custom-select-trigger:hover {
+  border-color: var(--color-hover) !important;
+}
+
 .dark .custom-select-trigger.active {
   border-color: var(--color-primary) !important;
 }
@@ -968,11 +971,11 @@ button:not(:active), .btn:not(:active) {
 }
 
 .dark .custom-option:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: var(--bg-content) !important;
 }
 
 .dark .custom-option.selected {
-  background: rgba(59, 130, 246, 0.2) !important;
+  background: var(--bg-content) !important;
   color: var(--color-primary) !important;
 }
 

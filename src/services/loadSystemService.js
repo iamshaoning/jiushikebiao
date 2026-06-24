@@ -124,6 +124,11 @@ class LoadSystemService {
         this.state.gradeColors = {};
 
         localStorage.removeItem('coursemanagerdata');
+
+        // 重置学生列表缓存，避免上一个账号的缓存数据被试用模式渲染复用
+        if (registry.get('listRenderService')) {
+            registry.get('listRenderService').resetStudentCache();
+        }
         
         // 重置历史记录服务状态，避免显示其他账号的操作记录
         // 注意：不删除 localStorage 中的历史记录数据，只重置内存中的状态
