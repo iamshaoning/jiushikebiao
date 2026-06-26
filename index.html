@@ -1,0 +1,473 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1300">
+    <title>玖拾课表</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <script src="https://unpkg.com/chinese-days@latest" defer></script>
+    <script>
+        // 页面加载早期检测系统深色模式，避免页面闪烁
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
+  <script type="module" crossorigin src="./assets/index-Cj7BsynX.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-CcxJ4pU1.css">
+</head>
+<body class="min-h-screen" style="opacity: 0; transition: opacity 0.5s ease-in-out;">
+    <!-- 导航栏 -->
+    <nav class="shadow-sm border-b" style="display: none; background-color: var(--bg-secondary); border-color: var(--border-color); position: sticky; top: 0; z-index: 50;">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img src="./pikachu.gif" alt="玖拾课表" class="mr-1 cursor-pointer" id="navbar-pikachu">
+                    <h1 class="text-2xl font-bold" style="font-size: 26px; color: var(--text-primary);">玖拾课表</h1>
+                </div>
+                <div class="flex-1 flex justify-center">
+                    <div class="flex items-center nav-tabs-container">
+                        <button data-page="calendar-page" class="nav-item px-3 py-2 rounded-md font-semibold active" style="width: 120px; height: 44px; font-size: 16px;">
+                            <i data-lucide="calendar-check" class="mr-1.5 inline-block" style="width: 20px; height: 20px;"></i> 日历排课
+                        </button>
+                        <button data-page="students-page" class="nav-item px-3 py-2 rounded-md font-semibold" style="width: 120px; height: 44px; font-size: 16px;">
+                            <i data-lucide="users-round" class="mr-1.5 inline-block" style="width: 20px; height: 20px;"></i> 学生管理
+                        </button>
+                        <button data-page="statistics-page" class="nav-item px-3 py-2 rounded-md font-semibold" style="width: 120px; height: 44px; font-size: 16px;">
+                            <i data-lucide="chart-column" class="mr-1.5 inline-block" style="width: 20px; height: 20px;"></i> 费用统计
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div id="sync-status" class="sync-card">
+                        <div class="sync-row">
+                            <div id="sync-icon" class="sync-icon"><div class="sync-dot"></div></div>
+                            <div>
+                                <div id="sync-title" class="sync-title">已同步</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 设置下拉菜单 -->
+                    <div class="settings-dropdown-container">
+                    <button id="settings-btn" class="settings-btn">
+                        <i data-lucide="cog" style="width: 18px; height: 18px;"></i>
+                    </button>
+                    <div id="settings-dropdown" class="settings-dropdown">
+                        <div class="settings-dropdown-header">
+                            <div class="settings-avatar" id="profile-avatar-wrapper">
+                                <img id="profile-avatar-img" src="" alt="头像" class="settings-avatar-img" style="display:none">
+                                <div class="settings-avatar-loading" id="profile-avatar-loading" style="display:none">
+                                    <div class="avatar-spinner"></div>
+                                </div>
+                                <div class="settings-avatar-placeholder" id="profile-avatar-placeholder">
+                                    <i data-lucide="circle-user-round" class="inline-block" style="width: 40px; height: 40px;"></i>
+                                </div>
+                                <div class="settings-avatar-overlay">
+                                    <i data-lucide="camera" style="width: 14px; height: 14px;"></i>
+                                </div>
+                            </div>
+                            <div class="settings-header-info">
+                                <span id="settings-user-name" class="settings-user-name" title="点击修改昵称"></span>
+                                <input id="settings-nickname-input" class="settings-nickname-input" type="text" maxlength="20" placeholder="输入昵称" style="display:none">
+                            </div>
+                        </div>
+                        <input type="file" id="profile-avatar-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
+                        <div class="settings-dropdown-divider"></div>
+                        <div class="settings-theme-item">
+                            <span id="settings-theme-label" class="settings-theme-label">自动模式</span>
+                            <div id="theme-slider" class="theme-slider">
+                                <div id="theme-slider-indicator" class="theme-slider-indicator light"></div>
+                                <div class="theme-slider-icons">
+                                    <span data-theme="light"><i data-lucide="sun" style="width: 16px; height: 16px;"></i></span>
+                                    <span data-theme="auto"><i data-lucide="sun-moon" style="width: 16px; height: 16px;"></i></span>
+                                    <span data-theme="dark"><i data-lucide="moon" style="width: 16px; height: 16px;"></i></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="settings-dropdown-divider"></div>
+                    <div class="settings-dropdown-row">
+                        <div id="snapshot-btn" data-action="open-snapshot-manager" class="settings-dropdown-item settings-dropdown-item-blue" style="width: 100%; height: 100%;">
+                            <i data-lucide="gallery-vertical-end" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            <span>快照</span>
+                        </div>
+                        <div id="history-btn" data-action="open-history" class="settings-dropdown-item settings-dropdown-item-blue" style="width: 100%; height: 100%;">
+                            <i data-lucide="history" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            <span>历史</span>
+                        </div>
+                    </div>
+                    <div class="settings-dropdown-divider"></div>
+                    <div class="settings-dropdown-row">
+                        <div id="logout-btn" class="settings-dropdown-item settings-dropdown-item-danger" style="width: 100%; height: 100%;">
+                            <i data-lucide="power" class="inline-block" style="width: 16px; height: 16px;"></i>
+                            <span>退出</span>
+                        </div>
+                    </div>
+                    </div>
+                    </div>
+                </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style="display: none;">
+        <!-- 日历页面 -->
+        <div id="calendar-page" class="page active">
+            <!-- 日历控制区 -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--text-primary);">日历排课</h2>
+                <div class="flex items-center space-x-4 mr-4">
+                    <button id="toggle-privacy" data-action="toggle-privacy" title="隐私模式" class="w-8 h-8 rounded-full transition-colors flex items-center justify-center">
+                        <i data-lucide="paw-print" class="inline-block" style="width: 16px; height: 16px;"></i>
+                    </button>
+                    <button id="prev-month" data-action="prev-month" style="background-color: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); border-width: 1px; border-style: solid;" class="w-8 h-8 rounded-full transition-colors flex items-center justify-center">
+                        <i data-lucide="chevron-left" class="inline-block" style="width: 16px; height: 16px;"></i>
+                    </button>
+                    <div class="custom-select" id="calendar-year-wrapper">
+                        <div class="custom-select-trigger font-medium" id="calendar-year-trigger" data-action="toggle-select" data-select-wrapper="calendar-year-wrapper">
+                            <span>2026年</span>
+                            <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
+                        </div>
+                        <div class="custom-select-options" id="calendar-year-options"></div>
+                    </div>
+                    <div class="custom-select" id="calendar-month-wrapper">
+                        <div class="custom-select-trigger font-medium" id="calendar-month-trigger" data-action="toggle-select" data-select-wrapper="calendar-month-wrapper">
+                            <span>3月</span>
+                            <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
+                        </div>
+                        <div class="custom-select-options" id="calendar-month-options"></div>
+                    </div>
+                    <button id="next-month" data-action="next-month" style="background-color: var(--bg-secondary); border-color: var(--border-color); color: var(--text-primary); border-width: 1px; border-style: solid;" class="w-8 h-8 rounded-full transition-colors flex items-center justify-center">
+                        <i data-lucide="chevron-right" class="inline-block" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 日历网格 -->
+            <div class="rounded-xl shadow-sm border" style="background-color: var(--bg-secondary); border-color: var(--border-color); overflow: hidden;">
+                <div class="grid grid-cols-7 border-b" style="background-color: var(--bg-secondary); border-color: var(--border-color); border-top-left-radius: 0.75rem; border-top-right-radius: 0.75rem;">
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周一</div>
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周二</div>
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周三</div>
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周四</div>
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周五</div>
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周六</div>
+                    <div class="text-center py-3 font-semibold" style="color: var(--text-primary);">周日</div>
+                </div>
+                <div id="calendar-grid" class="grid grid-cols-7">
+                    <!-- 日历单元格将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 学生页面 -->
+        <div id="students-page" class="page hidden">
+            <!-- 页面标题和添加按钮 -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-2xl font-bold" style="color: var(--text-primary);">学生管理</h2>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center" id="student-layout-toggle">
+                        <button class="student-layout-btn" data-layout="single" title="切换排列方式">1列</button>
+                    </div>
+                    <button id="manage-organizations-btn" data-action="manage-organizations" style="background-color: #6366f1;" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                        <i data-lucide="school" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 机构管理
+                    </button>
+                    <button id="manage-grades-btn" data-action="manage-grades" style="background-color: #8b5cf6;" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                        <i data-lucide="graduation-cap" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 年级管理
+                    </button>
+                    <button id="add-student-btn" data-action="add-student-main" style="background-color: #a855f7;" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                        <i data-lucide="user-plus" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 添加学生
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜索框 -->
+            <form autocomplete="off" novalidate onsubmit="event.preventDefault(); return false;">
+                <div class="flex gap-4 mb-6">
+                    <div class="flex-grow">
+
+                        <input type="text" id="student-search" name="student-search-12345" placeholder="输入姓名、机构进行搜索" class="w-full px-4 py-2 border rounded-lg" style="border-color: var(--border-color); background-color: var(--bg-input); color: var(--text-primary);" autocomplete="off" autocorrect="off" autocapitalize="off" formnovalidate>
+                    </div>
+                </div>
+            </form>
+
+            <!-- 学生列表 -->
+            <div class="rounded-xl shadow-sm overflow-hidden border" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y" style="border-color: var(--border-color); table-layout: fixed;">
+                        <thead class="border-b" style="border-color: var(--border-color);">
+                            <tr>
+                                <th class="px-6 py-3 text-left font-semibold" style="color: var(--text-primary); width: 20%;">姓名</th>
+                                <th class="px-6 py-3 text-left font-semibold" style="color: var(--text-primary); width: 20%;">机构</th>
+                                <th class="px-6 py-3 text-left font-semibold" style="color: var(--text-primary); width: 20%;">年级</th>
+                                <th class="px-6 py-3 text-left font-semibold" style="color: var(--text-primary); width: 20%;">一对一课时费</th>
+                                <th class="px-6 py-3 text-left font-semibold" style="color: var(--text-primary); width: 20%;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="students-list" class="divide-y" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                            <!-- 学生列表将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计页面 -->
+        <div id="statistics-page" class="page hidden">
+            <!-- 页面标题 -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold" style="color: var(--text-primary);">费用统计</h2>
+                <div class="flex items-center space-x-3">
+                    <!-- 自定义年份下拉菜单 -->
+                    <div class="custom-select" id="statistics-year-wrapper">
+                        <div class="custom-select-trigger" id="statistics-year-trigger" data-action="toggle-select" data-select-wrapper="statistics-year-wrapper">
+                            <span>2026年</span>
+                            <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
+                        </div>
+                        <div class="custom-select-options" id="statistics-year-options">
+                            <!-- 年份选项将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    <!-- 自定义月份下拉菜单 -->
+                    <div class="custom-select" id="statistics-month-wrapper">
+                        <div class="custom-select-trigger" id="statistics-month-trigger" data-action="toggle-select" data-select-wrapper="statistics-month-wrapper">
+                            <span>1月</span>
+                            <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
+                        </div>
+                        <div class="custom-select-options" id="statistics-month-options">
+                            <div class="custom-option" data-value="all">全年</div>
+                            <div class="custom-option selected" data-value="0">1月</div>
+                            <div class="custom-option" data-value="1">2月</div>
+                            <div class="custom-option" data-value="2">3月</div>
+                            <div class="custom-option" data-value="3">4月</div>
+                            <div class="custom-option" data-value="4">5月</div>
+                            <div class="custom-option" data-value="5">6月</div>
+                            <div class="custom-option" data-value="6">7月</div>
+                            <div class="custom-option" data-value="7">8月</div>
+                            <div class="custom-option" data-value="8">9月</div>
+                            <div class="custom-option" data-value="9">10月</div>
+                            <div class="custom-option" data-value="10">11月</div>
+                            <div class="custom-option" data-value="11">12月</div>
+                        </div>
+                    </div>
+                    <!-- 自定义机构下拉菜单 -->
+                    <div class="custom-select" id="statistics-organization-wrapper">
+                        <div class="custom-select-trigger" id="statistics-organization-trigger" data-action="toggle-select" data-select-wrapper="statistics-organization-wrapper">
+                            <span>全部机构</span>
+                            <i data-lucide="chevron-down" class="custom-select-arrow inline-block" style="width: 12px; height: 12px;"></i>
+                        </div>
+                        <div class="custom-select-options" id="statistics-organization-options">
+                            <div class="custom-option selected" data-value="">全部机构</div>
+                            <!-- 机构选项将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    <div class="relative flex">
+                        <button id="export-statistics" data-action="export-data" style="background-color: var(--color-success);" class="text-white px-4 py-2 rounded-lg flex items-center transition-colors hover:opacity-90">
+                            <i data-lucide="arrow-down-to-line" class="inline-block mr-2" style="width: 16px; height: 16px;"></i> 导出报表
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="p-5 rounded-xl shadow-sm border" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium mb-1" style="color: var(--text-secondary);">总课节数</h3>
+                            <p id="total-hours" class="text-3xl font-bold" style="color: var(--text-primary);">0</p>
+                        </div>
+                        <div class="p-2 rounded-lg" style="background-color: rgba(59, 130, 246, 0.1);">
+                            <i data-lucide="calendar-check" style="color: var(--color-primary); width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs" style="color: var(--text-secondary);">节课程</div>
+                </div>
+                <div class="p-5 rounded-xl shadow-sm border" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium mb-1" style="color: var(--text-secondary);">总课时费</h3>
+                            <p id="total-fee" class="text-3xl font-bold" style="color: var(--color-success);">¥0</p>
+                        </div>
+                        <div class="p-2 rounded-lg" style="background-color: rgba(16, 185, 129, 0.1);">
+                            <i data-lucide="circle-dollar-sign" class="inline-block" style="width: 20px; height: 20px; color: var(--color-success);"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs" style="color: var(--text-secondary);">人民币</div>
+                </div>
+                <div class="p-5 rounded-xl shadow-sm border" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-sm font-medium mb-1" style="color: var(--text-secondary);">学生人数</h3>
+                            <p id="total-students" class="text-3xl font-bold" style="color: var(--color-purple);">0</p>
+                        </div>
+                        <div class="p-2 rounded-lg" style="background-color: rgba(148, 0, 211, 0.1);">
+                            <i data-lucide="users-round" style="color: var(--color-purple); width: 20px; height: 20px;"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs" style="color: var(--text-secondary);">名学生</div>
+                </div>
+            </div>
+
+            <!-- 机构模块 -->
+            <div class="p-5 rounded-xl shadow-sm border mb-6" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold" style="color: var(--text-primary);">机构数据</h3>
+                </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-md font-medium" style="color: var(--text-primary);">机构课量分布</h4>
+                        </div>
+                        <div class="h-64 flex items-center justify-center">
+                            <div id="organization-chart"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-base font-semibold" style="color: var(--text-primary);">机构详细数据</h4>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y" style="border-color: var(--border-color);">
+                                <thead>
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-base font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">机构名称</th>
+                                        <th class="px-4 py-3 text-left text-base font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">课节数</th>
+                                        <th class="px-4 py-3 text-left text-base font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">课时费</th>
+                                        <th class="px-4 py-3 text-left text-base font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">学生数</th>
+                                        <th class="px-4 py-3 text-left text-base font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">占比</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="organization-table" class="divide-y" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                                    <!-- 机构数据将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 机构课型数据模块 -->
+            <div id="detailed-type-table-container" class="p-5 rounded-xl shadow-sm border mb-6" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium" style="color: var(--text-primary);">机构课型数据</h3>
+                </div>
+                <!-- 内容将通过JavaScript动态生成 -->
+            </div>
+
+            <!-- 学生数据模块 -->
+            <div id="student-data-container" class="p-5 rounded-xl shadow-sm border mb-6" style="background-color: var(--bg-secondary); border-color: var(--border-color);">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium" style="color: var(--text-primary);">学生课量数据</h3>
+                </div>
+                <!-- 内容将通过JavaScript动态生成 -->
+            </div>
+
+        </div>
+
+
+    </main>
+    
+    <!-- 登录模态框 -->
+    <div id="auth-modal" class="fixed inset-0 z-50 flex items-center justify-center" style="opacity: 0; transition: opacity 0.3s ease-out;">
+        <div id="auth-background" class="absolute inset-0" style="background: linear-gradient(-45deg, #8bdeda, #43add0, #998ee0, #e17dc2, #ef9393); background-size: 400% 400%; animation: gradientFlow 15s ease infinite;"></div>
+        <div class="relative bg-transparent backdrop-blur-lg rounded-2xl w-full max-w-md p-8 transform transition-all duration-300 ease-out scale-95 opacity-0" id="auth-container">
+            <div id="pikachu-logo" class="flex items-center justify-center gap-0 mb-4" style="cursor:pointer">
+                <img src="./pikachu.gif" alt="玖拾课表" class="flex-shrink-0">
+                <div class="relative flex-shrink-0 -ml-2">
+                    <img src="./talk.png" alt="pi ka~" class="block">
+                    <img id="typing-gif" src="./pika-typing.gif" alt="pi ka~" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin-left:-6px;margin-top:-7px">
+                </div>
+            </div>
+            <div id="auth-tabs" class="flex gap-2 mb-8">
+                <button id="login-tab" class="flex-1 py-3 rounded-full border-2 border-blue-500/50 bg-blue-500/25 text-white font-bold text-center text-lg transition-all duration-300 hover:bg-blue-500/35">登录</button>
+                <button id="register-tab" class="flex-1 py-3 rounded-full border-2 border-white/20 bg-white/8 text-white/70 font-semibold text-center text-lg transition-all duration-300 hover:bg-white/14">注册</button>
+            </div>
+            
+            <!-- 共用表单容器 -->
+            <div id="auth-form" class="transition-all duration-500 ease-in-out transform">
+                <div class="mb-4">
+                    <input type="email" id="auth-email" placeholder="邮  箱" class="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all text-white text-center text-lg font-semibold">
+                </div>
+                <div class="mb-8">
+                    <input type="password" id="auth-password" placeholder="密  码" class="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full transition-all text-white text-center text-lg font-semibold">
+                </div>
+                
+                <!-- 按钮容器包装器 -->
+                <div class="relative">
+                    <!-- 登录按钮 -->
+                    <div id="login-btn-container" class="transition-all duration-700 ease-in-out opacity-100">
+                        <button id="login-submit" class="w-full bg-blue-500 text-white font-bold text-lg py-4 rounded-full shadow-lg shadow-blue-500/35 transition-all duration-300 hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-500/45 hover:-translate-y-px active:translate-y-0 flex items-center justify-center gap-2">
+                            <span id="login-btn-text">登 录</span>
+                            <span id="login-loading" class="hidden ml-2">
+                                <i data-lucide="loader-circle" class="inline-block animate-spin" style="width: 16px; height: 16px;"></i>
+                            </span>
+                        </button>
+                    </div>
+                    
+                    <!-- 注册按钮 -->
+                    <div id="register-btn-container" class="absolute top-0 left-0 w-full transition-all duration-700 ease-in-out opacity-0 pointer-events-none">
+                        <button id="register-submit" class="w-full bg-purple-500 text-white font-bold text-lg py-4 rounded-full shadow-lg shadow-purple-500/35 transition-all duration-300 hover:bg-purple-600 hover:shadow-xl hover:shadow-purple-500/45 hover:-translate-y-px active:translate-y-0 flex items-center justify-center">
+                            <span id="register-btn-text">注 册</span>
+                            <span id="register-loading" class="hidden ml-2">
+                                <i data-lucide="loader-circle" class="inline-block animate-spin" style="width: 16px; height: 16px;"></i>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部功能栏 -->
+    <div class="fixed bottom-6 left-0 right-0 items-center justify-center gap-8 hidden" id="auth-footer" style="z-index:51">
+        <!-- GitHub -->
+        <a href="https://github.com/iamshaoning/jiushikebiao" target="_blank" rel="noopener noreferrer" class="opacity-70 hover:opacity-100 hover:scale-150 transition-all duration-200" title="项目仓库">
+            <img src="./GitHub.svg" alt="GitHub" style="width:24px;height:24px">
+        </a>
+        <!-- 公告板 -->
+        <div class="relative" id="announcement-wrapper">
+            <button id="announcement-btn" class="opacity-70 hover:opacity-100 hover:scale-150 transition-all duration-200" title="公告板">
+                <img src="./Gonggao.svg" alt="公告板" style="width:26px;height:26px">
+            </button>
+        </div>
+        <!-- 微信 -->
+        <div class="relative" id="wechat-wrapper">
+            <button class="opacity-70 hover:opacity-100 hover:scale-150 transition-all duration-200" title="联系我">
+                <img src="./Wechat.svg" alt="微信" style="width:24px;height:24px">
+            </button>
+            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-8 opacity-0 translate-y-2 pointer-events-none transition-opacity transition-transform duration-300" id="wechat-popup">
+                <div class="rounded-xl p-4" style="background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.25);">
+                    <p class="text-white text-2xl text-center mb-3 font-medium" style="text-shadow: 0 1px 3px rgba(0,0,0,0.3);">iamshaoning</p>
+                    <img src="./weixin.png" alt="微信" class="rounded-lg shadow-lg" style="max-width:none;width:auto;height:auto">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框容器 -->
+    <div id="modal-container" class="fixed inset-0 bg-black/50 items-center justify-center hidden opacity-0 transition-opacity duration-400" style="z-index: 40; padding-top: 4rem;">
+        <div class="rounded-lg border p-6 w-full max-w-md mx-4 no-shadow transform scale-90 opacity-0 translate-y-4 transition-all duration-400" id="modal-content" style="background-color: var(--bg-secondary); border-color: var(--border-color); transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);">
+            <!-- 模态框内容将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <!-- 嵌套模态框容器 (用于编辑等二级操作) -->
+    <div id="nested-modal-container" class="fixed inset-0 bg-black/70 items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="rounded-lg border p-6 w-full max-w-md mx-4 no-shadow transform scale-90 opacity-0 translate-y-4 transition-all duration-300" id="nested-modal-content" style="background-color: var(--bg-secondary); border-color: var(--border-color); transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);">
+            <!-- 嵌套模态框内容将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div id="notification-container" class="fixed top-20 right-4 z-50 flex flex-col items-end space-y-2"></div>
+
+    <!-- 浮动操作栏 -->
+    <div id="floating-action-bar" class="floating-action-bar">
+        <div id="floating-action-bar-content" class="floating-action-bar-content"></div>
+    </div>
+</body></html>
