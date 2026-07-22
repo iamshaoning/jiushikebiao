@@ -1,0 +1,408 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap');
+@import url('https://unpkg.com/@chinese-fonts/lxgwwenkaibright@latest/dist/LXGWBright-Medium/result.css');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ 主题变量 ============ */
+:root {
+  /* 功能标识色 */
+  --color-primary: #3b82f6;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #06b6d4;
+  --color-purple: #8b5cf6;
+  --color-gold: #FAF408;
+  --color-today: #f59e0b;
+  --color-secondary: #9ca3af;
+  --color-hover: #f97316;
+
+  /* 背景/文字/边框 —— 米白色系（层级：primary最浅 → tertiary最深） */
+  --bg-primary: #FAF7F2;
+  --bg-secondary: #F8F3EC;
+  --bg-content: #F5F0E8;
+  --bg-tertiary: #EBE5DC;
+  --bg-input: #F8F3EC;
+  --bg-input2: #EBE5DC;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555555;
+  --border-color: #C7DACF;
+  --shadow-sm: 0 2px 8px rgba(15, 61, 46, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 61, 46, 0.08);
+  --shadow-lg: 0 8px 24px rgba(15, 61, 46, 0.1);
+}
+
+/* ============ 基础 ============ */
+:root {
+  font-family: "LXGW Bright Medium", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(224, 164, 88, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 88% 92%, rgba(15, 61, 46, 0.04) 0%, transparent 40%);
+  background-attachment: fixed;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #C7DACF;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8FB5A2;
+}
+
+/* 标题字体 */
+.font-display {
+  font-family: "Noto Serif SC", Georgia, serif;
+}
+/* 数字字体（统计卡） */
+.font-num {
+  font-family: "JetBrains Mono", monospace;
+  font-feature-settings: "tnum";
+}
+
+/* ============ 自定义工具类 ============ */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-white hover:bg-ink-600;
+  }
+  .btn-secondary {
+    @apply btn bg-[var(--bg-secondary)] text-ink border border-ink-300 hover:bg-ink-50;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-ghost {
+    @apply btn text-slate2 hover:bg-ink-50;
+  }
+  .btn:disabled,
+  .btn[disabled] {
+    @apply bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed shadow-none hover:bg-gray-200 hover:text-gray-400;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 rounded-lg border border-ink-200 bg-[var(--bg-input)] text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-ink-300 focus:ring-2 focus:ring-ink-100 transition;
+  }
+
+  .card {
+    @apply bg-[var(--bg-secondary)] rounded-xl2 shadow-soft border border-ink-100;
+  }
+  .card-hover {
+    @apply card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5;
+  }
+
+  /* 统计卡 */
+  .stat-card {
+    @apply bg-[var(--bg-secondary)] rounded-xl2 border border-ink-100 px-5 py-4 shadow-soft;
+  }
+  .stat-card .stat-label {
+    @apply text-xs text-gray-500 uppercase tracking-wider;
+  }
+  .stat-card .stat-value {
+    @apply text-2xl font-num font-bold text-gray-900 mt-1;
+  }
+
+  .tag {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+  }
+  .tag-info { @apply tag bg-blue-50 text-blue-700; }
+  .tag-success { @apply tag bg-green-50 text-green-700; }
+  .tag-warning { @apply tag bg-amber-50 text-amber-700; }
+  .tag-danger { @apply tag bg-red-50 text-red-700; }
+  .tag-neutral { @apply tag bg-gray-100 text-gray-600; }
+
+  .table-row-hover:hover {
+    @apply bg-ink-50/50;
+  }
+}
+
+/* ============ 路由切换淡入动画 ============ */
+@keyframes routeFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.route-fade-in {
+  animation: routeFadeIn 0.6s ease-out forwards;
+}
+
+/* ============ 课表功能组件样式 ============ */
+
+/* —— 日历单元格（仅保留 Tailwind 无法表达的功能性样式） —— */
+.calendar-cell {
+  position: relative;
+  transition: box-shadow 0.15s ease;
+}
+.calendar-cell:hover {
+  box-shadow: inset 0 0 0 2px #8FB5A2;
+}
+.calendar-cell.today-border {
+  box-shadow: inset 0 0 0 2px var(--color-today);
+  z-index: 2;
+}
+.calendar-cell.selected {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+  z-index: 3;
+}
+
+/* —— 课程标签（仅保留 hover/selected 边框） —— */
+.course-tag-item {
+  transition: box-shadow 0.15s ease;
+}
+.course-tag-item:hover {
+  box-shadow: inset 0 0 0 2px var(--tag-theme-color);
+}
+.course-tag-item.is-selected {
+  box-shadow: inset 0 0 0 2px var(--tag-theme-color);
+}
+
+/* —— 同步状态卡片（侧边栏墨绿背景上，用固定颜色） —— */
+.sync-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+.sync-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background-color: #10b981;
+  animation: sync-breathe 2.5s ease-in-out infinite;
+}
+.sync-card.syncing .sync-dot {
+  background-color: #f59e0b;
+  animation: sync-pulse 1.2s ease-in-out infinite;
+}
+.sync-card.offline .sync-dot {
+  background-color: #9ca3af;
+  animation: none;
+}
+.sync-card.loggedout .sync-dot {
+  background-color: #ef4444;
+  animation: none;
+}
+@keyframes sync-breathe {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+}
+@keyframes sync-pulse {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.5); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.7; }
+}
+
+/* —— 学生选中状态（box-shadow inset 避免布局抖动） —— */
+.student-row-selected {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+.student-card-selected {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+/* —— 学生多列布局（按机构分组卡片网格） —— */
+.students-grid {
+  display: grid;
+  gap: 1rem;
+}
+.students-grid.cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.students-grid.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 768px) {
+  .students-grid.cols-2,
+  .students-grid.cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+.student-org-group {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+.student-org-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.student-org-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.student-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--bg-content);
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+.student-card:not(.student-card-selected):hover {
+  background-color: var(--bg-tertiary);
+  box-shadow: inset 0 0 0 2px #8FB5A2;
+}
+.student-card-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+.student-card-fee {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.student-table-row {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+.student-table-row:not(.student-row-selected):hover {
+  background-color: var(--bg-content);
+  box-shadow: inset 0 0 0 2px #8FB5A2;
+}
+
+/* —— 日期选择器 —— */
+.date-picker-popover {
+  position: absolute;
+  z-index: 60;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-lg);
+  padding: 0.75rem;
+  width: 17rem;
+}
+.date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.date-picker-cell {
+  text-align: center;
+  padding: 0.35rem 0;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: background-color 0.15s ease;
+}
+.date-picker-cell:hover {
+  background-color: var(--bg-tertiary);
+}
+.date-picker-cell.other-month {
+  color: var(--color-secondary);
+}
+.date-picker-cell.selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+.date-picker-cell.today {
+  box-shadow: inset 0 0 0 1px var(--color-today);
+}
+
+/* —— 节假日标识 —— */
+.holiday-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+.schedule-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+/* —— 进度条（统计占比） —— */
+.progress-bar {
+  height: 6px;
+  border-radius: 9999px;
+  background-color: var(--bg-tertiary);
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background-color: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+/* —— 设置下拉（Layout 侧边栏底部） —— */
+.settings-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.settings-dropdown-item:hover {
+  background-color: var(--bg-tertiary);
+}
+.settings-dropdown-item.danger:hover {
+  background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+}
+
+/* —— 工具类补充 —— */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* 隐藏 number 输入框上下箭头 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
