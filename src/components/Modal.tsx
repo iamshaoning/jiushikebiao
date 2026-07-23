@@ -1,4 +1,5 @@
 import { type ReactNode, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -70,7 +71,7 @@ export default function Modal({
     ? 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[60] flex items-center justify-center p-4'
     : 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 backdrop-blur-sm z-40 flex items-center justify-center p-4';
 
-  return (
+  return createPortal(
     <div
       className={`${overlayCls} transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={closeOnOverlay ? onClose : undefined}
@@ -103,6 +104,7 @@ export default function Modal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

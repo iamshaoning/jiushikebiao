@@ -9,6 +9,7 @@
  * 使其脱离父级 overflow 限制，从而允许模态框内容区使用 overflow-y-auto 收起超出的表单内容
  */
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import type { SelectOption } from '@/components/CustomSelect';
 
@@ -129,7 +130,7 @@ export default function ComboBox({
         }}
       />
 
-      {shouldRender && dropdownPos && (
+      {shouldRender && dropdownPos && createPortal(
         <div
           className={`fixed z-[70] max-h-48 overflow-y-auto rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg py-1 transition-all duration-200 origin-top ${
             visible ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'
@@ -154,7 +155,8 @@ export default function ComboBox({
               {opt.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

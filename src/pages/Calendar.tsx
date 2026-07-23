@@ -305,12 +305,26 @@ export default function Calendar() {
       setSelectedDates([dateStr]);
       return;
     }
-    // 计算从 start 到当前的所有日期
     const startIdx = cells.findIndex((c) => c.dateStr === dragStartRef.current);
     const endIdx = cells.findIndex((c) => c.dateStr === dateStr);
     if (startIdx < 0 || endIdx < 0) return;
-    const [from, to] = startIdx <= endIdx ? [startIdx, endIdx] : [endIdx, startIdx];
-    const dates = cells.slice(from, to + 1).map((c) => c.dateStr);
+    // 按 6×7 网格的行列矩形选择（而非索引范围连续填充），
+    // 避免跨周拖拽时自动选中起点到终点之间的所有格子
+    const startRow = Math.floor(startIdx / 7);
+    const startCol = startIdx % 7;
+    const endRow = Math.floor(endIdx / 7);
+    const endCol = endIdx % 7;
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+    const dates: string[] = [];
+    for (let r = minRow; r <= maxRow; r++) {
+      for (let c = minCol; c <= maxCol; c++) {
+        const idx = r * 7 + c;
+        if (idx >= 0 && idx < cells.length) dates.push(cells[idx].dateStr);
+      }
+    }
     setSelectedDates(dates);
   };
 

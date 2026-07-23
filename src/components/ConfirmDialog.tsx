@@ -7,6 +7,7 @@
  * - 遮罩效果与 Modal 一级一致（z-[45]，不覆盖导航栏）
  */
 import { type ReactNode, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { HelpCircle, TriangleAlert, CircleAlert } from 'lucide-react';
 
 export type ConfirmType = 'confirm' | 'delete' | 'warning';
@@ -93,7 +94,7 @@ export default function ConfirmDialog({
   const Icon = cfg.icon;
   const acceptText = confirmText || cfg.defaultText;
 
-  return (
+  return createPortal(
     <div
       className={`modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 backdrop-blur-sm z-[45] flex items-center justify-center p-4 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onCancel}
@@ -135,6 +136,7 @@ export default function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
