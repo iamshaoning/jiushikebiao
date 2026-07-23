@@ -21,6 +21,8 @@ import HistoryModal from '@/modals/HistoryModal';
 import AnnouncementsModal from '@/modals/AnnouncementsModal';
 import { startAutoSnapshotTimer } from '@/lib/snapshot';
 import { subscribeAnnouncements, type Announcement } from '@/lib/announcement';
+import { checkConnection } from '@/lib/data';
+import { useToast } from '@/components/Toast';
 
 // 适配 vite base 路径
 const FAVICON = `${import.meta.env.BASE_URL}favicon.svg`;
@@ -52,11 +54,14 @@ export default function Layout() {
   const [activeModal, setActiveModal] = useState<'profile' | 'snapshot' | 'history' | 'announce' | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
+  const syncStatus = useStore((s) => s.syncStatus);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   // 滑动指示器：记录每个菜单项的 DOM 位置
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [indicator, setIndicator] = useState({ top: 0, height: 0, visible: false });
+  const toast = useToast();
+  const logoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 公告 Realtime 订阅 + 未读判断
   useEffect(() => {
@@ -99,8 +104,6 @@ export default function Layout() {
     return () => { cancelled = true; };
   }, [user, setUser]);
 
-  if (!user) return null;
-
   // 路由变化时更新指示器位置 + 清除所有选中状态
   useLayoutEffect(() => {
     const activeIdx = navItems.findIndex((item) => isActiveItem(loc.pathname, item.to));
@@ -122,6 +125,16 @@ export default function Layout() {
     return () => clearTimeout(timer);
   }, []);
 
+  // 卸载时清理登出定时器，避免对已卸载组件调用 nav
+  useEffect(() => {
+    return () => {
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+    };
+  }, []);
+
+  // 所有 Hook 必须在任何条件 return 之前调用，避免 hooks 数量变化触发运行时错误
+  if (!user) return null;
+
   const handleLogout = () => {
     setLogoutConfirm(true);
   };
@@ -132,7 +145,7 @@ export default function Layout() {
     setLogoutConfirm(false);
     setLeaving(true);
     sessionStorage.setItem('authLogoutTransition', '1');
-    setTimeout(() => {
+    logoutTimerRef.current = setTimeout(() => {
       logout();
       nav('/login', { replace: true });
     }, 300);
@@ -152,11 +165,34 @@ export default function Layout() {
     : 'duration-500 opacity-100';
   const asideContentClass = `transition-opacity ${fadeClass}`;
   const mainClass = `transition-opacity ${fadeClass}`;
+  // 移动端同步圆点：复用 .sync-card/.sync-dot 样式，状态颜色与文字
+  const syncDotCls = syncStatus === 'online' ? '' : syncStatus;
+  const syncDotLabel =
+    syncStatus === 'online'
+      ? '已同步'
+      : syncStatus === 'syncing'
+        ? '同步中'
+        : syncStatus === 'checking'
+          ? '检测中'
+          : syncStatus === 'offline'
+            ? '离线'
+            : '未登录';
+  // 点击同步指示器主动检测连接
+  const handleSyncCheck = async () => {
+    if (syncStatus === 'checking' || syncStatus === 'syncing') return;
+    if (!user) {
+      toast.warning('请先登录');
+      return;
+    }
+    const ok = await checkConnection(user.id);
+    if (ok) toast.success('连接正常');
+    else toast.warning('连接失败，请检查网络');
+  };
 
   return (
     <div className="h-screen flex overflow-hidden">
       {/* 侧边栏：背景色保持，logo 区域始终可见，菜单/用户信息淡入淡出 */}
-      <aside className="hidden md:flex md:w-60 lg:w-64 flex-col bg-ink-700 text-white shadow-lg z-50">
+      <aside className="hidden desktop:flex desktop:w-64 flex-col bg-ink-700 text-white shadow-lg z-50">
         {/* 品牌区域：logo + 大标题，始终可见，衔接 AuthPage logo 形变后的位置 */}
         <div className="px-5 py-6 border-b border-ink-600/40">
           <div className="flex items-center gap-3">
@@ -281,55 +317,71 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* 移动端顶栏 */}
-      <div
-        className={`md:hidden fixed top-0 inset-x-0 z-50 bg-ink-700 text-white px-4 py-3 flex items-center justify-between shadow-md ${asideContentClass}`}
-      >
-        <div className="flex items-center gap-2">
-          <img src={FAVICON} alt="玖拾课表" className="w-5 h-5 object-contain" />
-          <span className="font-display font-bold">玖拾课表</span>
+      {/* 移动端 fixed 顶部块：顶栏 + 次级导航合并（无空行，整体不随滚动）。
+          父块统一墨绿背景，次级导航文字淡出时背景由父块填充，避免登出闪烁 */}
+      <div className="desktop:hidden fixed top-0 inset-x-0 z-50 bg-ink-700">
+        {/* 顶栏：logo+标题+操作一行不换行；py-3 让顶部块总高度精确为 88px（顶栏 44 + 次级导航 44），与 main pt-[88px] 及模态框 top-[88px] 对齐，消除遮罩上部空白 */}
+        <div className="bg-ink-700 text-white px-3 py-3 flex items-center justify-between shadow-md">
+          {/* 品牌：黄框 logo + 标题，shrink-0 防压缩，始终可见 */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="w-5 h-5 rounded bg-amber-300 flex items-center justify-center shadow-sm">
+              <img src={FAVICON} alt="玖拾课表" className="w-3.5 h-3.5 object-contain" />
+            </div>
+            <span className="text-sm font-bold text-white whitespace-nowrap">玖拾课表</span>
+          </div>
+          {/* 右侧操作：同步+快照+历史+公告+头像+退出，shrink-0 防换行，淡入淡出 */}
+          <div className={`flex items-center gap-1.5 shrink-0 ${asideContentClass}`}>
+            <button
+              onClick={handleSyncCheck}
+              className={`sync-card ${syncDotCls} cursor-pointer select-none`}
+              style={{ padding: '0.15rem' }}
+              title={`同步状态：${syncDotLabel}（点击检测连接）`}
+            >
+              <span className="sync-dot" />
+            </button>
+            <button onClick={() => setActiveModal('snapshot')} aria-label="快照" title="快照管理">
+              <Camera className="w-4 h-4 text-ink-100/70" />
+            </button>
+            <button onClick={() => setActiveModal('history')} aria-label="历史" title="操作历史">
+              <HistoryIcon className="w-4 h-4 text-ink-100/70" />
+            </button>
+            <button onClick={handleOpenAnnouncements} aria-label="公告" title="公告板" className="relative">
+              <Bell className="w-4 h-4 text-ink-100/70" />
+              {hasUnread && (
+                <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveModal('profile')}
+              aria-label="个人资料"
+              title={user.display_name}
+              className="w-6 h-6 rounded-full overflow-hidden border border-ink-600/40 shrink-0 bg-ink-600/40"
+            >
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={user.display_name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[10px] font-medium text-ink-100/70">
+                  {(user.display_name || user.email || '?').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </button>
+            <button onClick={handleLogout} aria-label="退出" title="退出登录">
+              <LogOut className="w-4 h-4 text-ink-100/70" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={handleOpenAnnouncements} aria-label="公告" className="relative">
-            <Bell className="w-4 h-4 text-ink-100/70" />
-            {hasUnread && (
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveModal('profile')}
-            aria-label="个人资料"
-            className="w-7 h-7 rounded-full overflow-hidden border border-ink-600/40 shrink-0 bg-ink-600/40"
-          >
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={user.display_name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs font-medium text-ink-100/70">
-                {(user.display_name || user.email || '?').charAt(0).toUpperCase()}
-              </div>
-            )}
-          </button>
-          <span className="text-xs text-ink-100/70 truncate max-w-[80px]">{user.display_name}</span>
-          <button onClick={handleLogout} aria-label="退出">
-            <LogOut className="w-4 h-4 text-ink-100/70" />
-          </button>
-        </div>
-      </div>
-
-      {/* 主内容：进入时淡入，登出时淡出；独立滚动不影响侧边栏 */}
-      <main className={`flex-1 min-w-0 overflow-y-auto pt-14 md:pt-0 ${mainClass}`}>
-        {/* 移动端次级导航 */}
-        <div className="md:hidden bg-[var(--bg-secondary)] border-b border-ink-100 px-4 py-2 flex gap-2 overflow-x-auto">
+        {/* 次级导航：紧贴顶栏，文字跟随登出/进入淡出，背景由父块提供保持墨绿；选中琥珀色（同步桌面端菜单配色），无横线间隔 */}
+        <div className={`px-4 py-2 flex gap-2 overflow-x-auto transition-opacity ${fadeClass}`}>
           {navItems.map((item) => {
             const active = isActiveItem(loc.pathname, item.to);
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex-shrink-0 px-3 py-1.5 rounded text-xs ${
+                className={`flex-shrink-0 px-3 py-1.5 rounded text-xs transition-colors ${
                   active
-                    ? 'bg-ink text-white'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'text-amber-200 font-medium'
+                    : 'text-ink-100/70 hover:text-white'
                 }`}
               >
                 {item.label}
@@ -337,10 +389,14 @@ export default function Layout() {
             );
           })}
         </div>
+      </div>
+
+      {/* 主内容：进入时淡入，登出时淡出；独立滚动不影响侧边栏 */}
+      <main className={`flex-1 min-w-0 overflow-y-auto pt-[88px] desktop:pt-0 ${mainClass}`}>
         {/* 右侧内容：key 变化触发重新挂载，播放 route-fade-in 淡入动画 */}
         <div
           key={loc.pathname}
-          className="px-4 md:px-8 lg:px-10 py-6 md:py-8 max-w-7xl mx-auto route-fade-in"
+          className="px-4 desktop:px-10 py-6 desktop:py-8 max-w-7xl mx-auto route-fade-in"
         >
           <Outlet />
         </div>

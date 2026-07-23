@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -69,13 +69,17 @@ function ToastList() {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const push = useToastStore.getState().push;
 
-  const value: ToastCtx = {
-    push,
-    success: (m) => push('success', m),
-    error: (m) => push('error', m),
-    warning: (m) => push('warning', m),
-    info: (m) => push('info', m),
-  };
+  // useMemo 稳定 context value，避免每次渲染重建对象导致所有消费组件重渲染
+  const value = useMemo<ToastCtx>(
+    () => ({
+      push,
+      success: (m) => push('success', m),
+      error: (m) => push('error', m),
+      warning: (m) => push('warning', m),
+      info: (m) => push('info', m),
+    }),
+    [push],
+  );
 
   return (
     <Ctx.Provider value={value}>

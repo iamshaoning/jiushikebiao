@@ -7,7 +7,7 @@
  * 3. 机构课型数据模块（一对一分布表 + 多人课分布表，课节数可点击弹窗）
  * 4. 学生课量数据模块（课节数可点击弹窗）
  */
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { useStore } from '@/stores/useStore';
 import { useToast } from '@/components/Toast';
 import CustomSelect from '@/components/CustomSelect';
@@ -57,6 +57,57 @@ export default function Statistics() {
     () => calculateStats(courses, students, filters),
     [courses, students, year, month, orgFilter],
   );
+
+  // 机构详细数据表溢出检测：桌面端当表格横向溢出（需要滚动条）时，
+  // 表格另起一行独占，环形图居中于所在行；否则双列并排
+  // 关键：测量表格"自然宽度"（克隆到无限宽隐藏容器，不受当前布局影响），
+  // 与双列时每列可用宽度（card宽度的一半，card宽度不随 tableOverflow 变化）比较，
+  // 避免双列↔单列的反馈循环导致闪烁
+  const orgTableRef = useRef<HTMLDivElement>(null);
+  const [tableOverflow, setTableOverflow] = useState(false);
+  // 检测表格自然宽度是否超过双列半宽（决定是否换行独占一行）
+  const checkTableOverflow = () => {
+    const tbl = orgTableRef.current?.querySelector('table');
+    if (!tbl) return;
+    // 克隆表格到无限宽隐藏容器测量自然宽度（不随当前布局变化）
+    const clone = tbl.cloneNode(true) as HTMLTableElement;
+    clone.style.width = 'auto';
+    clone.style.minWidth = '0';
+    clone.style.maxWidth = 'none';
+    const measure = document.createElement('div');
+    measure.style.position = 'absolute';
+    measure.style.visibility = 'hidden';
+    measure.style.width = 'max-content';
+    measure.style.whiteSpace = 'nowrap';
+    measure.appendChild(clone);
+    document.body.appendChild(measure);
+    const naturalWidth = clone.offsetWidth;
+    document.body.removeChild(measure);
+    // card 宽度不随 tableOverflow 变化（始终全宽），双列每列可用宽度
+    const card = orgTableRef.current?.closest('.card') as HTMLElement | null;
+    const cardWidth = card?.clientWidth ?? 0;
+    const halfWidth = (cardWidth - 40 - 24) / 2; // card p-5(40) + grid gap-6(24)
+    setTableOverflow(naturalWidth > halfWidth);
+  };
+  // useLayoutEffect：首次/数据变化时同步检测，在浏览器绘制前完成，避免切换页面时先显示双列再跳单列的闪烁
+  useLayoutEffect(() => {
+    checkTableOverflow();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stats.orgStats]);
+  // useEffect：resize 时防抖检测
+  useEffect(() => {
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    const debounced = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(checkTableOverflow, 200);
+    };
+    window.addEventListener('resize', debounced);
+    return () => {
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', debounced);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stats.orgStats]);
 
   // 年月下拉选项：默认当前年前两年到后一年，若数据超出范围则自适应扩展
   const yearOptions = useMemo(() => {
@@ -216,7 +267,7 @@ export default function Statistics() {
     const color = getOrgColor(org);
     return (
       <span
-        className="px-2 py-1 text-xs font-medium rounded-full"
+        className="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap"
         style={{ backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`, color }}
       >
         {org}
@@ -228,7 +279,7 @@ export default function Statistics() {
     const color = getGradeColor(grade);
     return (
       <span
-        className="px-2 py-1 text-xs font-medium rounded-full"
+        className="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap"
         style={{ backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`, color }}
       >
         {grade}
@@ -258,27 +309,23 @@ export default function Statistics() {
 
   return (
     <div className="space-y-4">
-      {/* 顶部工具栏 */}
+      {/* 顶部工具栏：仅标题 */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink-700">
             费用统计
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            按时间与机构维度统计课时与费用
+            注意核实月份与机构信息
           </p>
         </div>
-        <button onClick={handleExport} className="btn-primary">
-          <Download className="w-4 h-4" />
-          导出 HTML
-        </button>
       </div>
 
-      {/* 筛选器 */}
-      <div className="card p-4 flex items-center gap-3 flex-wrap">
+      {/* 筛选器：无外轮廓；本月移到下月右侧，导出按钮移到末尾（原本月位置） */}
+      <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
         <button
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-gray-100"
+          className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
         </button>
@@ -286,36 +333,29 @@ export default function Statistics() {
           value={year}
           options={yearOptions}
           onChange={(v) => setYear(v as number)}
-          className="w-24"
+          className="w-24 shrink-0"
         />
         <CustomSelect
           value={month}
           options={monthOptions}
           onChange={(v) => setMonth(v as number | 'all')}
-          className="w-20"
+          className="w-20 shrink-0"
         />
         <button
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-gray-100"
+          className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0"
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
-        <span className="text-sm text-gray-400">·</span>
         <CustomSelect
           value={orgFilter}
           options={orgOptions}
           onChange={(v) => setOrgFilter(v as string)}
-          className="w-32"
+          className="min-w-0 desktop:flex-none desktop:w-32 desktop:shrink-0"
         />
-        <button
-          onClick={() => {
-            setYear(NOW.getFullYear());
-            setMonth(NOW.getMonth());
-            setOrgFilter('');
-          }}
-          className="ml-auto px-3 py-1.5 rounded-lg text-sm text-gray-500 hover:bg-gray-100"
-        >
-          本月
+        <button onClick={handleExport} className="btn-primary hidden desktop:inline-flex ml-auto shrink-0">
+          <Download className="w-4 h-4" />
+          导出
         </button>
       </div>
 
@@ -398,13 +438,13 @@ export default function Statistics() {
             <h3 className="font-display font-bold text-ink-700 mb-4">
               机构数据
             </h3>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 左：饼图 */}
-              <div>
-                <h4 className="text-sm font-medium text-gray-600 mb-4">
+            <div className={tableOverflow ? 'flex flex-col gap-6' : 'grid grid-cols-1 desktop:grid-cols-2 gap-6'}>
+              {/* 左：饼图（表格溢出时居中独占一行） */}
+              <div className={tableOverflow ? 'flex flex-col items-center' : ''}>
+                <h4 className="text-sm font-medium text-gray-600 mb-4 self-start">
                   机构课量分布
                 </h4>
-                <div className="h-64 flex items-center justify-center">
+                <div className="flex items-center justify-center py-2">
                   <PieChart
                     data={pieData}
                     centerLabel="总费用"
@@ -412,8 +452,8 @@ export default function Statistics() {
                   />
                 </div>
               </div>
-              {/* 右：机构详细数据表 */}
-              <div>
+              {/* 右：机构详细数据表（溢出时独占一行） */}
+              <div ref={orgTableRef}>
                 <h4 className="text-sm font-medium text-gray-600 mb-4">
                   机构详细数据
                 </h4>
@@ -466,7 +506,7 @@ export default function Statistics() {
                     </tbody>
                   </table>
                 </div>
-              </div>
+                </div>
             </div>
           </div>
           </div>
@@ -535,7 +575,7 @@ export default function Statistics() {
                     </tbody>
                   </table>
                 </div>
-              </div>
+                </div>
               )}
             </div>
 
@@ -598,7 +638,7 @@ export default function Statistics() {
                     </tbody>
                   </table>
                 </div>
-              </div>
+                </div>
               )}
             </div>
           </div>
@@ -657,7 +697,7 @@ export default function Statistics() {
                   </tbody>
                 </table>
               </div>
-              </div>
+                </div>
             )}
           </div>
         </>
@@ -673,7 +713,7 @@ export default function Statistics() {
             {detailTitle}
           </span>
         }
-        width="max-w-2xl"
+        width="max-w-lg"
       >
         <div className="mb-3 text-sm text-gray-500">
           {rangeLabel}
@@ -724,9 +764,9 @@ export default function Statistics() {
                 }}
               >
                 <colgroup>
-                  <col style={{ width: '25%' }} />
                   <col style={{ width: '15%' }} />
-                  <col style={{ width: '45%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '55%' }} />
                   <col style={{ width: '15%' }} />
                 </colgroup>
                 <thead>
@@ -740,7 +780,7 @@ export default function Statistics() {
                     <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-gray-500 border-b border-ink-100 bg-[var(--bg-content)]">
                       学生
                     </th>
-                    <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-right text-gray-500 border-b border-ink-100 bg-[var(--bg-content)]">
+                    <th className="px-3 pr-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-right text-gray-500 border-b border-ink-100 bg-[var(--bg-content)]">
                       费用
                     </th>
                   </tr>
@@ -750,7 +790,7 @@ export default function Statistics() {
                     const studentNames = (c.studentNames || []).join('、') || '-';
                     const startTime = c.startTime ? c.startTime.substring(0, 5) : '-';
                     let feeDisplay = '-';
-                    if (c.lessonType === '多人课' && c.fees[0] !== undefined) {
+                    if (c.lessonType === '多人课' && c.fees?.[0] !== undefined) {
                       feeDisplay = `¥${Math.round(c.fees[0]).toLocaleString()}`;
                     } else if (c.fees && c.fees.length > 0) {
                       feeDisplay = `¥${Math.round(
@@ -766,8 +806,8 @@ export default function Statistics() {
                             : ''
                         }
                       >
-                        <td className="px-3 py-2.5 text-gray-700 border-b border-ink-100">
-                          {c.date}
+                        <td className="px-3 py-2.5 text-gray-700 border-b border-ink-100 whitespace-nowrap">
+                          {c.date ? c.date.substring(5) : '-'}
                         </td>
                         <td className="px-3 py-2.5 text-gray-700 border-b border-ink-100">
                           {startTime}
@@ -776,7 +816,7 @@ export default function Statistics() {
                           {studentNames}
                         </td>
                         <td
-                          className="px-3 py-2.5 text-right font-medium border-b border-ink-100"
+                          className="px-3 pr-4 py-2.5 text-right font-medium border-b border-ink-100"
                           style={{ color: 'var(--color-success)' }}
                         >
                           {feeDisplay}

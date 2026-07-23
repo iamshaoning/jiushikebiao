@@ -57,6 +57,14 @@ body {
   background-attachment: fixed;
 }
 
+/* 默认禁止 UI 元素文本自动换行，避免屏幕宽度变化时布局错位；
+   需要换行的段落/长描述请显式使用 whitespace-normal 类覆盖。
+   搭配容器 min-w-0 + truncate 可实现超出部分省略号隐藏 */
+button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
+.stat-label, .stat-unit, .settings-dropdown-item, th {
+  white-space: nowrap;
+}
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 8px;
@@ -73,9 +81,9 @@ body {
   background: #8FB5A2;
 }
 
-/* 标题字体 */
+/* 标题字体（与正文统一使用 LXGW Bright Medium） */
 .font-display {
-  font-family: "Noto Serif SC", Georgia, serif;
+  font-family: "LXGW Bright Medium", "Noto Serif SC", Georgia, serif;
 }
 /* 数字字体（统计卡） */
 .font-num {
@@ -202,6 +210,10 @@ body {
   background-color: #f59e0b;
   animation: sync-pulse 1.2s ease-in-out infinite;
 }
+.sync-card.checking .sync-dot {
+  background-color: #f97316;
+  animation: sync-breathe 1.5s ease-in-out infinite;
+}
 .sync-card.offline .sync-dot {
   background-color: #9ca3af;
   animation: none;
@@ -228,29 +240,14 @@ body {
   box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
-/* —— 学生多列布局（按机构分组卡片网格） —— */
-.students-grid {
-  display: grid;
-  gap: 1rem;
-}
-.students-grid.cols-2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-.students-grid.cols-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-@media (max-width: 768px) {
-  .students-grid.cols-2,
-  .students-grid.cols-3 {
-    grid-template-columns: 1fr;
-  }
-}
+/* —— 学生机构分组（JS masonry：模块按估算高度分配到最短列，紧密堆叠无列底空白） —— */
 .student-org-group {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 0.75rem;
   padding: 1rem;
   box-shadow: var(--shadow-sm);
+  /* 模块间距由父级 flex gap 控制 */
 }
 .student-org-group-header {
   display: flex;
@@ -265,10 +262,11 @@ body {
   flex-direction: column;
   gap: 0.5rem;
 }
+/* 三列等宽 grid：姓名/年级/费用各自在所在列左对齐，避免居中导致的错位 */
 .student-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;

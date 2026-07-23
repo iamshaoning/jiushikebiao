@@ -21,6 +21,7 @@ const LOGIN_TIME_KEY = 'kb-login-time';
 export function useAuthSync(): void {
   const { user, setUser, logout } = useAuth();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const signOutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 用户登录/登出时：加载数据 + 初始化保存监听
   useEffect(() => {
@@ -83,6 +84,8 @@ export function useAuthSync(): void {
         if (!intervalRef.current) {
           intervalRef.current = setInterval(checkSession, SESSION_CHECK_INTERVAL);
         }
+        // 页面恢复可见时立即检查一次，处理后台期间超过 24h 的情况
+        checkSession();
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -99,11 +102,11 @@ export function useAuthSync(): void {
 
   // onAuthStateChange：监听 Supabase 认证状态变化
   useEffect(() => {
-    const { data } = onAuthStateChange((event: string, session: unknown) => {
-      const s = session as any;
+    const { data } = onAuthStateChange((event: string) => {
       if (event === 'SIGNED_OUT') {
         // 防抖 500ms，避免短暂状态变化误触发
-        setTimeout(() => {
+        if (signOutTimerRef.current) clearTimeout(signOutTimerRef.current);
+        signOutTimerRef.current = setTimeout(() => {
           localStorage.removeItem(LOGIN_TIME_KEY);
           setUser(null);
         }, 500);
@@ -112,6 +115,7 @@ export function useAuthSync(): void {
 
     return () => {
       data?.subscription?.unsubscribe();
+      if (signOutTimerRef.current) clearTimeout(signOutTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

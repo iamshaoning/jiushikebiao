@@ -10,7 +10,7 @@
 import { supabase, TABLES } from './supabase';
 import { useStore } from '@/stores/useStore';
 import type { AppState } from './types';
-import { debounce, getDeviceId } from './utils';
+import { debounce } from './utils';
 
 const LOCAL_KEY = 'coursemanagerdata';
 const SAVE_DEBOUNCE = 2000;
@@ -62,20 +62,23 @@ async function uploadToServer(localData: AppState, userId: string): Promise<void
     organizationColors: localData.organizationColors || {},
     gradeColors: localData.gradeColors || {},
     lastupdated: localData.lastupdated,
-    device_id: getDeviceId(),
   };
 
   let lastError: unknown;
   for (let attempt = 0; attempt <= 2; attempt++) {
     try {
-      await supabase.from(TABLES.COURSE_DATA).upsert(payload, { onConflict: 'userid' });
+      const { error } = await supabase
+        .from(TABLES.COURSE_DATA)
+        .upsert(payload, { onConflict: 'userid' });
+      // supabase-js 不抛异常，错误以 { error } 返回，需手动检查否则重试与上层 catch 失效
+      if (error) throw error;
       return;
     } catch (e) {
       lastError = e;
       if (attempt < 2) await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
     }
   }
-  console.error('上传数据失败:', lastError);
+  throw lastError;
 }
 
 /** 创建默认空数据（服务器无记录时） */
@@ -91,10 +94,10 @@ async function createDefaultData(userId: string): Promise<void> {
     userid: userId,
   };
   try {
-    await supabase.from(TABLES.COURSE_DATA).upsert({
+    const { error } = await supabase.from(TABLES.COURSE_DATA).upsert({
       ...defaultData,
-      device_id: getDeviceId(),
     }, { onConflict: 'userid' });
+    if (error) throw error;
     setLocalData(defaultData);
     useStore.getState().replaceData(defaultData);
     useStore.getState().setSyncStatus('online');
@@ -231,6 +234,33 @@ export const saveData = debounce(async () => {
   await saveImmediate();
 }, SAVE_DEBOUNCE);
 
+/* ---------- 连接检测 ---------- */
+
+/**
+ * 主动检测 Supabase 连接状态
+ * 用于同步指示器点击检测：设置 checking（橙色呼吸灯）→ 查询 → online/offline
+ * @returns 是否连接正常
+ */
+export async function checkConnection(userId: string): Promise<boolean> {
+  const store = useStore.getState();
+  store.setSyncStatus('checking');
+  try {
+    const { error } = await supabase
+      .from(TABLES.COURSE_DATA)
+      .select('userid')
+      .eq('userid', userId)
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    store.setSyncStatus('online');
+    return true;
+  } catch (e) {
+    console.error('连接检测失败:', e);
+    store.setSyncStatus('offline');
+    return false;
+  }
+}
+
 /* ---------- Realtime 订阅 ---------- */
 
 let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -275,7 +305,7 @@ export function setupRealtime(userId: string): void {
 export function cleanupRealtime(): void {
   if (realtimeChannel) {
     try {
-      realtimeChannel.unsubscribe();
+      supabase.removeChannel(realtimeChannel);
     } catch {
       // 忽略
     }

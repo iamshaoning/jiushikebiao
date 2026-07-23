@@ -30,16 +30,18 @@ import {
   School,
   GraduationCap,
   UserRoundX,
-  LayoutGrid,
 } from 'lucide-react';
 
-type LayoutMode = 'single' | 'double' | 'triple';
+type LayoutMode = 'list' | 'org';
 const LAYOUT_KEY = 'studentListLayout';
-const VALID_LAYOUTS: LayoutMode[] = ['single', 'double', 'triple'];
 
 function loadLayout(): LayoutMode {
-  const saved = localStorage.getItem(LAYOUT_KEY) as LayoutMode | null;
-  return saved && VALID_LAYOUTS.includes(saved) ? saved : 'single';
+  const saved = localStorage.getItem(LAYOUT_KEY);
+  // 兼容旧值：single→list, double/triple→org
+  if (saved === 'single') return 'list';
+  if (saved === 'double' || saved === 'triple') return 'org';
+  if (saved === 'list' || saved === 'org') return saved;
+  return 'list';
 }
 
 export default function Students() {
@@ -169,23 +171,46 @@ export default function Students() {
   // 按机构分组（多列布局）
   const grouped = useMemo(() => groupStudentsByOrg(filtered), [filtered]);
 
-  // 虚拟滚动（单列且 >50 条）
+  // 机构分组瀑布流：按估算高度分配到最短列，消除 CSS columns 的列底大空白
+  const orgList = useMemo(() => Array.from(grouped.entries()), [grouped]);
+  const [numCols, setNumCols] = useState(1);
+  const masonryRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const calc = () => {
+      const w = masonryRef.current?.offsetWidth ?? window.innerWidth;
+      if (w >= 1100) setNumCols(3);
+      else if (w >= 768) setNumCols(2);
+      else setNumCols(1);
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, []);
+  // 分配到最短列（估算：header 48 + padding 64 + 每学生约 60 + gap 8）
+  const orgColumns = useMemo(() => {
+    const cols: [string, Student[]][][] = Array.from({ length: numCols }, () => []);
+    const colHeights = new Array(numCols).fill(0);
+    orgList.forEach(([org, orgStudents]) => {
+      const estHeight = 112 + orgStudents.length * 60 + Math.max(0, orgStudents.length - 1) * 8;
+      let minCol = 0;
+      for (let c = 1; c < numCols; c++) {
+        if (colHeights[c] < colHeights[minCol]) minCol = c;
+      }
+      cols[minCol].push([org, orgStudents]);
+      colHeights[minCol] += estHeight + 16;
+    });
+    return cols;
+  }, [orgList, numCols]);
+
+  // 虚拟滚动（列表模式且 >50 条）
   const parentRef = useRef<HTMLDivElement>(null);
-  const enableVirtual = layout === 'single' && filtered.length > 50;
+  const enableVirtual = layout === 'list' && filtered.length > 50;
   const virtualizer = useVirtualizer({
     count: enableVirtual ? filtered.length : 0,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 80,
     overscan: 5,
   });
-
-  // 布局切换
-  const cycleLayout = () => {
-    const next: LayoutMode =
-      layout === 'single' ? 'double' : layout === 'double' ? 'triple' : 'single';
-    setLayout(next);
-    localStorage.setItem(LAYOUT_KEY, next);
-  };
 
   // 选择
   const handleSelect = (id: string, e: React.MouseEvent) => {
@@ -311,7 +336,7 @@ export default function Students() {
         </div>
         <div className="flex-1 min-w-0">
           <span
-            className="px-2 py-1 text-xs font-medium rounded-full"
+            className="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap"
             style={{
               backgroundColor: `color-mix(in srgb, ${orgColor} 20%, transparent)`,
               color: orgColor,
@@ -322,7 +347,7 @@ export default function Students() {
         </div>
         <div className="flex-1 min-w-0">
           <span
-            className="px-2 py-1 text-xs font-medium rounded-full"
+            className="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap"
             style={{
               backgroundColor: `color-mix(in srgb, ${gradeColor} 20%, transparent)`,
               color: gradeColor,
@@ -352,7 +377,7 @@ export default function Students() {
       >
         <span className="student-card-name truncate">{student.name || '未命名'}</span>
         <span
-          className="px-2 py-0.5 text-xs font-medium rounded-full justify-self-center"
+          className="px-2 py-0.5 text-xs font-medium rounded-full justify-self-start truncate"
           style={{
             backgroundColor: `color-mix(in srgb, ${gradeColor} 20%, transparent)`,
             color: gradeColor,
@@ -360,7 +385,7 @@ export default function Students() {
         >
           {student.grade || '未设置'}
         </span>
-        <span className="student-card-fee justify-self-center">
+        <span className="student-card-fee justify-self-start truncate">
           {Math.round(fee)}元/{duration}分钟
         </span>
       </div>
@@ -369,8 +394,8 @@ export default function Students() {
 
   return (
     <div className="space-y-4 select-none">
-      {/* 顶部工具栏 */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      {/* 顶部工具栏：移动端纵向（标题独占一行），桌面端横向 */}
+      <div className="flex flex-col gap-3 desktop:flex-row desktop:items-end desktop:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-ink-700">
             学生管理
@@ -379,7 +404,45 @@ export default function Students() {
             共 {students.length} 名学生 · {organizations.length} 个机构 · {grades.length} 个年级
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* 移动端按钮组（桌面端隐藏，桌面端按钮移至搜索框同行） */}
+        <div className="flex items-center gap-2 shrink-0 desktop:hidden">
+          <button
+            onClick={() => setMgmtModal({ open: true, type: 'organization' })}
+            className="btn-secondary"
+          >
+            <School className="w-4 h-4" />
+            <span className="hidden desktop:inline">机构管理</span>
+            <span className="desktop:hidden">机构</span>
+          </button>
+          <button
+            onClick={() => setMgmtModal({ open: true, type: 'grade' })}
+            className="btn-secondary"
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span className="hidden desktop:inline">年级管理</span>
+            <span className="desktop:hidden">年级</span>
+          </button>
+          <button onClick={() => setFormModal({ open: true, editStudent: null })} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            <span className="hidden desktop:inline">添加学生</span>
+            <span className="desktop:hidden">新增</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 搜索 + 桌面端操作按钮同行 */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="input-field pl-9"
+            placeholder="搜索学生姓名或机构"
+          />
+        </div>
+        {/* 桌面端按钮组（移动端隐藏，靠右） */}
+        <div className="hidden desktop:flex items-center gap-2 shrink-0 ml-auto">
           <button
             onClick={() => setMgmtModal({ open: true, type: 'organization' })}
             className="btn-secondary"
@@ -401,27 +464,6 @@ export default function Students() {
         </div>
       </div>
 
-      {/* 搜索 + 布局切换 */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="input-field pl-9"
-            placeholder="搜索学生姓名或机构"
-          />
-        </div>
-        <button
-          onClick={cycleLayout}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-gray-500 border border-ink-200 hover:bg-[var(--bg-content)] transition-colors"
-          title="切换布局"
-        >
-          <LayoutGrid className="w-4 h-4" />
-          {layout === 'single' ? '1 列' : layout === 'double' ? '2 列' : '3 列'}
-        </button>
-      </div>
-
       {/* 列表区域 */}
       {filtered.length === 0 ? (
         <div className="card p-12 text-center">
@@ -435,8 +477,8 @@ export default function Students() {
             {searchTerm ? '尝试修改搜索条件' : '点击"添加学生"开始管理'}
           </p>
         </div>
-      ) : layout === 'single' ? (
-        /* 单列表格 */
+      ) : layout === 'list' ? (
+        /* 列表表格 */
         <div className="card overflow-hidden">
           {/* 表头 */}
           <div className="flex items-center gap-3 px-6 py-3 bg-[var(--bg-content)] border-b border-ink-100 text-xs font-medium text-gray-500">
@@ -481,42 +523,44 @@ export default function Students() {
           )}
         </div>
       ) : (
-        /* 多列卡片网格（按机构分组） */
-        <div className={`students-grid ${layout === 'triple' ? 'cols-3' : 'cols-2'}`}>
-          {Array.from(grouped.entries()).map(([org, orgStudents]) => {
-            const orgColor = generateColor(org, 'organization');
-            return (
-              <div key={org} className="student-org-group">
-                <div className="student-org-group-header">
-                  <span
-                    className="px-2 py-0.5 text-xs font-medium rounded-full"
-                    style={{
-                      backgroundColor: `color-mix(in srgb, ${orgColor} 20%, transparent)`,
-                      color: orgColor,
-                    }}
-                  >
-                    {org}
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {orgStudents.length} 人
-                  </span>
-                </div>
-                <div
-                  className="student-org-group-body"
-                >
-                  {orgStudents.map((s) => (
-                    <div
-                      key={s.id}
-                      data-student-id={s.id}
-                      onMouseDown={handleDragStart}
-                    >
-                      {renderCard(s)}
+        /* 机构分组瀑布流：JS 按估算高度分配到最短列，模块紧密堆叠无列底大空白 */
+        <div ref={masonryRef} className="flex gap-4 items-start">
+          {orgColumns.map((col, c) => (
+            <div key={c} className="flex-1 flex flex-col gap-4 min-w-0">
+              {col.map(([org, orgStudents]) => {
+                const orgColor = generateColor(org, 'organization');
+                return (
+                  <div key={org} className="student-org-group">
+                    <div className="student-org-group-header">
+                      <span
+                        className="px-2 py-0.5 text-xs font-medium rounded-full"
+                        style={{
+                          backgroundColor: `color-mix(in srgb, ${orgColor} 20%, transparent)`,
+                          color: orgColor,
+                        }}
+                      >
+                        {org}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {orgStudents.length} 人
+                      </span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                    <div className="student-org-group-body">
+                      {orgStudents.map((s) => (
+                        <div
+                          key={s.id}
+                          data-student-id={s.id}
+                          onMouseDown={handleDragStart}
+                        >
+                          {renderCard(s)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       )}
 

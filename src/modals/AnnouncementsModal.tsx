@@ -3,7 +3,7 @@
  *
  * 列出全部公告（按时间倒序），实时监听新公告并追加到顶部
  */
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/Modal';
 import {
   loadAnnouncements,
@@ -15,7 +15,6 @@ import { Bell, Clock } from 'lucide-react';
 interface AnnouncementsModalProps {
   open: boolean;
   onClose: () => void;
-  onRead?: () => void;
 }
 
 function formatTime(ts: string): string {
@@ -32,10 +31,9 @@ function formatTime(ts: string): string {
   }
 }
 
-export default function AnnouncementsModal({ open, onClose, onRead }: AnnouncementsModalProps) {
+export default function AnnouncementsModal({ open, onClose }: AnnouncementsModalProps) {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(false);
-  const loadedRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -47,9 +45,6 @@ export default function AnnouncementsModal({ open, onClose, onRead }: Announceme
         if (!cancelled) {
           setAnnouncements(list);
           setLoading(false);
-          loadedRef.current = true;
-          // 标记已读
-          onRead?.();
         }
       } catch (e) {
         console.error('[AnnouncementsModal] 加载失败:', e);

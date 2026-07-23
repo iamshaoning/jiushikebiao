@@ -10,21 +10,6 @@ import { generateColor } from './utils';
 
 /* ---------- CRUD ---------- */
 
-/** 删除单个学生（不级联修改课程，课程保留冗余字段照常显示） */
-export function deleteStudent(id: string): void {
-  useStore.getState().mutateData((draft) => {
-    draft.students = draft.students.filter((s) => s.id !== id);
-  });
-}
-
-/** 批量删除学生 */
-export function batchDeleteStudents(ids: string[]): void {
-  const idSet = new Set(ids);
-  useStore.getState().mutateData((draft) => {
-    draft.students = draft.students.filter((s) => !idSet.has(s.id));
-  });
-}
-
 /**
  * 批量更新学生字段（机构/年级/费用）
  * 机构变化时级联更新课程的 organizations/colors 冗余字段
@@ -48,9 +33,11 @@ export function batchUpdateStudents(
       return updated;
     });
 
-    // 机构变化时级联更新课程的 organizations/colors
+    // 机构变化时级联更新课程的 organizations/colors 及机构颜色映射
     if (newOrg !== undefined) {
       const newColor = generateColor(newOrg);
+      // 同步更新 organizationColors，避免后续 initColorsFromState 重新分配不同颜色导致不一致
+      draft.organizationColors[newOrg] = newColor;
       draft.courses = draft.courses.map((c) => {
         let changed = false;
         const newOrgs = [...c.organizations];
@@ -58,8 +45,7 @@ export function batchUpdateStudents(
         c.studentIds.forEach((sid, idx) => {
           if (idSet.has(sid) && newOrgs[idx] !== undefined) {
             newOrgs[idx] = newOrg;
-            if (newColors[idx] !== undefined) newColors[idx] = newColor;
-            else newColors[idx] = newColor;
+            newColors[idx] = newColor;
             changed = true;
           }
         });

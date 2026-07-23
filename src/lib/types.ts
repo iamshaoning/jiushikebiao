@@ -26,7 +26,6 @@ export interface Course {
   startTime: string; // HH:MM
   duration: number; // 分钟
   fees: number[]; // 按学生索引的课时费
-  note: string;
   studentIds: string[];
   studentNames: string[]; // 冗余，编辑学生时级联更新
   organizations: string[]; // 冗余
@@ -62,7 +61,7 @@ export interface SessionUser {
 }
 
 /** 同步状态 */
-export type SyncStatus = 'online' | 'offline' | 'loggedout' | 'syncing' | 'trial';
+export type SyncStatus = 'online' | 'offline' | 'loggedout' | 'syncing' | 'checking';
 
 /** 历史记录类型 */
 export type HistoryType =

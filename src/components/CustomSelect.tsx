@@ -69,17 +69,17 @@ export default function CustomSelect({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] text-sm transition-colors hover:border-ink-300 ${triggerClassName}`}
+        className={`w-full flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] text-sm transition-colors hover:border-ink-300 ${triggerClassName}`}
       >
-        <span className={selected ? 'text-ink-700' : 'text-gray-400'}>
+        <span className={`flex-1 min-w-0 truncate ${selected ? 'text-ink-700' : 'text-gray-400'}`}>
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`shrink-0 w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {shouldRender && (
         <div
-          className={`absolute z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg py-1 min-w-full transition-all duration-200 origin-top ${
+          className={`absolute z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg py-1 w-full transition-all duration-200 origin-top ${
             visible ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'
           }`}
         >

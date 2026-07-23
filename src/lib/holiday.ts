@@ -24,7 +24,7 @@ export function getDateInfo(dateStr: string): DateInfo | null {
     const isDayName = /^[A-Z][a-z]+$/.test(dd.name) || dd.name === '1';
 
     const info: DateInfo = {
-      isWorkday: dd.work === true && !isDayName,
+      isWorkday: dd.work === true,
       isHoliday: !isDayName && dd.work !== true,
       isInLieu: (chineseDays as any).isInLieu ? (chineseDays as any).isInLieu(dateStr) : false,
       name: '',
@@ -42,14 +42,6 @@ export function getDateInfo(dateStr: string): DateInfo | null {
   } catch {
     return null;
   }
-}
-
-/** 获取调休/班/休标识 HTML 类名（用于日历单元格） */
-export function getScheduleTagClass(dateInfo: DateInfo | null): string {
-  if (!dateInfo) return '';
-  if (dateInfo.isInLieu) return 'schedule-lieu';
-  if (dateInfo.isHoliday) return 'schedule-holiday';
-  return 'schedule-workday';
 }
 
 /** 节假日名称简化（用于标签显示） */

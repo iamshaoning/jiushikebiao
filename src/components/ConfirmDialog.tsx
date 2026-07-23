@@ -95,7 +95,7 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className={`modal-overlay fixed inset-0 md:left-60 lg:left-64 bg-ink-900/40 backdrop-blur-sm z-[45] flex items-center justify-center p-4 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 backdrop-blur-sm z-[45] flex items-center justify-center p-4 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onCancel}
     >
       <div

@@ -4,7 +4,7 @@
  * 重写自课表 conflictModal
  * 显示冲突课程，提供跳过/覆盖选项，支持逐节或统一处理
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/Modal';
 import type { PasteConflict } from '@/lib/course';
 import { calculateEndTimeFromDuration } from '@/lib/utils';
@@ -29,6 +29,11 @@ export default function ConflictModal({
 
   // 重置决定
   const resetDecisions = () => setDecisions({});
+
+  // 弹窗打开时重置历史决定，避免残留上次选择导致误操作
+  useEffect(() => {
+    if (open) setDecisions({});
+  }, [open]);
 
   // 全部跳过
   const skipAll = () => {
@@ -76,7 +81,7 @@ export default function ConflictModal({
           <button
             onClick={handleConfirm}
             disabled={!allDecided}
-            className={allDecided ? 'btn-primary' : 'btn-disabled'}
+            className="btn-primary"
           >
             确认
           </button>

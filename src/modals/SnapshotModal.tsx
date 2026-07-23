@@ -15,7 +15,7 @@ import {
   deleteSnapshot,
 } from '@/lib/snapshot';
 import type { Snapshot, SnapshotType } from '@/lib/types';
-import { Camera, Plus, Clock, RefreshCw } from 'lucide-react';
+import { Camera, Plus, Clock, RefreshCw, Trash2, Replace } from 'lucide-react';
 
 interface SnapshotModalProps {
   open: boolean;
@@ -97,15 +97,24 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
 
   const handleOverwrite = () => {
     if (!confirmOverwrite) return;
-    // 覆盖 = 删除旧快照 + 创建新快照
-    deleteSnapshot(confirmOverwrite.id);
+    // 覆盖 = 先删除旧快照腾出配额，再创建新快照
+    // （若先创建会触发配额trim丢弃最旧快照，再删除旧快照会导致额外数据丢失）
+    const overwriteId = confirmOverwrite.id;
+    const deleted = deleteSnapshot(overwriteId);
+    if (!deleted) {
+      toast.error('快照覆盖失败');
+      return;
+    }
     const newSnap = createSnapshot('manual', '手动快照');
-    setConfirmOverwrite(null);
     if (newSnap) {
+      setConfirmOverwrite(null);
       toast.success('快照覆盖成功');
       refresh();
     } else {
-      toast.error('快照覆盖失败');
+      // 创建失败：尝试恢复被删除的旧快照（数据已在 deleteSnapshot 中从存储移除，
+      // 无法直接恢复，提示用户手动重建）
+      toast.error('快照覆盖失败，旧快照已被删除');
+      refresh();
     }
   };
 
@@ -140,24 +149,30 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
           <button
             onClick={() => setConfirmRestore(snap)}
             disabled={restoring}
-            className="px-2 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 transition-colors"
+            className="px-2 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 transition-colors inline-flex items-center gap-1"
+            title="恢复"
           >
-            恢复
+            <RefreshCw className="w-3 h-3" />
+            <span className="hidden desktop:inline">恢复</span>
           </button>
           {showOverwrite && (
             <button
               onClick={() => setConfirmOverwrite(snap)}
-              className="px-2 py-1 rounded text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="px-2 py-1 rounded text-xs bg-blue-600 text-white hover:bg-blue-700 transition-colors inline-flex items-center gap-1"
+              title="覆盖"
             >
-              覆盖
+              <Replace className="w-3 h-3" />
+              <span className="hidden desktop:inline">覆盖</span>
             </button>
           )}
           {showDelete && (
             <button
               onClick={() => setConfirmDelete(snap)}
-              className="px-2 py-1 rounded text-xs bg-red-600 text-white hover:bg-red-700 transition-colors"
+              className="px-2 py-1 rounded text-xs bg-red-600 text-white hover:bg-red-700 transition-colors inline-flex items-center gap-1"
+              title="删除"
             >
-              删除
+              <Trash2 className="w-3 h-3" />
+              <span className="hidden desktop:inline">删除</span>
             </button>
           )}
         </div>

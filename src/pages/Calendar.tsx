@@ -84,6 +84,11 @@ export default function Calendar() {
   const clearSelections = useStore((s) => s.clearSelections);
   const toast = useToast();
 
+  // 本月课程数（小标题展示）
+  const monthCourseCount = courses.filter((c) =>
+    (c.date || '').startsWith(`${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`),
+  ).length;
+
   // 模态框状态
   const [formModal, setFormModal] = useState<{
     open: boolean;
@@ -108,10 +113,21 @@ export default function Calendar() {
   // 拖拽框线（从鼠标按下位置到当前位置的矩形）
   const [dragRect, setDragRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  // 响应式：移动端用列表视图（每天一卡），桌面端用月历网格
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 1100,
+  );
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 1100);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   // 全局拖拽监听：mousedown 在页面任意空白处启动自由拖拽，mousemove 绘制框线，mouseup 结束
   useEffect(() => {
     const onGlobalMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
+      // 移动端列表视图不启用自由拖拽（触摸交互由 touchstart 处理）
+      if (isMobile) return;
       const target = e.target as HTMLElement;
       // 点击交互元素/课程标签/模态框/FAB：不启动拖拽
       if (target.closest('button, input, select, textarea, .modal-overlay, .floating-action-bar, .course-tag-item')) return;
@@ -124,6 +140,20 @@ export default function Calendar() {
       dragStartRef.current = null;
       dragStartPosRef.current = { x: e.clientX, y: e.clientY };
       setIsDragging(true);
+    };
+
+    // 移动端：点击非日期卡片、非课程标签、非交互元素的空白区域时收起浮动操作栏
+    const onGlobalTouchStart = (e: TouchEvent) => {
+      if (!isMobile) return;
+      const target = e.target as HTMLElement;
+      if (
+        target.closest(
+          'button, input, select, textarea, .modal-overlay, .floating-action-bar, .course-tag-item, .calendar-cell, .mobile-day-card',
+        )
+      ) {
+        return;
+      }
+      clearSelections();
     };
 
     const onGlobalMouseMove = (e: MouseEvent) => {
@@ -145,16 +175,18 @@ export default function Calendar() {
     };
 
     window.addEventListener('mousedown', onGlobalMouseDown);
+    window.addEventListener('touchstart', onGlobalTouchStart, { passive: true });
     if (isDragging) {
       window.addEventListener('mousemove', onGlobalMouseMove);
       window.addEventListener('mouseup', onGlobalMouseUp);
     }
     return () => {
       window.removeEventListener('mousedown', onGlobalMouseDown);
+      window.removeEventListener('touchstart', onGlobalTouchStart);
       window.removeEventListener('mousemove', onGlobalMouseMove);
       window.removeEventListener('mouseup', onGlobalMouseUp);
     };
-  }, [isDragging, clearSelections]);
+  }, [isDragging, clearSelections, isMobile]);
 
   // 确认弹窗
   const [confirm, setConfirm] = useState<{
@@ -443,51 +475,149 @@ export default function Calendar() {
 
   return (
     <div className="space-y-4 select-none">
-      {/* 月份导航 */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100">
-            <ChevronLeft className="w-4 h-4 text-gray-500" />
-          </button>
-          <CustomSelect
-            value={currentYear}
-            options={yearOptions}
-            onChange={(v) => setCurrentMonth(v as number, currentMonth)}
-            className="w-24"
-          />
-          <CustomSelect
-            value={currentMonth}
-            options={monthOptions}
-            onChange={(v) => setCurrentMonth(currentYear, v as number)}
-            className="w-20"
-          />
-          <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100">
-            <ChevronRight className="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            onClick={() => setCurrentMonth(today.getFullYear(), today.getMonth())}
-            className="ml-2 px-3 py-1.5 rounded-lg text-sm text-gray-500 border border-ink-200 hover:bg-gray-100"
-          >
-            今天
-          </button>
-        </div>
+      {/* 页面标题 */}
+      <div>
+        <h1 className="font-display text-2xl font-bold text-ink-700">日历排课</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          本月已有 {monthCourseCount} 节课，注意休息哦~
+        </p>
+      </div>
 
-        {/* 隐私模式（只保留图标） */}
+      {/* 月份导航 */}
+      <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
+        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0">
+          <ChevronLeft className="w-4 h-4 text-gray-500" />
+        </button>
+        <CustomSelect
+          value={currentYear}
+          options={yearOptions}
+          onChange={(v) => setCurrentMonth(v as number, currentMonth)}
+          className="w-24 shrink-0"
+        />
+        <CustomSelect
+          value={currentMonth}
+          options={monthOptions}
+          onChange={(v) => setCurrentMonth(currentYear, v as number)}
+          className="w-20 shrink-0"
+        />
+        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0">
+          <ChevronRight className="w-4 h-4 text-gray-500" />
+        </button>
+        {/* 隐私模式：圆角矩形墨绿色按钮（图标区分状态），自动靠右；移动端隐藏 */}
         <button
           onClick={togglePrivacy}
-          className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
-            privacyMode
-              ? 'bg-ink-700 text-white'
-              : 'text-gray-500 hover:bg-gray-100'
-          }`}
+          className="hidden desktop:flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-ink-700 text-white transition-opacity shrink-0 ml-auto"
           title={privacyMode ? '隐私模式已开启' : '点击开启隐私模式'}
         >
           {privacyMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
       </div>
 
-      {/* 月历网格 */}
-      <div className="rounded-xl overflow-hidden border border-ink-200">
+      {/* 移动端：列表视图（每天一卡，全宽显示课程，避免 7 列格子过窄） */}
+      {isMobile && (
+        <div className="desktop:hidden space-y-2">
+          {cells.filter((c) => c.isCurrent).map((cell) => {
+            const dayCourses = (coursesByDate.get(cell.dateStr) || []).sort((a, b) =>
+              (a.startTime || '').localeCompare(b.startTime || ''),
+            );
+            const dateInfo = getDateInfo(cell.dateStr);
+            const isToday = cell.dateStr === todayStr;
+            const isSelected = selectedDates.includes(cell.dateStr);
+            const wd = new Date(cell.dateStr).getDay();
+            const weekdayLabel = WEEKDAYS[wd === 0 ? 6 : wd - 1];
+            const isWeekend = wd === 0 || wd === 6;
+
+            return (
+              <div
+                key={cell.dateStr}
+                className={`mobile-day-card rounded-lg border overflow-hidden cursor-pointer transition-colors bg-[var(--bg-content)] ${
+                  isSelected
+                    ? 'border-amber-400 bg-amber-50/60'
+                    : isToday
+                      ? 'border-amber-300'
+                      : 'border-ink-200'
+                }`}
+                onClick={(e) => selectDate(cell.dateStr, e)}
+              >
+                {/* 日期头 */}
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <span
+                    className={`text-sm font-medium ${
+                      isToday ? 'text-amber-600' : isWeekend ? 'text-gray-400' : 'text-gray-700'
+                    }`}
+                  >
+                    {cell.day}
+                  </span>
+                  <span className="text-xs text-gray-400">{weekdayLabel}</span>
+                  {dateInfo?.isHoliday && dateInfo.name && (
+                    <span
+                      className="px-1.5 h-5 rounded text-[10px] font-semibold inline-flex items-center justify-center"
+                      style={getHolidayTagStyle(dateInfo.name)}
+                    >
+                      {simplifyHolidayName(dateInfo.name)}
+                    </span>
+                  )}
+                  {dateInfo?.isInLieu && (
+                    <span className="w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-purple-500 inline-flex items-center justify-center">
+                      调
+                    </span>
+                  )}
+                  {dateInfo?.isWorkday && isWeekend && (
+                    <span className="w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-ink inline-flex items-center justify-center">
+                      班
+                    </span>
+                  )}
+                  {dayCourses.length > 0 && (
+                    <span className="ml-auto text-xs text-gray-400">{dayCourses.length} 节</span>
+                  )}
+                </div>
+                {/* 课程列表：左色条 + 时间 + 学生名 + 费用，全宽横向排列 */}
+                {dayCourses.length > 0 && (
+                  <div className="px-3 pb-2 space-y-1">
+                    {dayCourses.map((course) => {
+                      const isSelectedCourse = selectedCourseIds.includes(course.id);
+                      const primaryColor = safeColor(course.colors?.[0] || 'var(--color-secondary)');
+                      const fee = getCourseDisplayFee(course);
+                      const feeHtml = !privacyMode && fee > 0 ? `¥${fee}` : '';
+                      const names = (course.studentNames || [])
+                        .map((n) => (privacyMode ? maskName(n) : n))
+                        .join('、');
+                      return (
+                        <div
+                          key={course.id}
+                          className="flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition-all"
+                          style={{
+                            borderLeft: `3px solid ${primaryColor}`,
+                            backgroundColor: `color-mix(in srgb, ${primaryColor} 8%, transparent)`,
+                            boxShadow: isSelectedCourse ? `inset 0 0 0 2px ${primaryColor}` : undefined,
+                          }}
+                          onClick={(e) => handleCourseClick(course, e)}
+                        >
+                          <span className="text-xs text-gray-600 shrink-0">
+                            {course.startTime}-{calculateEndTimeFromDuration(course.startTime, course.duration)}
+                          </span>
+                          <span
+                            className="text-xs flex-1 truncate font-medium"
+                            style={{ color: primaryColor }}
+                          >
+                            {names || '未命名'}
+                          </span>
+                          {feeHtml && (
+                            <span className="text-xs text-gray-500 shrink-0">{feeHtml}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 桌面端：月历网格 */}
+      <div className="hidden desktop:block rounded-xl overflow-hidden border border-ink-200">
         {/* 星期表头 */}
         <div className="grid grid-cols-7 bg-[var(--bg-content)] border-b border-ink-200">
           {WEEKDAYS.map((w, i) => (
@@ -625,12 +755,6 @@ export default function Calendar() {
                               </span>
                             )}
                           </div>
-                          {/* 备注 */}
-                          {!privacyMode && course.note && (
-                            <div className="text-[9px] truncate text-gray-400">
-                              {course.note}
-                            </div>
-                          )}
                         </div>
                       </div>
                     );

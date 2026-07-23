@@ -371,12 +371,4 @@ export function filterCoursesForDetail(
   return filtered.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-/** 获取学生在指定课程中的费用 */
-export function getStudentCourseFee(course: Course, index: number): number {
-  if (course.lessonType === '一对一') {
-    return course.fees[index] ?? 0;
-  }
-  const total = course.fees[0] ?? 0;
-  const count = Math.max(1, course.studentIds.length);
-  return total / count;
-}
+

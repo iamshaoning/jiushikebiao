@@ -76,7 +76,6 @@ export function createCourseObject(
       partial.duration ?? 120,
       partial.fees?.[0],
     ),
-    note: partial.note || '',
     studentIds,
     studentNames: selectedStudents.map((s) => s.name),
     organizations: selectedStudents.map((s) => s.organization),

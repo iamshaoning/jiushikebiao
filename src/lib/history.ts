@@ -105,9 +105,6 @@ export function recordUpdateCourse(oldCourse: Course, newCourse: Course): void {
   if (oldCourse.lessonType !== newCourse.lessonType) {
     changes.push({ field: '课型', old: oldCourse.lessonType, new: newCourse.lessonType });
   }
-  if (oldCourse.note !== newCourse.note) {
-    changes.push({ field: '备注', old: oldCourse.note || '(无)', new: newCourse.note || '(无)' });
-  }
   const oldFee = oldCourse.fees?.[0] ?? 0;
   const newFee = newCourse.fees?.[0] ?? 0;
   if (oldFee !== newFee) {

@@ -7,6 +7,9 @@ export default {
       center: true,
     },
     extend: {
+      screens: {
+        desktop: '1100px',
+      },
       colors: {
         // 主色：深墨绿
         ink: {
@@ -42,8 +45,8 @@ export default {
         slate2: "#475569",
       },
       fontFamily: {
-        serif: ['"Noto Serif SC"', 'Georgia', 'serif'],
-        sans: ['"Noto Sans SC"', 'system-ui', 'sans-serif'],
+        serif: ['"LXGW Bright Medium"', '"Noto Serif SC"', 'Georgia', 'serif'],
+        sans: ['"LXGW Bright Medium"', '"Noto Sans SC"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {

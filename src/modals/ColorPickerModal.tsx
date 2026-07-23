@@ -5,7 +5,7 @@
  * 调色板选择，已用色锁定，当前色标记，底部预览
  */
 import Modal from '@/components/Modal';
-import { COLOR_PALETTE } from '@/lib/utils';
+import { COLOR_PALETTE, isLightColor } from '@/lib/utils';
 
 interface ColorPickerModalProps {
   open: boolean;
@@ -14,15 +14,6 @@ interface ColorPickerModalProps {
   usedColors?: string[];
   onPick: (color: string) => void;
   title?: string;
-}
-
-/** 判断颜色是否为浅色（用于决定文字颜色） */
-function isLightColor(hex: string): boolean {
-  const c = hex.replace('#', '');
-  const r = parseInt(c.substring(0, 2), 16);
-  const g = parseInt(c.substring(2, 4), 16);
-  const b = parseInt(c.substring(4, 6), 16);
-  return (r * 299 + g * 587 + b * 114) / 1000 > 128;
 }
 
 export default function ColorPickerModal({
@@ -71,8 +62,6 @@ export default function ColorPickerModal({
               }}
             >
               {color.toUpperCase()}
-              {isSelected && <span className="ml-1">✓</span>}
-              {isUsed && <span className="ml-1">🔒</span>}
             </button>
           );
         })}

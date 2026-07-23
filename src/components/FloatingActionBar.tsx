@@ -106,11 +106,11 @@ export default function FloatingActionBar({
 
   return (
     <div
-      className={`floating-action-bar fixed bottom-6 left-1/2 -translate-x-1/2 z-40 transition-transform duration-300 ease-out ${
+      className={`floating-action-bar fixed bottom-6 left-1/2 -translate-x-1/2 desktop:left-[calc(50%+128px)] z-40 transition-transform duration-300 ease-out ${
         visible ? 'translate-y-0 pointer-events-auto' : 'translate-y-32 pointer-events-none'
       }`}
     >
-      <div className="flex items-center gap-1 px-3 py-2 rounded-xl bg-ink-700 text-white shadow-lift">
+      <div className="flex items-center gap-1 px-3 py-2 rounded-xl bg-ink-700 text-white shadow-lift whitespace-nowrap">
         {/* 计数 */}
         {isMulti && (
           <span className="text-xs text-ink-100/70 px-2">已选 {p.count} 项</span>

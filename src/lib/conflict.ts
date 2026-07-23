@@ -12,7 +12,9 @@ import { timeToMins, calculateEndTimeFromDuration } from './utils';
 export function getCourseTimeRange(course: Course): { start: number; end: number } {
   const start = timeToMins(course.startTime);
   const end = timeToMins(calculateEndTimeFromDuration(course.startTime, course.duration));
-  return { start, end };
+  // 24:00 边界：calculateEndTimeFromDuration 对结束于午夜的课程返回 '00:00'（即 0），
+  // 此处视为 1440，否则 end=0 会使 checkTimeConflict 的区间重叠判定失效
+  return { start, end: end === 0 ? 1440 : end };
 }
 
 /** 检查两节课时间是否冲突（同日 + 时间区间重叠） */
@@ -29,26 +31,4 @@ export function findConflictingCourses(target: Course, existing: Course[]): Cour
   return existing.filter((c) => c.id !== target.id && checkTimeConflict(target, c));
 }
 
-/** 批量检测冲突：对一组待添加课程，检查它们之间及与已有课程的冲突 */
-export interface ConflictResult {
-  course: Course;
-  conflicts: Course[];
-}
 
-export function checkBatchConflicts(
-  newCourses: Course[],
-  existing: Course[],
-): ConflictResult[] {
-  const results: ConflictResult[] = [];
-  const allCourses = [...existing];
-
-  for (const course of newCourses) {
-    const conflicts = findConflictingCourses(course, allCourses);
-    if (conflicts.length > 0) {
-      results.push({ course, conflicts });
-    }
-    allCourses.push(course);
-  }
-
-  return results;
-}

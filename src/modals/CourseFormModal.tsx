@@ -60,7 +60,6 @@ export default function CourseFormModal({
   const [startTime, setStartTime] = useState('08:00');
   const [duration, setDuration] = useState(120);
   const [fee, setFee] = useState<number>(0);
-  const [note, setNote] = useState('');
 
   // 初始化/重置表单
   useEffect(() => {
@@ -72,7 +71,6 @@ export default function CourseFormModal({
       setStartTime(editCourse.startTime);
       setDuration(editCourse.duration);
       setFee(editCourse.fees[0] ?? 0);
-      setNote(editCourse.note);
     } else {
       setFormDate(date);
       setLessonType('一对一');
@@ -80,7 +78,6 @@ export default function CourseFormModal({
       setStartTime('08:00');
       setDuration(120);
       setFee(0);
-      setNote('');
     }
   }, [open, editCourse, date]);
 
@@ -164,7 +161,6 @@ export default function CourseFormModal({
             lessonType,
             startTime,
             duration,
-            note,
             studentIds: selectedStudentIds,
             fees: lessonType === '一对一' ? undefined : [fee],
           },
@@ -217,7 +213,6 @@ export default function CourseFormModal({
         lessonType,
         startTime,
         duration,
-        note,
         studentIds: selectedStudentIds,
         fees: lessonType === '一对一' ? undefined : [fee],
       },
@@ -257,7 +252,6 @@ export default function CourseFormModal({
       onClose={onClose}
       title={isEdit ? '编辑课程' : isBatchAdd ? `批量添加课程（${batchDates.length}天）` : '添加课程'}
       width="max-w-lg"
-      overflowVisible
       footer={
         <>
           <button onClick={onClose} className="btn-secondary">
@@ -277,7 +271,7 @@ export default function CourseFormModal({
           </label>
           {isBatchAdd ? (
             <div className="px-3 py-2 rounded-lg border border-ink-200 bg-[var(--bg-content)] text-sm text-gray-600 max-h-24 overflow-y-auto">
-              {batchDates.sort().map((d) => (
+              {[...batchDates].sort().map((d) => (
                 <span key={d} className="inline-block mr-2 mb-1 px-2 py-0.5 rounded bg-ink-100 text-ink-700 text-xs">
                   {d}
                 </span>
@@ -348,8 +342,8 @@ export default function CourseFormModal({
           )}
         </div>
 
-        {/* 时间 */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* 时间 + 费用：开始时间+时长一行，结束时间+课时费一行（双端统一） */}
+        <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">开始时间</label>
             <TimePicker value={startTime} onChange={setStartTime} className="w-full" />
@@ -373,36 +367,23 @@ export default function CourseFormModal({
               className="input-field bg-[var(--bg-content)] cursor-default"
             />
           </div>
-        </div>
-
-        {/* 费用 */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">
-            {lessonType === '一对一' ? '课时费（自动计算）' : '总课时费'}
-          </label>
-          <input
-            type="number"
-            value={fee}
-            onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
-            disabled={lessonType === '一对一'}
-            className={`input-field ${
-              lessonType === '一对一'
-                ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200'
-                : ''
-            }`}
-            placeholder="0.00"
-          />
-        </div>
-
-        {/* 备注 */}
-        <div>
-          <label className="block text-xs text-gray-500 mb-1.5">备注</label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="input-field min-h-[60px] resize-y"
-            placeholder="可选"
-          />
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">
+              {lessonType === '一对一' ? '课时费' : '总课时费'}
+            </label>
+            <input
+              type="number"
+              value={fee}
+              onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
+              disabled={lessonType === '一对一'}
+              className={`input-field ${
+                lessonType === '一对一'
+                  ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200'
+                  : ''
+              }`}
+              placeholder="0.00"
+            />
+          </div>
         </div>
       </div>
     </Modal>
