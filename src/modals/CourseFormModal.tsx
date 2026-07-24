@@ -252,7 +252,6 @@ export default function CourseFormModal({
       onClose={onClose}
       title={isEdit ? '编辑课程' : isBatchAdd ? `批量添加课程（${batchDates.length}天）` : '添加课程'}
       width="max-w-lg"
-      overflowVisible
       footer={
         <>
           <button onClick={onClose} className="btn-secondary">

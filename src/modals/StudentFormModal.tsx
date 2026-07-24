@@ -144,7 +144,6 @@ export default function StudentFormModal({
       onClose={onClose}
       title={isEdit ? '编辑学生' : '添加学生'}
       width="max-w-lg"
-      overflowVisible
       footer={
         <>
           <button onClick={onClose} className="btn-secondary">取消</button>

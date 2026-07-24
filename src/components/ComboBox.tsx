@@ -40,7 +40,7 @@ export default function ComboBox({
   const [shouldRender, setShouldRender] = useState(false);
   const [visible, setVisible] = useState(false);
   const [inputValue, setInputValue] = useState(String(value));
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top?: number; bottom?: number; left: number; width: number; direction: 'up' | 'down' } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -63,10 +63,22 @@ export default function ComboBox({
   }, [open]);
 
   // 打开时基于 input 位置计算下拉菜单坐标（fixed 定位，脱离父级 overflow）
+  // 底部空间不足时自动向上展开
   useLayoutEffect(() => {
     if (open && inputRef.current) {
       const rect = inputRef.current.getBoundingClientRect();
-      setDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      const DROPDOWN_HEIGHT = 200; // max-h-48(192px) + py-1(8px) 预估高度
+      const spaceBelow = window.innerHeight - rect.bottom - 4;
+      const spaceAbove = rect.top - 4;
+      const direction = spaceBelow < DROPDOWN_HEIGHT && spaceAbove >= DROPDOWN_HEIGHT ? 'up' : 'down';
+      setDropdownPos({
+        // 向上展开时用 bottom 定位（相对视口底部），让菜单底部紧贴 trigger 顶部，
+        // 避免因预估高度与实际高度不符导致菜单底部远离 trigger
+        ...(direction === 'up' ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
+        left: rect.left,
+        width: rect.width,
+        direction,
+      });
     } else {
       setDropdownPos(null);
     }
@@ -132,10 +144,12 @@ export default function ComboBox({
 
       {shouldRender && dropdownPos && createPortal(
         <div
-          className={`fixed z-[70] max-h-48 overflow-y-auto rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg py-1 transition-all duration-200 origin-top ${
+          className={`fixed z-[70] max-h-48 overflow-y-auto rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg py-1 transition-all duration-200 ${
+            dropdownPos.direction === 'up' ? 'origin-bottom' : 'origin-top'
+          } ${
             visible ? 'opacity-100 scale-y-100' : 'opacity-0 scale-y-0 pointer-events-none'
           } ${dropdownClassName}`}
-          style={{ top: dropdownPos.top, left: dropdownPos.left, width: dropdownPos.width }}
+          style={{ top: dropdownPos.top, bottom: dropdownPos.bottom, left: dropdownPos.left, width: dropdownPos.width }}
         >
           {options.map((opt) => (
             <button
