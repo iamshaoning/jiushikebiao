@@ -1,10 +1,10 @@
 /**
- * 屏幕尺寸守卫：宽 < 375 或高 < 730 时显示禁止使用画面
+ * 屏幕尺寸守卫：宽 < 375 或高 < 500 时显示禁止使用画面
  */
 import { useState, useEffect, type ReactNode } from 'react';
 
 const MIN_WIDTH = 375;
-const MIN_HEIGHT = 730;
+const MIN_HEIGHT = 500;
 
 export default function ScreenGuard({ children }: { children: ReactNode }) {
   const [tooSmall, setTooSmall] = useState(false);
@@ -39,7 +39,7 @@ export default function ScreenGuard({ children }: { children: ReactNode }) {
         <p className="text-sm text-ink-100/70 leading-relaxed">
           本系统需要更大的屏幕显示。
           <br />
-          请使用宽度 ≥ 375px 且高度 ≥ 730px 的设备访问。
+          请使用宽度 ≥ 375px 且高度 ≥ 500px 的设备访问。
         </p>
       </div>
     );
