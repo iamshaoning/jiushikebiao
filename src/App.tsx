@@ -3,7 +3,6 @@ import { type ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { useAuthSync } from '@/hooks/useAuthSync';
-import ScreenGuard from '@/components/ScreenGuard';
 import Layout from '@/components/Layout';
 
 import AuthPage from '@/pages/AuthPage';
@@ -71,9 +70,7 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <ScreenGuard>
-          <AppContent />
-        </ScreenGuard>
+        <AppContent />
       </ToastProvider>
     </AuthProvider>
   );
