@@ -281,6 +281,11 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
                 {items.map((item) => {
                   const color = getItemColor(item);
                   const isEditing = editing?.oldVal === item;
+                  // 统计使用该机构/年级的学生数，有学生使用时禁止删除
+                  const usedCount = students.filter((s) =>
+                    isOrg ? s.organization === item : s.grade === item,
+                  ).length;
+                  const deleteDisabled = usedCount > 0;
                   return (
                     <div
                       key={item}
@@ -341,8 +346,13 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
                             </button>
                             <button
                               onClick={() => setDeleteTarget(item)}
-                              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform text-red-500"
-                              title="删除"
+                              disabled={deleteDisabled}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform ${
+                                deleteDisabled
+                                  ? 'text-gray-300 cursor-not-allowed bg-gray-100 border border-gray-200'
+                                  : 'text-red-500 hover:scale-110 active:scale-95'
+                              }`}
+                              title={deleteDisabled ? `有 ${usedCount} 名学生正在使用，无法删除` : '删除'}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -391,7 +401,7 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
         </p>
         {deleteRefCount > 0 && (
           <p className="mt-2 text-sm text-amber-600">
-            有 {deleteRefCount} 名学生正在使用此{itemName}，删除后学生记录保留但下拉框不再列出。
+            有 {deleteRefCount} 名学生正在使用此{itemName}，无法删除。
           </p>
         )}
       </Modal>
