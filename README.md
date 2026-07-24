@@ -29,6 +29,22 @@
 
 ---
 
+## 界面预览
+
+<p align="center">
+  <img src="public/预览1.png" width="800" alt="界面预览1">
+</p>
+
+<p align="center">
+  <img src="public/预览2.png" width="800" alt="界面预览2">
+</p>
+
+<p align="center">
+  <img src="public/预览3.png" width="800" alt="界面预览3">
+</p>
+
+---
+
 ## 功能概览
 
 ### 日历排课
