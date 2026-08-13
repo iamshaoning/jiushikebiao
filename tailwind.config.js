@@ -8,7 +8,7 @@ export default {
     },
     extend: {
       screens: {
-        desktop: '500px',
+        desktop: '1100px',
       },
       colors: {
         // 主色：深墨绿
