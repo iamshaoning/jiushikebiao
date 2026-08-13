@@ -159,26 +159,26 @@ header{margin-bottom:1.5rem}
 header h1{font-family:"Noto Serif SC",Georgia,serif;font-size:1.5rem;font-weight:700;color:#08231A}
 header p{font-size:0.875rem;color:#6b7280;margin-top:0.25rem}
 .range-labels{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap}
-.range-label{display:inline-block;padding:0.25rem 0.75rem;font-size:0.8rem;color:#4b5563;background:#F5F0E8;border:1px solid #C7DACF;border-radius:0.5rem}
+.range-label{display:inline-block;padding:0.25rem 0.75rem;font-size:0.8rem;color:#4b5563;background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.5rem}
 .stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
-.stat-card{background:#F8F3EC;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
+.stat-card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
 .stat-label{font-size:0.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em}
 .stat-value{font-family:"JetBrains Mono",monospace;font-size:1.875rem;font-weight:700;margin-top:0.25rem}
 .stat-unit{font-size:0.75rem;color:#6b7280;margin-top:0.75rem}
-.card{background:#F8F3EC;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
+.card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
 .card h3{font-family:"Noto Serif SC",Georgia,serif;font-size:1.125rem;font-weight:700;color:#08231A;margin-bottom:1rem}
 .card h4{font-size:0.875rem;font-weight:500;color:#4b5563;margin-bottom:0.75rem;margin-top:1.5rem}
 .card h4:first-of-type{margin-top:0}
 .empty{text-align:center;padding:2rem;font-size:0.875rem;color:#9ca3af}
 table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #C7DACF;border-radius:0.5rem;overflow:hidden}
-th{padding:0.75rem 1rem;text-align:left;font-size:0.875rem;font-weight:600;color:#6b7280;border-bottom:1px solid #C7DACF;background-color:#F5F0E8}
+th{padding:0.75rem 1rem;text-align:left;font-size:0.875rem;font-weight:600;color:#6b7280;border-bottom:1px solid #C7DACF;background-color:#FFFFFF}
 td{padding:0.75rem 1rem;font-size:0.875rem;color:#374151;border-bottom:1px solid #C7DACF}
 tr:last-child td{border-bottom:none}
 .num{font-family:"JetBrains Mono",monospace}
 .font-medium{font-weight:500}
 .tag{display:inline-block;padding:0.125rem 0.5rem;font-size:0.75rem;font-weight:500;border-radius:9999px}
 .progress{display:flex;align-items:center;gap:0.5rem}
-.progress-bar{width:6rem;height:0.5rem;background:#F5F0E8;border-radius:9999px;overflow:hidden}
+.progress-bar{width:6rem;height:0.5rem;background:#FFFFFF;border-radius:9999px;overflow:hidden}
 .progress-fill{height:100%;border-radius:9999px}
 .progress-text{font-size:0.75rem;color:#6b7280;font-family:"JetBrains Mono",monospace}
 @media(max-width:768px){.stat-cards{grid-template-columns:1fr}}

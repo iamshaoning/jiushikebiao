@@ -19,13 +19,13 @@
   --color-secondary: #9ca3af;
   --color-hover: #f97316;
 
-  /* 背景/文字/边框 —— 米白色系（层级：primary最浅 → tertiary最深） */
+  /* 背景/文字/边框 —— 页面背景米白，内容模块纯白（层级：primary最浅 → tertiary最深） */
   --bg-primary: #FAF7F2;
-  --bg-secondary: #F8F3EC;
-  --bg-content: #F5F0E8;
+  --bg-secondary: #FFFFFF;
+  --bg-content: #FFFFFF;
   --bg-tertiary: #EBE5DC;
-  --bg-input: #F8F3EC;
-  --bg-input2: #EBE5DC;
+  --bg-input: #FFFFFF;
+  --bg-input2: #FFFFFF;
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --border-color: #C7DACF;
