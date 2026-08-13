@@ -137,6 +137,17 @@ export default function CourseFormModal({
     }
   };
 
+  // 所选学生的机构/年级汇总（去重展示，仅用于只读展示）
+  const selectedStudentsInfo = useMemo(() => {
+    const sel = students.filter((s) => selectedStudentIds.includes(s.id));
+    const orgs = [...new Set(sel.map((s) => s.organization).filter(Boolean))];
+    const grades = [...new Set(sel.map((s) => s.grade).filter(Boolean))];
+    return {
+      orgs: orgs.join('、'),
+      grades: grades.join('、'),
+    };
+  }, [students, selectedStudentIds]);
+
   // 提交表单（支持单日/批量多日添加）
   const handleSubmit = () => {
     if (selectedStudentIds.length === 0) {
@@ -342,6 +353,28 @@ export default function CourseFormModal({
               </div>
             </div>
           )}
+        </div>
+
+        {/* 所选学生的机构/年级（只读展示） */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">机构</label>
+            <input
+              value={selectedStudentsInfo.orgs}
+              disabled
+              placeholder="未选择学生"
+              className="input-field bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">年级</label>
+            <input
+              value={selectedStudentsInfo.grades}
+              disabled
+              placeholder="未选择学生"
+              className="input-field bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200"
+            />
+          </div>
         </div>
 
         {/* 时间 + 费用：开始时间+时长一行，结束时间+课时费一行（双端统一） */}
