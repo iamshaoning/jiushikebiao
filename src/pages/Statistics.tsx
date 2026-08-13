@@ -37,7 +37,6 @@ const NOW = new Date();
 
 export default function Statistics() {
   const courses = useStore((s) => s.courses);
-  const students = useStore((s) => s.students);
   const organizations = useStore((s) => s.organizations);
   const organizationColors = useStore((s) => s.organizationColors);
   const gradeColors = useStore((s) => s.gradeColors);
@@ -233,8 +232,14 @@ export default function Statistics() {
   const detailTitle = useMemo(() => {
     if (!detailFilter) return '课节数详情';
     if (detailFilter.studentId) {
-      const st = students.find((s) => s.id === detailFilter.studentId);
-      return st ? `${st.name} 的课节详情` : '课节数详情';
+      // 从课程快照读取学生姓名，不依赖当前学生动态信息
+      const first = detailCourses.find((c) => c.studentIds.includes(detailFilter.studentId!));
+      if (first) {
+        const idx = first.studentIds.indexOf(detailFilter.studentId!);
+        const name = first.studentNames?.[idx];
+        if (name) return `${name} 的课节详情`;
+      }
+      return '课节数详情';
     }
     const parts: string[] = [];
     if (detailFilter.org) parts.push(detailFilter.org);
@@ -242,7 +247,7 @@ export default function Statistics() {
     if (detailFilter.lessonType) parts.push(detailFilter.lessonType);
     if (detailFilter.studentCount != null) parts.push(`${detailFilter.studentCount}人`);
     return parts.join(' · ') || '课节数详情';
-  }, [detailFilter, students]);
+  }, [detailFilter, detailCourses]);
 
   // 详情弹窗统计
   const detailStats = useMemo(() => {
