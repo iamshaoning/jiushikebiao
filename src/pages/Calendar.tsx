@@ -24,6 +24,8 @@ import {
   recordBatchDeleteDayCourses,
   recordPasteCourses,
   recordBatchPasteCourses,
+  recordAddCourse,
+  recordBatchAddCourses,
 } from '@/lib/history';
 import type { Course } from '@/lib/types';
 import {
@@ -105,7 +107,9 @@ export default function Calendar() {
     open: boolean;
     conflicts: ReturnType<typeof pasteCoursesToDate>['conflicts'];
     added: Course[];
-  }>({ open: false, conflicts: [], added: [] });
+    /** 冲突来源：粘贴课程或添加课程，决定解决后的通知/历史记录文案 */
+    source: 'paste' | 'add';
+  }>({ open: false, conflicts: [], added: [], source: 'paste' });
 
   // 拖拽多选
   const dragStartRef = useRef<string | null>(null);
@@ -450,7 +454,7 @@ export default function Calendar() {
     }
 
     if (result.conflicts.length > 0) {
-      setConflictData({ open: true, conflicts: result.conflicts, added: result.added });
+      setConflictData({ open: true, conflicts: result.conflicts, added: result.added, source: 'paste' });
     } else if (result.added.length > 0) {
       confirmPaste(result.added, []);
       if (result.added.length === 1) {
@@ -467,23 +471,38 @@ export default function Calendar() {
     }
   };
 
-  // 冲突解决
+  // 冲突解决（区分粘贴/添加来源，通知与历史记录文案保持一致）
   const handleConflictResolve = (
     skipped: typeof conflictData.conflicts,
     overridden: typeof conflictData.conflicts,
   ) => {
+    const source = conflictData.source;
     const overrideIds = overridden.flatMap((o) => o.conflictingCourses.map((c) => c.id));
     const allToAdd = [...conflictData.added, ...overridden.map((o) => o.newCourse)];
     confirmPaste(allToAdd, overrideIds);
-    if (allToAdd.length === 1) {
-      recordPasteCourses(allToAdd);
+    // 全部跳过时没有可添加/粘贴的课程，提示跳过而非"成功 0 节"
+    if (allToAdd.length === 0) {
+      toast.warning(`已跳过 ${skipped.length} 节冲突课程，未${source === 'add' ? '添加' : '粘贴'}新课程`);
+    } else if (source === 'add') {
+      if (allToAdd.length === 1) {
+        recordAddCourse(allToAdd[0]);
+      } else {
+        recordBatchAddCourses(allToAdd);
+      }
+      let msg = `成功添加 ${allToAdd.length} 节课程`;
+      if (skipped.length > 0) msg += `，跳过 ${skipped.length} 节`;
+      toast.success(msg);
     } else {
-      recordBatchPasteCourses(allToAdd);
+      if (allToAdd.length === 1) {
+        recordPasteCourses(allToAdd);
+      } else {
+        recordBatchPasteCourses(allToAdd);
+      }
+      let msg = `成功粘贴 ${allToAdd.length} 节课程`;
+      if (skipped.length > 0) msg += `，跳过 ${skipped.length} 节`;
+      toast.success(msg);
     }
-    let msg = `成功粘贴 ${allToAdd.length} 节课程`;
-    if (skipped.length > 0) msg += `，跳过 ${skipped.length} 节`;
-    toast.success(msg);
-    setConflictData({ open: false, conflicts: [], added: [] });
+    setConflictData({ open: false, conflicts: [], added: [], source: 'paste' });
     clearSelections();
   };
 
@@ -799,16 +818,16 @@ export default function Calendar() {
         date={formModal.date}
         dates={formModal.dates}
         editCourse={formModal.editCourse}
-        onConflict={(conflicts) => {
+        onConflict={(conflicts, preAdded) => {
           setFormModal({ open: false, date: '', dates: [], editCourse: null });
-          setConflictData({ open: true, conflicts, added: [] });
+          setConflictData({ open: true, conflicts, added: preAdded ?? [], source: 'add' });
         }}
       />
 
       {/* 冲突模态框 */}
       <ConflictModal
         open={conflictData.open}
-        onClose={() => setConflictData({ open: false, conflicts: [], added: [] })}
+        onClose={() => setConflictData({ open: false, conflicts: [], added: [], source: 'paste' })}
         conflicts={conflictData.conflicts}
         onResolve={handleConflictResolve}
       />

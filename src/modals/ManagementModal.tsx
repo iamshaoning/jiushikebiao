@@ -322,14 +322,14 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
                           <>
                             <button
                               onClick={handleEditSubmit}
-                              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform text-green-600"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-ink-50 transition-colors text-green-600"
                               title="确认"
                             >
                               <Check className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setEditing(null)}
-                              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform text-gray-400"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-ink-50 transition-colors text-gray-400"
                               title="取消"
                             >
                               <X className="w-4 h-4" />
@@ -339,7 +339,7 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
                           <>
                             <button
                               onClick={() => handleEditStart(item)}
-                              className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform text-green-600"
+                              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-ink-50 transition-colors text-green-600"
                               title="编辑"
                             >
                               <Pencil className="w-4 h-4" />
@@ -347,10 +347,10 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
                             <button
                               onClick={() => setDeleteTarget(item)}
                               disabled={deleteDisabled}
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform ${
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                                 deleteDisabled
                                   ? 'text-gray-300 cursor-not-allowed bg-gray-100 border border-gray-200'
-                                  : 'text-red-500 hover:scale-110 active:scale-95'
+                                  : 'text-red-500 hover:bg-red-50'
                               }`}
                               title={deleteDisabled ? `有 ${usedCount} 名学生正在使用，无法删除` : '删除'}
                             >

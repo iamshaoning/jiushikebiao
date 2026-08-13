@@ -32,7 +32,8 @@ interface CourseFormModalProps {
   /** 批量添加时的全部目标日期（单日时为 [date]） */
   dates?: string[];
   editCourse?: Course | null;
-  onConflict?: (conflicts: PasteConflict[]) => void;
+  /** 冲突回调：conflicts 为冲突课程，added 为批量添加中无冲突的课程（解决后一并添加） */
+  onConflict?: (conflicts: PasteConflict[], added: Course[]) => void;
 }
 
 const DURATION_OPTIONS = [60, 90, 120];
@@ -185,7 +186,8 @@ export default function CourseFormModal({
       });
 
       if (conflicts.length > 0 && onConflict) {
-        onConflict(conflicts);
+        // 无冲突的课程随回调一并传递，由冲突解决流程统一提交，避免被静默丢弃
+        onConflict(conflicts, coursesToAdd);
         return;
       }
 
@@ -229,7 +231,7 @@ export default function CourseFormModal({
     const conflicts = findConflictingCourses(courseData, otherCourses);
 
     if (conflicts.length > 0 && onConflict) {
-      onConflict([{ newCourse: courseData, conflictingCourses: conflicts }]);
+      onConflict([{ newCourse: courseData, conflictingCourses: conflicts }], []);
       return;
     }
 
@@ -363,8 +365,8 @@ export default function CourseFormModal({
             <label className="block text-xs text-gray-500 mb-1.5">结束时间</label>
             <input
               value={endTime}
-              readOnly
-              className="input-field bg-[var(--bg-content)] cursor-default"
+              disabled
+              className="input-field bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200"
             />
           </div>
           <div>

@@ -133,20 +133,20 @@ export default function ConflictModal({
               <div className="flex gap-2 pt-1">
                 <button
                   onClick={() => setDecisions((prev) => ({ ...prev, [i]: 'skip' }))}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium transition ${
+                  className={`flex-1 py-1.5 rounded text-xs font-medium transition border ${
                     decisions[i] === 'skip'
-                      ? 'bg-gray-200 text-ink-700'
-                      : 'text-gray-500 hover:bg-ink-50'
+                      ? 'bg-gray-200 text-ink-700 border-ink-300'
+                      : 'text-gray-500 hover:bg-ink-50 border-ink-200'
                   }`}
                 >
                   跳过
                 </button>
                 <button
                   onClick={() => setDecisions((prev) => ({ ...prev, [i]: 'override' }))}
-                  className={`flex-1 py-1.5 rounded text-xs font-medium transition ${
+                  className={`flex-1 py-1.5 rounded text-xs font-medium transition border ${
                     decisions[i] === 'override'
-                      ? 'bg-red-100 text-red-700'
-                      : 'text-gray-500 hover:bg-ink-50'
+                      ? 'bg-red-100 text-red-700 border-red-200'
+                      : 'text-gray-500 hover:bg-ink-50 border-ink-200'
                   }`}
                 >
                   覆盖
