@@ -79,6 +79,7 @@ export function createCourseObject(
     studentIds,
     studentNames: selectedStudents.map((s) => s.name),
     organizations: selectedStudents.map((s) => s.organization),
+    grades: selectedStudents.map((s) => s.grade || ''),
     colors: selectedStudents.map((s) => generateColor(s.organization || '未分配', 'organization')),
     createdAt: partial.createdAt || now,
     updatedAt: now,
@@ -203,6 +204,10 @@ export function pasteCoursesToDate(
       date: dateStr,
       createdAt: now,
       updatedAt: now,
+      // 跨版本剪贴板：旧格式课程可能缺 grades，补齐数组结构（内容留空，统计层显示"未设置"）
+      ...(!Array.isArray(course.grades) || course.grades.length !== (course.studentIds || []).length
+        ? { grades: (course.studentIds || []).map(() => '') }
+        : {}),
     };
 
     // 检查与已有课程的冲突
@@ -266,6 +271,10 @@ export function pasteCoursesToDates(
         date: dateStr,
         createdAt: now,
         updatedAt: now,
+        // 跨版本剪贴板：旧格式课程可能缺 grades，补齐数组结构
+        ...(!Array.isArray(course.grades) || course.grades.length !== (course.studentIds || []).length
+          ? { grades: (course.studentIds || []).map(() => '') }
+          : {}),
       };
 
       // 检查与已有课程的冲突

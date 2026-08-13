@@ -4,7 +4,7 @@
  * 重写自课表 statisticsCalculatorService.js
  * 忠实保留：多人课费用只算一次（计入第一个匹配学生机构），一对一按学生累加
  */
-import type { Course, Student } from './types';
+import type { Course } from './types';
 
 export interface StatFilters {
   year: number;
@@ -100,7 +100,6 @@ export function filterCoursesByDate(
  */
 export function calculateStats(
   courses: Course[],
-  students: Student[],
   filters: StatFilters,
 ): StatResult {
   const org = filters.organization?.trim() || '';
@@ -131,19 +130,6 @@ export function calculateStats(
     }
     return lessonMap.get(name)!;
   };
-  const ensureStudent = (s: Student) => {
-    if (!studentMap.has(s.id)) {
-      studentMap.set(s.id, {
-        studentId: s.id,
-        name: s.name,
-        organization: s.organization,
-        grade: s.grade,
-        courseCount: 0,
-        totalFee: 0,
-      });
-    }
-    return studentMap.get(s.id)!;
-  };
 
   filtered.forEach((course) => {
     const lessonType = course.lessonType || '一对一';
@@ -154,20 +140,12 @@ export function calculateStats(
     const perStudentFee = isGroup ? groupFee / studentCount : 0;
 
     if (isGroup) {
-      // 多人课：找第一个匹配机构筛选的学生
-      let firstMatch: Student | null = null;
-      for (const sid of studentIds) {
-        const s = students.find((x) => x.id === sid);
-        if (s && (!org || s.organization === org)) {
-          firstMatch = s;
-          break;
-        }
-      }
-      if (firstMatch) {
+      // 多人课：机构完全取自课程冗余快照（创建时所有学生同机构），不依赖当前学生
+      const orgName = course.organizations?.[0] ?? '';
+      if (!org || orgName === org) {
         totalFee += groupFee;
         totalCourses++;
-        const orgName = firstMatch.organization || '未分配';
-        const o = ensureOrg(orgName);
+        const o = ensureOrg(orgName || '未分配');
         o.fee += groupFee;
         o.courses += 1;
         const l = ensureLesson(lessonType);
@@ -177,11 +155,13 @@ export function calculateStats(
     }
 
     // 按学生遍历（一对一累加费用，多人课累加分摊费用到学生维度）
+    // 机构/年级/姓名完全取自课程冗余快照，不依赖当前学生动态信息
     let oneOnOneCounted = false;
     studentIds.forEach((sid, idx) => {
-      const s = students.find((x) => x.id === sid);
-      if (!s) return;
-      if (org && s.organization !== org) return;
+      const orgName = course.organizations?.[idx] ?? '';
+      const grade = course.grades?.[idx] ?? '';
+      const name = course.studentNames?.[idx] ?? '';
+      if (org && orgName !== org) return;
 
       let fee = 0;
       if (!isGroup) {
@@ -191,8 +171,7 @@ export function calculateStats(
           totalCourses++;
           oneOnOneCounted = true;
         }
-        const orgName = s.organization || '未分配';
-        const o = ensureOrg(orgName);
+        const o = ensureOrg(orgName || '未分配');
         o.fee += fee;
         o.courses += 1;
         const l = ensureLesson(lessonType);
@@ -203,41 +182,49 @@ export function calculateStats(
       }
 
       uniqueStudents.add(sid);
-      const o2 = ensureOrg(s.organization || '未分配');
+      const o2 = ensureOrg(orgName || '未分配');
       o2.students.add(sid);
       const l2 = ensureLesson(lessonType);
       l2.students.add(sid);
 
-      const ss = ensureStudent(s);
+      // 学生维度：展示信息取该学生最近一次课程的快照（跨课程覆盖，保持最新）
+      let ss = studentMap.get(sid);
+      if (!ss) {
+        ss = { studentId: sid, name, organization: orgName, grade, courseCount: 0, totalFee: 0 };
+        studentMap.set(sid, ss);
+      }
+      ss.name = name;
+      ss.organization = orgName;
+      ss.grade = grade;
       ss.totalFee += fee;
       ss.courseCount += 1;
 
       // 详细统计：按课型/年级/机构/人数分组
-      const grade = s.grade || '未设置';
-      const orgName = s.organization || '未分配';
+      const gradeKey = grade || '未设置';
+      const orgKey = orgName || '未分配';
       if (!isGroup) {
         // 一对一：按年级 + 机构统计
-        if (!detailedOneOnOne[grade]) detailedOneOnOne[grade] = {};
-        if (!detailedOneOnOne[grade][orgName]) {
-          detailedOneOnOne[grade][orgName] = { courses: 0, fee: 0, students: new Set() };
+        if (!detailedOneOnOne[gradeKey]) detailedOneOnOne[gradeKey] = {};
+        if (!detailedOneOnOne[gradeKey][orgKey]) {
+          detailedOneOnOne[gradeKey][orgKey] = { courses: 0, fee: 0, students: new Set() };
         }
-        detailedOneOnOne[grade][orgName].courses += 1;
-        detailedOneOnOne[grade][orgName].fee += fee;
-        detailedOneOnOne[grade][orgName].students.add(sid);
+        detailedOneOnOne[gradeKey][orgKey].courses += 1;
+        detailedOneOnOne[gradeKey][orgKey].fee += fee;
+        detailedOneOnOne[gradeKey][orgKey].students.add(sid);
       } else {
         // 多人课：按上课人数 + 年级 + 机构统计
         const sc = String(studentCount);
         if (!detailedGroup[sc]) detailedGroup[sc] = {};
-        if (!detailedGroup[sc][grade]) detailedGroup[sc][grade] = {};
-        if (!detailedGroup[sc][grade][orgName]) {
-          detailedGroup[sc][grade][orgName] = { courses: 0, fee: 0, students: new Set() };
+        if (!detailedGroup[sc][gradeKey]) detailedGroup[sc][gradeKey] = {};
+        if (!detailedGroup[sc][gradeKey][orgKey]) {
+          detailedGroup[sc][gradeKey][orgKey] = { courses: 0, fee: 0, students: new Set() };
         }
         // 多人课费用只计算一次（第一个学生时）
         if (idx === 0) {
-          detailedGroup[sc][grade][orgName].courses += 1;
-          detailedGroup[sc][grade][orgName].fee += groupFee;
+          detailedGroup[sc][gradeKey][orgKey].courses += 1;
+          detailedGroup[sc][gradeKey][orgKey].fee += groupFee;
         }
-        detailedGroup[sc][grade][orgName].students.add(sid);
+        detailedGroup[sc][gradeKey][orgKey].students.add(sid);
       }
     });
   });
@@ -318,7 +305,6 @@ export function calculateStats(
 /** 按详情筛选条件过滤课程（用于课节数弹窗） */
 export function filterCoursesForDetail(
   courses: Course[],
-  students: Student[],
   filters: StatFilters,
   detail: DetailFilter,
 ): Course[] {
@@ -354,15 +340,16 @@ export function filterCoursesForDetail(
   }
 
   // 机构/年级筛选（学生ID筛选路径不需要再按机构/年级过滤）
+  // 机构/年级取自课程冗余快照，不依赖当前学生
   if (!detail.studentId && (detail.org || detail.grade || globalOrg)) {
     filtered = filtered.filter((c) => {
       if (!c.studentIds || !Array.isArray(c.studentIds)) return false;
-      return c.studentIds.some((sid) => {
-        const student = students.find((s) => s.id === sid);
-        if (!student) return false;
-        if (globalOrg && student.organization !== globalOrg) return false;
-        if (detail.org && student.organization !== detail.org) return false;
-        if (detail.grade && student.grade !== detail.grade) return false;
+      return c.studentIds.some((sid, idx) => {
+        const orgName = c.organizations?.[idx] ?? '';
+        const grade = c.grades?.[idx] ?? '';
+        if (globalOrg && orgName !== globalOrg) return false;
+        if (detail.org && orgName !== detail.org) return false;
+        if (detail.grade && grade !== detail.grade) return false;
         return true;
       });
     });

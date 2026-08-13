@@ -94,11 +94,19 @@ export default function StudentFormModal({
           if (studentIdx >= 0) {
             const newNames = [...c.studentNames];
             const newOrgs = [...c.organizations];
+            const newGrades = c.grades ? [...c.grades] : null;
             const newColors = [...c.colors];
             newNames[studentIdx] = names[0];
             newOrgs[studentIdx] = organization;
+            if (newGrades) newGrades[studentIdx] = grade;
             newColors[studentIdx] = generateColor(organization);
-            return { ...c, studentNames: newNames, organizations: newOrgs, colors: newColors };
+            return {
+              ...c,
+              studentNames: newNames,
+              organizations: newOrgs,
+              ...(newGrades ? { grades: newGrades } : {}),
+              colors: newColors,
+            };
           }
           return c;
         });

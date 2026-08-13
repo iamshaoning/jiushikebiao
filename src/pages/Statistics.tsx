@@ -54,8 +54,8 @@ export default function Statistics() {
 
   const filters: StatFilters = { year, month, organization: orgFilter };
   const stats = useMemo(
-    () => calculateStats(courses, students, filters),
-    [courses, students, year, month, orgFilter],
+    () => calculateStats(courses, filters),
+    [courses, year, month, orgFilter],
   );
 
   // 机构详细数据表溢出检测：桌面端当表格横向溢出（需要滚动条）时，
@@ -226,8 +226,8 @@ export default function Statistics() {
   // 详情弹窗课程
   const detailCourses = useMemo(() => {
     if (!detailFilter) return [];
-    return filterCoursesForDetail(courses, students, filters, detailFilter);
-  }, [detailFilter, courses, students, year, month, orgFilter]);
+    return filterCoursesForDetail(courses, filters, detailFilter);
+  }, [detailFilter, courses, year, month, orgFilter]);
 
   // 详情弹窗标题
   const detailTitle = useMemo(() => {

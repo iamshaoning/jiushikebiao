@@ -29,6 +29,7 @@ export interface Course {
   studentIds: string[];
   studentNames: string[]; // 冗余，编辑学生时级联更新
   organizations: string[]; // 冗余
+  grades: string[]; // 冗余（年级快照），编辑学生时级联更新
   colors: string[]; // 冗余（机构色）
   createdAt: string;
   updatedAt: string;

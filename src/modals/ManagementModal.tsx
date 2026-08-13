@@ -148,7 +148,7 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
         else if (!isOrg && s.grade === oldVal) s.grade = trimmed;
       });
 
-      // 机构还需级联更新课程的 organizations/colors
+      // 机构级联更新课程的 organizations/colors，年级级联更新课程的 grades
       if (isOrg) {
         draft.courses.forEach((c) => {
           let changed = false;
@@ -167,6 +167,19 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
             c.organizations = newOrgs;
             c.colors = newColors;
           }
+        });
+      } else {
+        draft.courses.forEach((c) => {
+          if (!c.grades) return;
+          let changed = false;
+          const newGrades = c.grades.map((g) => {
+            if (g === oldVal) {
+              changed = true;
+              return trimmed;
+            }
+            return g;
+          });
+          if (changed) c.grades = newGrades;
         });
       }
     });

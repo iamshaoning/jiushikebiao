@@ -52,6 +52,22 @@ export function batchUpdateStudents(
         return changed ? { ...c, organizations: newOrgs, colors: newColors } : c;
       });
     }
+
+    // 年级变化时级联更新课程的 grades 冗余字段（与机构逻辑一致）
+    if (patch.grade !== undefined) {
+      const newGrade = patch.grade;
+      draft.courses = draft.courses.map((c) => {
+        let changed = false;
+        const newGrades = [...(c.grades || [])];
+        c.studentIds.forEach((sid, idx) => {
+          if (idSet.has(sid) && newGrades[idx] !== undefined) {
+            newGrades[idx] = newGrade;
+            changed = true;
+          }
+        });
+        return changed ? { ...c, grades: newGrades } : c;
+      });
+    }
   });
 }
 
