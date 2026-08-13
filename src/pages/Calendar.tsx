@@ -658,7 +658,7 @@ export default function Calendar() {
               key={w}
               className={`text-center text-xs py-2 font-medium ${
                 i >= 5 ? 'text-gray-400' : 'text-gray-600'
-              } ${i > 0 ? 'border-l border-ink-100' : ''}`}
+              } ${i < 6 ? 'border-r border-ink-100' : ''}`}
             >
               {w}
             </div>
