@@ -493,7 +493,7 @@ export default function Calendar() {
       <div>
         <h1 className="font-display text-2xl font-bold text-ink-700">日历排课</h1>
         <p className="text-sm text-gray-500 mt-1">
-          本月已有 {monthCourseCount} 节课，注意休息哦~
+          本月已有 {monthCourseCount} 节课，{monthCourseCount >= 30 ? '注意休息哦~' : '保持开心哦~'}
         </p>
       </div>
 
