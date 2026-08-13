@@ -131,7 +131,7 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
     return (
       <div
         key={snap.id}
-        className="p-3 border border-ink-200 rounded-lg mb-2 flex justify-between items-center"
+        className="p-3 border border-ink-200 rounded-lg mb-2 flex justify-between items-center bg-white"
       >
         <div className="flex items-center gap-2 min-w-0">
           <Icon className={`w-4 h-4 flex-shrink-0 ${meta.color}`} />
@@ -190,7 +190,7 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
           {Array.from({ length: autoEmptySlots }).map((_, i) => (
             <div
               key={`auto-empty-${i}`}
-              className="p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center"
+              className="p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center bg-white"
             >
               <div className="text-center text-gray-400">
                 <Clock className="w-4 h-4 mx-auto mb-1" />
@@ -209,7 +209,7 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
             <button
               key={`empty-${i}`}
               onClick={handleCreate}
-              className="w-full p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center cursor-pointer hover:bg-[var(--bg-content)] transition-colors"
+              className="w-full p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center cursor-pointer bg-white hover:bg-[var(--bg-tertiary)] transition-colors"
             >
               <div className="text-center">
                 <Plus className="w-4 h-4 mx-auto mb-1 text-gray-400" />

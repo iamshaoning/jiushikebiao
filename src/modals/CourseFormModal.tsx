@@ -297,7 +297,7 @@ export default function CourseFormModal({
                 className={`py-2 rounded-md text-sm font-medium transition-all ${
                   lessonType === lt
                     ? 'bg-ink-200 text-ink-700 font-medium shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-[var(--bg-secondary)]'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-[var(--bg-tertiary)]'
                 }`}
               >
                 {lt}
