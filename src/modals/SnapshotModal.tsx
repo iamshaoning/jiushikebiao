@@ -209,7 +209,7 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
             <button
               key={`empty-${i}`}
               onClick={handleCreate}
-              className="w-full p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center cursor-pointer bg-white hover:bg-[var(--bg-tertiary)] transition-colors"
+              className="w-full p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center cursor-pointer bg-white hover:bg-ink-50 transition-colors"
             >
               <div className="text-center">
                 <Plus className="w-4 h-4 mx-auto mb-1 text-gray-400" />

@@ -88,7 +88,7 @@ export default function Modal({
             </h3>
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+              className="p-1 rounded hover:bg-ink-50 text-gray-400 hover:text-ink-700"
               aria-label="关闭"
             >
               <X className="w-4 h-4" />

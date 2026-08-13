@@ -234,7 +234,7 @@ export default function Layout() {
                   className={`relative flex items-center gap-3 px-5 py-2.5 text-sm transition-colors duration-300 border-l-2 border-transparent ${
                     active
                       ? 'text-amber-200'
-                      : 'text-ink-100/80 hover:bg-ink-600/40 hover:text-white'
+                      : 'text-ink-100/80 hover:bg-ink-600/50 hover:text-white'
                   }`}
                 >
                   <Icon className="w-4 h-4" />

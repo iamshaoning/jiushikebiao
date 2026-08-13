@@ -107,7 +107,7 @@ function LoginForm({
             <button
               type="button"
               onClick={() => setShowPwd((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink-700 transition"
               tabIndex={-1}
               aria-label={showPwd ? '隐藏密码' : '显示密码'}
             >

@@ -146,7 +146,7 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   .tag-neutral { @apply tag bg-gray-100 text-gray-600; }
 
   .table-row-hover:hover {
-    @apply bg-ink-50/50;
+    @apply bg-ink-50;
   }
 }
 
@@ -276,7 +276,7 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   cursor: pointer;
 }
 .student-card:not(.student-card-selected):hover {
-  background-color: var(--bg-tertiary);
+  background-color: #E8F0EC;
   box-shadow: inset 0 0 0 2px #8FB5A2;
 }
 .student-card-name {
@@ -322,7 +322,7 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   transition: background-color 0.15s ease;
 }
 .date-picker-cell:hover {
-  background-color: var(--bg-tertiary);
+  background-color: #E8F0EC;
 }
 .date-picker-cell.other-month {
   color: var(--color-secondary);
@@ -387,7 +387,7 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   transition: background-color 0.15s ease;
 }
 .settings-dropdown-item:hover {
-  background-color: var(--bg-tertiary);
+  background-color: #E8F0EC;
 }
 .settings-dropdown-item.danger:hover {
   background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);

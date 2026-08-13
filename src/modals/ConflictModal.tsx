@@ -136,7 +136,7 @@ export default function ConflictModal({
                   className={`flex-1 py-1.5 rounded text-xs font-medium transition ${
                     decisions[i] === 'skip'
                       ? 'bg-gray-200 text-ink-700'
-                      : 'text-gray-500 hover:bg-gray-100'
+                      : 'text-gray-500 hover:bg-ink-50'
                   }`}
                 >
                   跳过
@@ -146,7 +146,7 @@ export default function ConflictModal({
                   className={`flex-1 py-1.5 rounded text-xs font-medium transition ${
                     decisions[i] === 'override'
                       ? 'bg-red-100 text-red-700'
-                      : 'text-gray-500 hover:bg-gray-100'
+                      : 'text-gray-500 hover:bg-ink-50'
                   }`}
                 >
                   覆盖

@@ -370,7 +370,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
                   {hasDetail && (
                     <button
                       onClick={() => setExpandedId(expanded ? null : record.id)}
-                      className="p-1.5 rounded hover:bg-gray-100 text-gray-400 transition-all"
+                      className="p-1.5 rounded hover:bg-ink-50 text-gray-400 transition-all"
                       title={expanded ? '收起详情' : '展开详情'}
                     >
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
@@ -379,7 +379,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
                   {undone ? (
                     <button
                       onClick={() => handleRedo(record.id)}
-                      className="p-1.5 rounded hover:bg-blue-50 text-blue-600 transition-colors"
+                      className="p-1.5 rounded hover:bg-ink-50 text-blue-600 transition-colors"
                       title="重做"
                     >
                       <CornerDownLeft className="w-4 h-4" />
@@ -387,7 +387,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
                   ) : (
                     <button
                       onClick={() => handleUndo(record.id)}
-                      className="p-1.5 rounded hover:bg-amber-50 text-amber-600 transition-colors"
+                      className="p-1.5 rounded hover:bg-ink-50 text-amber-600 transition-colors"
                       title="撤销"
                     >
                       <RotateCcw className="w-4 h-4" />

@@ -325,7 +325,7 @@ export default function Statistics() {
       <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
         <button
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0"
+          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
         </button>
@@ -343,7 +343,7 @@ export default function Statistics() {
         />
         <button
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0"
+          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>

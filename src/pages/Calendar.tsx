@@ -499,7 +499,7 @@ export default function Calendar() {
 
       {/* 月份导航 */}
       <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
-        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0">
+        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0">
           <ChevronLeft className="w-4 h-4 text-gray-500" />
         </button>
         <CustomSelect
@@ -514,7 +514,7 @@ export default function Calendar() {
           onChange={(v) => setCurrentMonth(currentYear, v as number)}
           className="w-20 shrink-0"
         />
-        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-gray-100 shrink-0">
+        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0">
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
         {/* 隐私模式：圆角矩形墨绿色按钮（图标区分状态），自动靠右；移动端隐藏 */}

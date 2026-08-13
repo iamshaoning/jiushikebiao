@@ -176,13 +176,13 @@ export default function DatePicker({
         >
           {/* 月份导航 */}
           <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={prevMonth} className="p-1 rounded hover:bg-gray-100">
+            <button type="button" onClick={prevMonth} className="p-1 rounded hover:bg-ink-50">
               <ChevronLeft className="w-4 h-4 text-gray-500" />
             </button>
             <span className="text-sm font-medium text-ink-700">
               {viewYear}年 {viewMonth + 1}月
             </span>
-            <button type="button" onClick={nextMonth} className="p-1 rounded hover:bg-gray-100">
+            <button type="button" onClick={nextMonth} className="p-1 rounded hover:bg-ink-50">
               <ChevronRight className="w-4 h-4 text-gray-500" />
             </button>
           </div>
@@ -211,7 +211,7 @@ export default function DatePicker({
                       : isToday
                       ? 'bg-amber-100 text-ink-700 font-medium'
                       : cell.isCurrent
-                      ? 'text-gray-700 hover:bg-gray-100'
+                      ? 'text-gray-700 hover:bg-ink-50'
                       : 'text-gray-300'
                   }`}
                 >
