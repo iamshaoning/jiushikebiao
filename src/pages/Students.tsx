@@ -179,7 +179,7 @@ export default function Students() {
     const calc = () => {
       const w = masonryRef.current?.offsetWidth ?? window.innerWidth;
       if (w >= 1100) setNumCols(3);
-      else if (w >= 768) setNumCols(2);
+      else if (w >= 500) setNumCols(2);
       else setNumCols(1);
     };
     calc();

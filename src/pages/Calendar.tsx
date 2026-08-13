@@ -115,10 +115,10 @@ export default function Calendar() {
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
   // 响应式：移动端用列表视图（每天一卡），桌面端用月历网格
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 1100,
+    () => typeof window !== 'undefined' && window.innerWidth < 500,
   );
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 1100);
+    const onResize = () => setIsMobile(window.innerWidth < 500);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);

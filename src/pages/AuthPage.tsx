@@ -315,7 +315,7 @@ export default function AuthPage() {
 
   // 根据 phase 计算布局参数
   const getLayout = () => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1100;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 500;
     // 移动端：纵向布局，绿色品牌区在上、白色表单区在下；形变目标为系统页顶栏高度（pt-14≈56px）
     if (isMobile) {
       // 顶栏 logo：px-3(12px) py-2.5(10px) w-5(20px)；idle logo：top-8 left-8(32px) w-10(40px)
