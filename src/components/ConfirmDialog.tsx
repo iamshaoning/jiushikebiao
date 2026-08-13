@@ -100,7 +100,7 @@ export default function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className={`bg-[var(--bg-secondary)] rounded-xl2 shadow-lift w-full max-w-sm p-6 transition-all duration-200 ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
+        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full max-w-sm p-6 transition-all duration-200 ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
         onClick={(e) => e.stopPropagation()}
         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
       >
