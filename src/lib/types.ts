@@ -29,10 +29,47 @@ export interface Course {
   studentIds: string[];
   studentNames: string[]; // 冗余，编辑学生时级联更新
   organizations: string[]; // 冗余
-  grades: string[]; // 冗余（年级快照），编辑学生时级联更新
+  grades: string[]; // 冗余（年级快照），编辑学生时级联更新；frozen 课程解除联动
   colors: string[]; // 冗余（机构色）
+  frozen?: boolean; // 冷数据标记：升级后冻结，级联字段写死，编辑时解锁可纠错
   createdAt: string;
   updatedAt: string;
+}
+
+/** 升级计划中单个年级行的配置 */
+export interface UpgradeGradeConfig {
+  /** 当前年级 */
+  grade: string;
+  /** 升级目标年级（为空 = 该年级不升级） */
+  target: string;
+  /** 预设课时费加成 */
+  feeIncrease: number;
+}
+
+/** 升级计划中单个机构的配置 */
+export interface UpgradeOrgConfig {
+  organization: string;
+  grades: UpgradeGradeConfig[];
+  /** 选中参与升级的学生 id（不在此列表中的学生不升级） */
+  studentIds: string[];
+}
+
+/** 年级升级计划 */
+export interface UpgradePlan {
+  /** 新学期开始日期 YYYY-MM-DD */
+  newTermStart: string;
+  createdAt: number;
+  /** pending 待执行 / cancelled 已作废 / executed 已执行 */
+  status: 'pending' | 'cancelled' | 'executed';
+  orgs: UpgradeOrgConfig[];
+}
+
+/** 升级执行记录（只保留最新一条） */
+export interface UpgradeRecord {
+  newTermStart: string;
+  executedAt: number;
+  /** 升级的学生数 */
+  studentCount: number;
 }
 
 /** 应用数据状态（持久化到 localStorage + Supabase coursemanagerdata 表） */
@@ -45,6 +82,10 @@ export interface AppState {
   gradeColors: Record<string, string>;
   lastupdated: number | null;
   userid?: string;
+  /** 升级计划（一次只允许一个进行中计划；null 表示无） */
+  upgradePlan: UpgradePlan | null;
+  /** 升级执行记录（只保留最新一条；默认数据条目为空记录） */
+  lastUpgrade: UpgradeRecord | null;
 }
 
 /** 日历视图状态（非持久化） */

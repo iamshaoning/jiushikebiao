@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useStore } from '@/stores/useStore';
 import { getSession, onAuthStateChange, logout as authLogout } from '@/lib/auth';
 import { loadData, initDataSave, cleanupRealtime, cleanupDataSave } from '@/lib/data';
+import { clearCopiedCourses } from '@/lib/course';
 
 const SESSION_CHECK_INTERVAL = 60 * 1000; // 60s
 const MAX_SESSION_HOURS = 24; // 24h 自动登出
@@ -26,7 +27,8 @@ export function useAuthSync(): void {
   // 用户登录/登出时：加载数据 + 初始化保存监听
   useEffect(() => {
     if (user) {
-      // 登录：记录登录时间 + 加载数据 + 初始化保存
+      // 登录：清空课程剪贴板（避免上次会话残留）+ 记录登录时间 + 加载数据 + 初始化保存
+      clearCopiedCourses();
       localStorage.setItem(LOGIN_TIME_KEY, Date.now().toString());
       loadData(user.id);
       initDataSave();

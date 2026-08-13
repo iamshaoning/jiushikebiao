@@ -90,6 +90,7 @@ export default function StudentFormModal({
 
         // 级联更新课程的冗余字段
         draft.courses = draft.courses.map((c) => {
+          if (c.frozen) return c; // 冷数据课程解除联动
           const studentIdx = c.studentIds.indexOf(editStudent.id);
           if (studentIdx >= 0) {
             const newNames = [...c.studentNames];
@@ -203,7 +204,7 @@ export default function StudentFormModal({
         {/* 费用 + 时长 */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">一对一课时费</label>
+            <label className="block text-xs text-gray-500 mb-1.5">预设课时费</label>
             <input
               type="number"
               value={fee}

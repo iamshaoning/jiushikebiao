@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import Modal from '@/components/Modal';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -310,13 +311,13 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
       {records.length > 0 && (
         <button
           onClick={() => setConfirmClear(true)}
-          className="btn btn-danger"
+          className="btn-danger"
         >
           <Trash2 className="w-4 h-4" />
           清空全部
         </button>
       )}
-      <button onClick={onClose} className="btn btn-secondary">
+      <button onClick={onClose} className="btn-secondary">
         关闭
       </button>
     </>
@@ -406,27 +407,14 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
       )}
 
       {/* 清空确认 */}
-      <Modal
+      <ConfirmDialog
         open={confirmClear}
-        onClose={() => setConfirmClear(false)}
-        title="确认清空历史"
-        nested
-        width="max-w-sm"
-        footer={
-          <>
-            <button onClick={handleClear} className="btn btn-danger">
-              清空
-            </button>
-            <button onClick={() => setConfirmClear(false)} className="btn btn-secondary">
-              取消
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm">
-          确认清空全部历史记录？已撤销的操作将无法重做。此操作不可撤销。
-        </p>
-      </Modal>
+        type="delete"
+        confirmText="清空"
+        message="确认清空全部历史记录？此操作不可撤销。"
+        onConfirm={handleClear}
+        onCancel={() => setConfirmClear(false)}
+      />
     </Modal>
   );
 }

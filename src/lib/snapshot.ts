@@ -10,7 +10,8 @@ import { useStore } from '@/stores/useStore';
 import type { AppState, Snapshot, SnapshotType } from './types';
 import { generateId } from './utils';
 import { recordRestoreSnapshot } from './history';
-import { saveImmediate } from './data';
+import { saveImmediate, isOffline } from './data';
+import { useToastStore } from '@/components/Toast';
 
 const STORAGE_KEY = 'coursemanagerSnapshots';
 const AUTO_SNAPSHOT_INTERVAL = 15 * 60 * 1000; // 15分钟
@@ -56,6 +57,14 @@ export function createSnapshot(type: SnapshotType, label?: string): Snapshot | n
   const userId = getCurrentUserId();
   if (!userId) return null;
 
+  // 离线限制：手动快照提示，自动快照静默跳过
+  if (isOffline()) {
+    if (type === 'manual') {
+      useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+    }
+    return null;
+  }
+
   const data = useStore.getState().getData();
   if (!data) return null;
 
@@ -98,6 +107,12 @@ export function listSnapshots(userId?: string): Snapshot[] {
 export async function restoreSnapshot(id: string): Promise<boolean> {
   const userId = getCurrentUserId();
   if (!userId) return false;
+
+  // 离线限制
+  if (isOffline()) {
+    useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+    return false;
+  }
 
   const all = getAllSnapshots();
   const snapshot = all.find((s) => s.id === id && s.userid === userId);
@@ -151,6 +166,13 @@ export async function restoreSnapshot(id: string): Promise<boolean> {
 export function deleteSnapshot(id: string): boolean {
   const userId = getCurrentUserId();
   if (!userId) return false;
+
+  // 离线限制
+  if (isOffline()) {
+    useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+    return false;
+  }
+
   const all = getAllSnapshots();
   const idx = all.findIndex((s) => s.id === id && s.userid === userId);
   if (idx === -1) return false;

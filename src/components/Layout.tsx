@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect, useEffect } from 'react';
+import { useRef, useState, useLayoutEffect, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useStore } from '@/stores/useStore';
@@ -19,9 +19,11 @@ import ProfileModal from '@/modals/ProfileModal';
 import SnapshotModal from '@/modals/SnapshotModal';
 import HistoryModal from '@/modals/HistoryModal';
 import AnnouncementsModal from '@/modals/AnnouncementsModal';
+import UpgradeModal, { type UpgradeModalMode } from '@/modals/UpgradeModal';
 import { startAutoSnapshotTimer } from '@/lib/snapshot';
 import { subscribeAnnouncements, type Announcement } from '@/lib/announcement';
 import { checkConnection } from '@/lib/data';
+import { isUpgradeDue, todayStr } from '@/lib/upgrade';
 import { useToast } from '@/components/Toast';
 
 // 适配 vite base 路径
@@ -52,6 +54,12 @@ export default function Layout() {
 
   // 模态框状态（互斥：同一时间只打开一个）
   const [activeModal, setActiveModal] = useState<'profile' | 'snapshot' | 'history' | 'announce' | null>(null);
+  // 升级计划到期提醒弹窗（独立于 activeModal，自动弹出）
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; mode: UpgradeModalMode }>({
+    open: false,
+    mode: 'remind',
+  });
+  const upgradePlan = useStore((s) => s.upgradePlan);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
   const syncStatus = useStore((s) => s.syncStatus);
@@ -74,6 +82,28 @@ export default function Layout() {
     });
     return unsub;
   }, [user]);
+
+  // 升级计划到期检测：登录/刷新/数据同步（upgradePlan 变化）/切回标签页时触发
+  const checkUpgradeDue = useCallback(() => {
+    const { upgradePlan: plan } = useStore.getState();
+    if (!plan || plan.status !== 'pending') return;
+    if (isUpgradeDue(plan, todayStr())) {
+      setUpgradeModal((prev) => (prev.open ? prev : { open: true, mode: 'remind' }));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    checkUpgradeDue();
+  }, [user, upgradePlan, checkUpgradeDue]);
+
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') checkUpgradeDue();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [checkUpgradeDue]);
 
   // 自动快照定时器（15分钟）
   useEffect(() => {
@@ -407,6 +437,15 @@ export default function Layout() {
       <SnapshotModal open={activeModal === 'snapshot'} onClose={() => setActiveModal(null)} />
       <HistoryModal open={activeModal === 'history'} onClose={() => setActiveModal(null)} />
       <AnnouncementsModal open={activeModal === 'announce'} onClose={() => setActiveModal(null)} />
+
+      {/* 升级计划到期提醒 / 执行确认弹窗 */}
+      <UpgradeModal
+        open={upgradeModal.open}
+        mode={upgradeModal.mode}
+        onClose={() => setUpgradeModal((prev) => ({ ...prev, open: false }))}
+        onStartUpgrade={() => setUpgradeModal((prev) => ({ ...prev, mode: 'confirm' }))}
+        onBackToRemind={() => setUpgradeModal((prev) => ({ ...prev, mode: 'remind' }))}
+      />
 
       {/* 登出确认弹窗 */}
       <ConfirmDialog

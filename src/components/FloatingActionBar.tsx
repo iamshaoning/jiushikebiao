@@ -120,7 +120,7 @@ export default function FloatingActionBar({
         {showAdd && (
           <button
             onClick={p.onAdd}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600/50 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isMultiDate ? '批量添加课程' : '添加课程'}
           >
             <Plus className="w-4 h-4" />
@@ -132,7 +132,7 @@ export default function FloatingActionBar({
         {showEdit && (
           <button
             onClick={p.onEdit}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600/50 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isMultiStudent ? '批量编辑学生' : isSingleCourse ? '编辑课程' : '编辑学生'}
           >
             <Pencil className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function FloatingActionBar({
         {showCopy && (
           <button
             onClick={p.onCopy}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600/50 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isSingleDate ? '复制当天所有课程' : '复制课程'}
           >
             <Copy className="w-4 h-4" />
@@ -156,7 +156,7 @@ export default function FloatingActionBar({
         {showPaste && (
           <button
             onClick={p.onPaste}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600/50 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isMultiDate ? '批量粘贴课程' : '粘贴课程'}
           >
             <ClipboardPaste className="w-4 h-4" />
@@ -168,7 +168,7 @@ export default function FloatingActionBar({
         {showDelete && (
           <button
             onClick={p.onDelete}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-red-500/30 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-red-500 hover:text-white transition-colors"
             title={isMulti ? '批量删除' : '删除'}
           >
             <Trash2 className="w-4 h-4" />
@@ -180,7 +180,7 @@ export default function FloatingActionBar({
         {showClear && (
           <button
             onClick={p.onClear}
-            className="flex items-center px-2 py-1.5 rounded-lg text-sm text-ink-100/70 hover:text-white hover:bg-ink-600/50 transition-colors"
+            className="flex items-center px-2 py-1.5 rounded-lg text-sm text-ink-100/70 hover:text-white hover:bg-ink-600 transition-colors"
             title="取消选择"
           >
             <X className="w-4 h-4" />

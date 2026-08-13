@@ -17,7 +17,8 @@ interface ToastState {
 
 let nextId = 1;
 
-const useToastStore = create<ToastState>((set, get) => ({
+/** 全局 Toast store（供非组件代码直接调用，如 store/服务层的离线拦截提示） */
+export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
   push: (type, message) => {
     const id = nextId++;

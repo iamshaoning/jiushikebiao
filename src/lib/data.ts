@@ -15,6 +15,17 @@ import { debounce } from './utils';
 const LOCAL_KEY = 'coursemanagerdata';
 const SAVE_DEBOUNCE = 2000;
 
+/* ---------- 离线限制 ---------- */
+
+/**
+ * 是否处于离线限制状态：已登录、数据已加载、但同步状态非在线。
+ * 此时禁止一切增删改操作（含快照/历史/升级等），仅可查看数据。
+ */
+export function isOffline(): boolean {
+  const { user, dataLoaded, syncStatus } = useStore.getState();
+  return !!user && dataLoaded && syncStatus !== 'online';
+}
+
 /* ---------- 本地数据读写 ---------- */
 
 function getLocalData(): AppState | null {
@@ -62,6 +73,9 @@ async function uploadToServer(localData: AppState, userId: string): Promise<void
     organizationColors: localData.organizationColors || {},
     gradeColors: localData.gradeColors || {},
     lastupdated: localData.lastupdated,
+    // 服务器新增列（JSONB）；旧表需先执行 ALTER TABLE 添加列
+    upgradeplan: localData.upgradePlan ?? null,
+    lastupgrade: localData.lastUpgrade ?? null,
   };
 
   let lastError: unknown;
@@ -92,6 +106,8 @@ async function createDefaultData(userId: string): Promise<void> {
     gradeColors: {},
     lastupdated: Date.now(),
     userid: userId,
+    upgradePlan: null,
+    lastUpgrade: null,
   };
   try {
     const { error } = await supabase.from(TABLES.COURSE_DATA).upsert({
@@ -165,6 +181,9 @@ export async function loadData(userId: string): Promise<void> {
       gradeColors: {},
       lastupdated: null,
       userid: userId,
+      // 清空升级计划/执行记录，避免残留上一账号数据
+      upgradePlan: null,
+      lastUpgrade: null,
     });
   }
 

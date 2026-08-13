@@ -6,6 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import Modal from '@/components/Modal';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import ColorPickerModal from '@/modals/ColorPickerModal';
 import { useStore } from '@/stores/useStore';
 import { useToast } from '@/components/Toast';
@@ -151,6 +152,7 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
       // 机构级联更新课程的 organizations/colors，年级级联更新课程的 grades
       if (isOrg) {
         draft.courses.forEach((c) => {
+          if (c.frozen) return; // 冷数据课程解除联动
           let changed = false;
           const newOrgs = c.organizations.map((o) => {
             if (o === oldVal) {
@@ -170,9 +172,9 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
         });
       } else {
         draft.courses.forEach((c) => {
-          if (!c.grades) return;
+          if (c.frozen) return; // 冷数据课程解除联动
           let changed = false;
-          const newGrades = c.grades.map((g) => {
+          const newGrades = (c.grades || []).map((g) => {
             if (g === oldVal) {
               changed = true;
               return trimmed;
@@ -391,33 +393,23 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
         title={`选择${itemName}颜色`}
       />
 
-      {/* 删除确认（nested） */}
-      <Modal
+      {/* 删除确认 */}
+      <ConfirmDialog
         open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title={`删除${itemName}`}
-        nested
-        width="max-w-sm"
-        footer={
+        type="delete"
+        message={
           <>
-            <button onClick={() => setDeleteTarget(null)} className="btn-secondary">
-              取消
-            </button>
-            <button onClick={handleDeleteConfirm} className="btn-danger">
-              确认删除
-            </button>
+            确定删除{itemName}「<b>{deleteTarget}</b>」吗？
+            {deleteRefCount > 0 && (
+              <div className="mt-2 text-amber-600">
+                有 {deleteRefCount} 名学生正在使用此{itemName}，无法删除。
+              </div>
+            )}
           </>
         }
-      >
-        <p>
-          确定删除{itemName}「<b>{deleteTarget}</b>」吗？
-        </p>
-        {deleteRefCount > 0 && (
-          <p className="mt-2 text-sm text-amber-600">
-            有 {deleteRefCount} 名学生正在使用此{itemName}，无法删除。
-          </p>
-        )}
-      </Modal>
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 }

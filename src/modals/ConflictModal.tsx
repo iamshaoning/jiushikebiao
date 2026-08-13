@@ -83,7 +83,7 @@ export default function ConflictModal({
             disabled={!allDecided}
             className="btn-primary"
           >
-            确认
+            执行
           </button>
         </>
       }

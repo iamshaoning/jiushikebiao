@@ -61,6 +61,12 @@ export default function CourseFormModal({
   const [startTime, setStartTime] = useState('08:00');
   const [duration, setDuration] = useState(120);
   const [fee, setFee] = useState<number>(0);
+  // 冷课程纠错：机构/年级手动输入值（frozen 课程快照，解除联动）
+  const [coldOrg, setColdOrg] = useState('');
+  const [coldGrade, setColdGrade] = useState('');
+
+  // 是否为冷数据课程（升级后冻结，编辑时机构/年级/课时费解锁可纠错）
+  const isColdEdit = isEdit && !!editCourse?.frozen;
 
   // 初始化/重置表单
   useEffect(() => {
@@ -72,6 +78,8 @@ export default function CourseFormModal({
       setStartTime(editCourse.startTime);
       setDuration(editCourse.duration);
       setFee(editCourse.fees[0] ?? 0);
+      setColdOrg(editCourse.organizations?.[0] ?? '');
+      setColdGrade(editCourse.grades?.[0] ?? '');
     } else {
       setFormDate(date);
       setLessonType('一对一');
@@ -103,6 +111,8 @@ export default function CourseFormModal({
 
   // 一对一费用自动计算
   useEffect(() => {
+    // 冷课程：费用手动纠错，不自动重算
+    if (editCourse?.frozen) return;
     if (lessonType === '一对一' && selectedStudentIds.length > 0) {
       const student = students.find((s) => s.id === selectedStudentIds[0]);
       if (student) {
@@ -115,8 +125,8 @@ export default function CourseFormModal({
   const toggleStudent = (student: Student) => {
     if (lessonType === '一对一') {
       setSelectedStudentIds([student.id]);
-    } else {
-      // 多人课：检查同机构同年级
+    } else if (!isColdEdit) {
+      // 多人课：检查同机构同年级（普通课程）
       const selected = students.filter((s) => selectedStudentIds.includes(s.id));
       if (!selectedStudentIds.includes(student.id)) {
         const { organizationMatch, gradeMatch } = checkMultiStudentSelection(selected, student);
@@ -129,6 +139,13 @@ export default function CourseFormModal({
           return;
         }
       }
+      setSelectedStudentIds((prev) =>
+        prev.includes(student.id)
+          ? prev.filter((id) => id !== student.id)
+          : [...prev, student.id],
+      );
+    } else {
+      // 冷数据课程多人课：自由多选，无同机构同年级限制（机构/年级手动填写）
       setSelectedStudentIds((prev) =>
         prev.includes(student.id)
           ? prev.filter((id) => id !== student.id)
@@ -248,9 +265,33 @@ export default function CourseFormModal({
 
     // 无冲突：直接添加/更新
     if (isEdit) {
-      updateCourse(courseData);
-      recordUpdateCourse(editCourse, courseData);
-      toast.success('课程已更新');
+      if (isColdEdit && editCourse) {
+        // 冷课程纠错：学生可重新选择，机构/年级/课时费手动填写（快照随保存重建）
+        const selectedStus = selectedStudentIds
+          .map((id) => students.find((s) => s.id === id))
+          .filter(Boolean) as Student[];
+        const studentCount = Math.max(1, selectedStudentIds.length);
+        const updated: Course = {
+          ...editCourse,
+          date: formDate,
+          lessonType,
+          startTime,
+          duration,
+          studentIds: selectedStudentIds,
+          studentNames: selectedStus.map((s) => s.name),
+          organizations: Array(studentCount).fill(coldOrg),
+          grades: Array(studentCount).fill(coldGrade),
+          colors: selectedStus.map((s) => generateColor(coldOrg || '未分配', 'organization')),
+          fees: Array(studentCount).fill(fee),
+        };
+        updateCourse(updated);
+        recordUpdateCourse(editCourse, updated);
+        toast.success('课程已更新');
+      } else {
+        updateCourse(courseData);
+        recordUpdateCourse(editCourse!, courseData);
+        toast.success('课程已更新');
+      }
     } else {
       addCourse(courseData);
       recordAddCourse(courseData);
@@ -322,7 +363,11 @@ export default function CourseFormModal({
         {/* 学生选择 */}
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
-            {lessonType === '一对一' ? '点击选择一位学生' : '点击可选多位学生（同机构同年级）'}
+            {isColdEdit
+              ? '冷数据课程（机构/年级/课时费需手动填写）'
+              : lessonType === '一对一'
+              ? '点击选择一位学生'
+              : '点击可选多位学生（同机构同年级）'}
           </label>
           {sortedStudents.length === 0 ? (
             <div className="text-sm p-3 border rounded-md text-gray-400 border-ink-200 bg-[var(--bg-content)]">
@@ -355,24 +400,30 @@ export default function CourseFormModal({
           )}
         </div>
 
-        {/* 所选学生的机构/年级（只读展示） */}
+        {/* 所选学生的机构/年级（普通课程只读展示；冷数据课程可编辑纠错） */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">机构</label>
             <input
-              value={selectedStudentsInfo.orgs}
-              disabled
-              placeholder="未选择学生"
-              className="input-field bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200"
+              value={isColdEdit ? coldOrg : selectedStudentsInfo.orgs}
+              onChange={(e) => setColdOrg(e.target.value)}
+              disabled={!isColdEdit}
+              placeholder="未设置"
+              className={`input-field ${
+                !isColdEdit ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200' : ''
+              }`}
             />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">年级</label>
             <input
-              value={selectedStudentsInfo.grades}
-              disabled
-              placeholder="未选择学生"
-              className="input-field bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200"
+              value={isColdEdit ? coldGrade : selectedStudentsInfo.grades}
+              onChange={(e) => setColdGrade(e.target.value)}
+              disabled={!isColdEdit}
+              placeholder="未设置"
+              className={`input-field ${
+                !isColdEdit ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200' : ''
+              }`}
             />
           </div>
         </div>
@@ -410,9 +461,9 @@ export default function CourseFormModal({
               type="number"
               value={fee}
               onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
-              disabled={lessonType === '一对一'}
+              disabled={lessonType === '一对一' && !isColdEdit}
               className={`input-field ${
-                lessonType === '一对一'
+                lessonType === '一对一' && !isColdEdit
                   ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200'
                   : ''
               }`}

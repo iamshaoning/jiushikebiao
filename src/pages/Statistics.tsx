@@ -839,7 +839,7 @@ export default function Statistics() {
       {/* 导出确认弹窗 */}
       <ConfirmDialog
         open={exportConfirm}
-        message={`确定要导出 ${rangeLabel} 的课时统计数据吗？`}
+        message={`确定要导出 ${rangeLabel} ${orgFilter || '全部机构'} 的课时统计数据吗？`}
         type="confirm"
         confirmText="导出"
         onConfirm={performExport}

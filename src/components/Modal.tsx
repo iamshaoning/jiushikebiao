@@ -71,10 +71,21 @@ export default function Modal({
     ? 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[60] flex items-center justify-center p-4'
     : 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 backdrop-blur-sm z-40 flex items-center justify-center p-4';
 
+  // 遮罩关闭：用 onMouseDown + target 判断，而非 onClick。
+  // onClick 会在 mousedown/mouseup 目标不一致时触发在共同祖先（遮罩）上，
+  // 导致从输入框拖拽框选文本跨出模态框释放时误关弹窗。
+  // 仅当按下点就是遮罩本身时才关闭，内容区按下（含拖拽选择）不关闭；
+  // 同时保留事件冒泡，不影响 CustomSelect 等基于 document mousedown 的关闭逻辑。
   return createPortal(
     <div
       className={`${overlayCls} transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      onClick={closeOnOverlay ? onClose : undefined}
+      onMouseDown={
+        closeOnOverlay
+          ? (e: React.MouseEvent) => {
+              if (e.target === e.currentTarget) onClose();
+            }
+          : undefined
+      }
     >
       <div
         className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full ${width} max-h-[calc(100vh-7.5rem)] desktop:max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden transition-all duration-200 ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}

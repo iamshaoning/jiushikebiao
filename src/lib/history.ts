@@ -6,6 +6,8 @@
  * 支持课程/学生操作的撤销与重做，通过 zustand mutateData 修改数据
  */
 import { useStore } from '@/stores/useStore';
+import { isOffline } from './data';
+import { useToastStore } from '@/components/Toast';
 import type {
   Course,
   Student,
@@ -51,6 +53,9 @@ function clone<T>(obj: T): T {
 /* ---------- 添加记录 ---------- */
 
 function addToHistory(record: HistoryRecord): void {
+  // 离线限制：业务修改被 mutateData 拦截后，调用方的 record* 仍会执行，
+  // 在此兜底，避免离线时写入假操作记录
+  if (isOffline()) return;
   const userId = getCurrentUserId();
   if (!userId) return;
   record.userid = userId;
@@ -269,6 +274,11 @@ export function getHistory(userId?: string): HistoryRecord[] {
 }
 
 export function clearHistory(userId?: string): void {
+  // 离线限制
+  if (isOffline()) {
+    useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+    return;
+  }
   const uid = userId || getCurrentUserId();
   if (!uid) return;
   const all = getAllHistories();
@@ -308,6 +318,11 @@ function markUndone(actionId: string, undone: boolean): void {
 }
 
 export function undoAction(actionId: string): boolean {
+  // 离线限制
+  if (isOffline()) {
+    useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+    return false;
+  }
   const records = getHistory();
   const record = records.find((r) => r.id === actionId);
   if (!record) return false;
@@ -390,6 +405,11 @@ export function undoAction(actionId: string): boolean {
 }
 
 export function redoAction(actionId: string): boolean {
+  // 离线限制
+  if (isOffline()) {
+    useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+    return false;
+  }
   const records = getHistory();
   const record = records.find((r) => r.id === actionId);
   if (!record || !record.meta?.undone) return false;

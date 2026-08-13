@@ -78,7 +78,7 @@ export default function ColorPickerModal({
             {currentColor ? currentColor.toUpperCase() : '未选择'}
           </span>
         </div>
-        <button type="button" onClick={onClose} className="btn btn-secondary">
+        <button type="button" onClick={onClose} className="btn-secondary">
           取消
         </button>
       </div>

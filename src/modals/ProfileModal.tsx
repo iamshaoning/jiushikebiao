@@ -100,7 +100,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
   };
 
   const footer = (
-    <button onClick={onClose} className="btn btn-secondary">
+    <button onClick={onClose} className="btn-secondary">
       关闭
     </button>
   );
@@ -175,7 +175,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
               <button
                 onClick={handleSaveNickname}
                 disabled={savingNick}
-                className="btn btn-primary whitespace-nowrap"
+                className="btn-primary whitespace-nowrap"
               >
                 {savingNick ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

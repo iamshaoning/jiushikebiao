@@ -14,6 +14,7 @@ import FloatingActionBar, { type FabType } from '@/components/FloatingActionBar'
 import ConfirmDialog from '@/components/ConfirmDialog';
 import StudentFormModal from '@/modals/StudentFormModal';
 import ManagementModal from '@/modals/ManagementModal';
+import UpgradeModal, { type UpgradeModalMode } from '@/modals/UpgradeModal';
 import {
   filterStudents,
   sortStudentsByOrgGradeName,
@@ -29,6 +30,7 @@ import {
   Search,
   School,
   GraduationCap,
+  Rocket,
   UserRoundX,
 } from 'lucide-react';
 
@@ -67,6 +69,20 @@ export default function Students() {
     type: 'organization',
   });
   const [batchEditOpen, setBatchEditOpen] = useState(false);
+
+  // 升级计划模态框：已有 pending 计划则进入确认模式，否则创建模式
+  const [upgradeModal, setUpgradeModal] = useState<{ open: boolean; mode: UpgradeModalMode }>({
+    open: false,
+    mode: 'create',
+  });
+
+  const handleOpenUpgrade = () => {
+    const plan = useStore.getState().upgradePlan;
+    setUpgradeModal({
+      open: true,
+      mode: plan && plan.status === 'pending' ? 'confirm' : 'create',
+    });
+  };
 
   // 批量编辑字段
   const [batchOrg, setBatchOrg] = useState('');
@@ -272,7 +288,7 @@ export default function Students() {
 
     const msg =
       count === 1
-        ? `删除学生「${deletedStudents[0]?.name || ''}」后，相关的 ${affectedCourses.length} 节课也将全部删除`
+        ? `删除学生「${deletedStudents[0]?.name || ''}」后，相关的 ${affectedCourses.length} 节课也将全部删除。`
         : `删除 ${count} 位学生后，相关的 ${affectedCourses.length} 节课也将全部删除。`;
 
     setConfirm({
@@ -422,6 +438,11 @@ export default function Students() {
             <span className="hidden desktop:inline">年级管理</span>
             <span className="desktop:hidden">年级</span>
           </button>
+          <button onClick={handleOpenUpgrade} className="btn-secondary">
+            <Rocket className="w-4 h-4" />
+            <span className="hidden desktop:inline">年级升级</span>
+            <span className="desktop:hidden">升级</span>
+          </button>
           <button onClick={() => setFormModal({ open: true, editStudent: null })} className="btn-primary">
             <Plus className="w-4 h-4" />
             <span className="hidden desktop:inline">添加学生</span>
@@ -457,6 +478,10 @@ export default function Students() {
             <GraduationCap className="w-4 h-4" />
             年级管理
           </button>
+          <button onClick={handleOpenUpgrade} className="btn-secondary">
+            <Rocket className="w-4 h-4" />
+            年级升级
+          </button>
           <button onClick={() => setFormModal({ open: true, editStudent: null })} className="btn-primary">
             <Plus className="w-4 h-4" />
             添加学生
@@ -485,7 +510,7 @@ export default function Students() {
             <div className="flex-1">姓名</div>
             <div className="flex-1">机构</div>
             <div className="flex-1">年级</div>
-            <div className="flex-1">课时费</div>
+            <div className="flex-1">预设课时费</div>
           </div>
           {enableVirtual ? (
             <div ref={parentRef} className="max-h-[70vh] overflow-y-auto">
@@ -587,6 +612,13 @@ export default function Students() {
         type={mgmtModal.type}
       />
 
+      {/* 年级升级模态框（创建 / 确认模式） */}
+      <UpgradeModal
+        open={upgradeModal.open}
+        mode={upgradeModal.mode}
+        onClose={() => setUpgradeModal((prev) => ({ ...prev, open: false }))}
+      />
+
       {/* 批量编辑模态框 */}
       <Modal
         open={batchEditOpen}
@@ -598,38 +630,48 @@ export default function Students() {
               取消
             </button>
             <button onClick={handleBatchEditSubmit} className="btn-primary">
-              应用
+              保存
             </button>
           </>
         }
       >
         <div className="space-y-4">
-          <p className="text-xs text-gray-500">
-            留空的字段保持不变
-          </p>
+          {/* 学生姓名（只读展示，不可修改） */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1.5">机构</label>
-            <CustomSelect
-              value={batchOrg}
-              options={[{ value: '', label: '不改' }, ...organizations.map((org) => ({ value: org, label: org }))]}
-              onChange={(v) => setBatchOrg(v as string)}
-              className="w-full"
-              triggerClassName="py-2 w-full"
+            <label className="block text-xs text-gray-500 mb-1.5">学生姓名</label>
+            <input
+              type="text"
+              value={students.filter((s) => selectedStudentIds.includes(s.id)).map((s) => s.name).join('、')}
+              readOnly
+              className="input-field opacity-60"
             />
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1.5">年级</label>
-            <CustomSelect
-              value={batchGrade}
-              options={[{ value: '', label: '不改' }, ...grades.map((g) => ({ value: g, label: g }))]}
-              onChange={(v) => setBatchGrade(v as string)}
-              className="w-full"
-              triggerClassName="py-2 w-full"
-            />
+          {/* 机构 + 年级（并排一行，与单个编辑一致） */}
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1.5">机构</label>
+              <CustomSelect
+                value={batchOrg}
+                options={[{ value: '', label: '不改' }, ...organizations.map((org) => ({ value: org, label: org }))]}
+                onChange={(v) => setBatchOrg(v as string)}
+                className="w-full"
+                triggerClassName="py-2 w-full"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-xs text-gray-500 mb-1.5">年级</label>
+              <CustomSelect
+                value={batchGrade}
+                options={[{ value: '', label: '不改' }, ...grades.map((g) => ({ value: g, label: g }))]}
+                onChange={(v) => setBatchGrade(v as string)}
+                className="w-full"
+                triggerClassName="py-2 w-full"
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">一对一课时费</label>
+              <label className="block text-xs text-gray-500 mb-1.5">预设课时费</label>
               <input
                 type="number"
                 value={batchFee}

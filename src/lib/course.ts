@@ -146,6 +146,11 @@ export function getClippedCourses(): Course[] {
   }
 }
 
+/** 清空剪贴板（重新登录时调用，避免跨账号残留课程数据） */
+export function clearCopiedCourses(): void {
+  localStorage.removeItem(CLIPBOARD_KEY);
+}
+
 /** 检查两节课是否重复（同时间+同课型+同学生） */
 function isDuplicateCourse(a: Course, b: Course): boolean {
   if (a.startTime !== b.startTime || a.duration !== b.duration || a.lessonType !== b.lessonType) {

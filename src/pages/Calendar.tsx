@@ -400,7 +400,7 @@ export default function Calendar() {
       const msg =
         dateCount === 1
           ? `确定要删除 ${selectedDates[0]} 的全部课程吗？`
-          : `确定要删除 ${dateCount} 天的全部课程（共 ${allDeleted.length} 节）吗？`;
+          : `确定要删除 ${dateCount} 天的共 ${allDeleted.length} 节课程吗？`;
       setConfirm({
         open: true,
         message: msg,

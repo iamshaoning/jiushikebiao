@@ -39,6 +39,7 @@ export function batchUpdateStudents(
       // 同步更新 organizationColors，避免后续 initColorsFromState 重新分配不同颜色导致不一致
       draft.organizationColors[newOrg] = newColor;
       draft.courses = draft.courses.map((c) => {
+        if (c.frozen) return c; // 冷数据课程解除联动
         let changed = false;
         const newOrgs = [...c.organizations];
         const newColors = [...(c.colors || [])];
@@ -57,6 +58,7 @@ export function batchUpdateStudents(
     if (patch.grade !== undefined) {
       const newGrade = patch.grade;
       draft.courses = draft.courses.map((c) => {
+        if (c.frozen) return c; // 冷数据课程解除联动
         let changed = false;
         const newGrades = [...(c.grades || [])];
         c.studentIds.forEach((sid, idx) => {

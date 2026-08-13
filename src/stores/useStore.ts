@@ -5,6 +5,7 @@ import type {
   SyncStatus,
 } from '@/lib/types';
 import { initColorsFromState } from '@/lib/utils';
+import { useToastStore } from '@/components/Toast';
 
 /** 持久化数据字段（保存到 localStorage + Supabase） */
 const DATA_FIELDS: (keyof AppState)[] = [
@@ -16,6 +17,8 @@ const DATA_FIELDS: (keyof AppState)[] = [
   'gradeColors',
   'lastupdated',
   'userid',
+  'upgradePlan',
+  'lastUpgrade',
 ];
 
 function pickData(state: AppState): AppState {
@@ -36,6 +39,8 @@ interface StoreState {
   gradeColors: Record<string, string>;
   lastupdated: number | null;
   userid?: string;
+  upgradePlan: AppState['upgradePlan'];
+  lastUpgrade: AppState['lastUpgrade'];
 
   /* 日历视图状态 */
   currentYear: number;
@@ -86,6 +91,8 @@ export const useStore = create<StoreState>((set, get) => ({
   organizationColors: {},
   gradeColors: {},
   lastupdated: null,
+  upgradePlan: null,
+  lastUpgrade: null,
 
   currentYear: now.getFullYear(),
   currentMonth: now.getMonth(),
@@ -114,6 +121,9 @@ export const useStore = create<StoreState>((set, get) => ({
       gradeColors: data.gradeColors ?? state.gradeColors,
       lastupdated: data.lastupdated ?? state.lastupdated,
       userid: data.userid ?? state.userid,
+      // 显式 null 需能覆盖旧值（升级计划取消/无记录），仅 undefined 时保留
+      upgradePlan: data.upgradePlan !== undefined ? data.upgradePlan : state.upgradePlan,
+      lastUpgrade: data.lastUpgrade !== undefined ? data.lastUpgrade : state.lastUpgrade,
     }));
     if (triggerColorInit) {
       initColorsFromState(get().organizationColors, get().gradeColors);
@@ -121,6 +131,12 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   mutateData: (producer) => {
+    // 离线限制：登录后离线仅可查看，禁止一切增删改操作
+    const { user, dataLoaded, syncStatus } = get();
+    if (user && dataLoaded && syncStatus !== 'online') {
+      useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
+      return;
+    }
     set((state) => {
       // 浅拷贝持久化字段（创建新引用），producer 可安全 mutate
       const draft: AppState = {
@@ -132,6 +148,8 @@ export const useStore = create<StoreState>((set, get) => ({
         gradeColors: { ...state.gradeColors },
         lastupdated: state.lastupdated,
         userid: state.userid,
+        upgradePlan: state.upgradePlan,
+        lastUpgrade: state.lastUpgrade,
       };
       producer(draft);
       draft.lastupdated = Date.now();

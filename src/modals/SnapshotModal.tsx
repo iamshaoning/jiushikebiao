@@ -6,6 +6,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import Modal from '@/components/Modal';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -227,89 +228,36 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
       </div>
 
       {/* 恢复确认 */}
-      <Modal
+      <ConfirmDialog
         open={!!confirmRestore}
-        onClose={() => setConfirmRestore(null)}
-        title="确认恢复快照"
-        nested
-        width="max-w-sm"
-        footer={
-          <>
-            <button
-              onClick={handleRestore}
-              disabled={restoring}
-              className="btn btn-primary"
-            >
-              {restoring ? '恢复中...' : '确认恢复'}
-            </button>
-            <button onClick={() => setConfirmRestore(null)} className="btn btn-secondary">
-              取消
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm">
-          恢复后当前数据将被快照数据覆盖，此操作可通过历史记录撤销。确认恢复
-          <strong className="mx-1">
-            {confirmRestore ? formatTime(confirmRestore.createdAt) : ''}
-          </strong>
-          的快照？
-        </p>
-      </Modal>
+        type="warning"
+        confirmText="恢复"
+        message="确认用此快照覆盖当前数据吗？此操作可撤销。"
+        onConfirm={() => {
+          setConfirmRestore(null);
+          handleRestore();
+        }}
+        onCancel={() => setConfirmRestore(null)}
+      />
 
       {/* 覆盖确认 */}
-      <Modal
+      <ConfirmDialog
         open={!!confirmOverwrite}
-        onClose={() => setConfirmOverwrite(null)}
-        title="确认覆盖快照"
-        nested
-        width="max-w-sm"
-        footer={
-          <>
-            <button onClick={handleOverwrite} className="btn btn-primary">
-              确认覆盖
-            </button>
-            <button onClick={() => setConfirmOverwrite(null)} className="btn btn-secondary">
-              取消
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm">
-          确认用当前数据覆盖快照
-          <strong className="mx-1">
-            {confirmOverwrite ? formatTime(confirmOverwrite.createdAt) : ''}
-          </strong>
-          ？此操作不可撤销。
-        </p>
-      </Modal>
+        type="delete"
+        confirmText="覆盖"
+        message="确认用当前数据覆盖此快照吗？此操作不可撤销。"
+        onConfirm={handleOverwrite}
+        onCancel={() => setConfirmOverwrite(null)}
+      />
 
       {/* 删除确认 */}
-      <Modal
+      <ConfirmDialog
         open={!!confirmDelete}
-        onClose={() => setConfirmDelete(null)}
-        title="确认删除快照"
-        nested
-        width="max-w-sm"
-        footer={
-          <>
-            <button onClick={handleDelete} className="btn btn-danger">
-              删除
-            </button>
-            <button onClick={() => setConfirmDelete(null)} className="btn btn-secondary">
-              取消
-            </button>
-          </>
-        }
-      >
-        <p className="text-sm">
-          确认删除快照
-          <strong className="mx-1">
-            {confirmDelete ? formatTime(confirmDelete.createdAt) : ''}
-          </strong>
-          ？此操作不可撤销。
-        </p>
-      </Modal>
+        type="delete"
+        message="确认删除此快照吗？此操作不可撤销。"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </Modal>
   );
 }
