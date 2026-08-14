@@ -6,15 +6,12 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>玖拾课表</title>
-    <!-- 本地字体：LXGWWenKaiGBLite-Medium（public 目录，随应用部署） -->
-    <style>
-      @font-face {
-        font-family: "LXGW WenKai GB Lite";
-        src: url('./LXGWWenKaiGBLite-Medium.woff2') format('woff2');
-        font-style: normal;
-        font-display: swap;
-      }
-    </style>
+    <!-- 字体：提前建连并并行加载字体 CSS，避免 @import 链式阻塞导致字体加载晚于首屏 -->
+    <link rel="preconnect" href="https://cn-font.claude-code-best.win" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://cn-font.claude-code-best.win/packages/lxgwwenkaibright/dist/LXGWBright-Medium/result.css"
+    />
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {

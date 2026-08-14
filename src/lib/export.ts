@@ -153,10 +153,10 @@ export function exportStatsHTML(
 <title>费用统计 - ${escHtml(range)}</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background-color:#FAF7F2;color:#1a1a1a;line-height:1.6;padding:2rem}
+body{font-family:"LXGW Bright Medium",system-ui,-apple-system,"Segoe UI",sans-serif;background-color:#FAF7F2;color:#1a1a1a;line-height:1.6;padding:2rem}
 .container{max-width:1000px;margin:0 auto}
 header{margin-bottom:1.5rem}
-header h1{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.5rem;font-weight:700;color:#08231A}
+header h1{font-family:"LXGW Bright Medium",Georgia,serif;font-size:1.5rem;font-weight:700;color:#08231A}
 header p{font-size:0.875rem;color:#6b7280;margin-top:0.25rem}
 .range-labels{display:flex;gap:0.5rem;margin-top:0.5rem;flex-wrap:wrap}
 .range-label{display:inline-block;padding:0.25rem 0.75rem;font-size:0.8rem;color:#4b5563;background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.5rem}
@@ -166,7 +166,7 @@ header p{font-size:0.875rem;color:#6b7280;margin-top:0.25rem}
 .stat-value{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.875rem;font-weight:700;margin-top:0.25rem}
 .stat-unit{font-size:0.75rem;color:#6b7280;margin-top:0.75rem}
 .card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
-.card h3{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.125rem;font-weight:700;color:#08231A;margin-bottom:1rem}
+.card h3{font-family:"LXGW Bright Medium",Georgia,serif;font-size:1.125rem;font-weight:700;color:#08231A;margin-bottom:1rem}
 .card h4{font-size:0.875rem;font-weight:500;color:#4b5563;margin-bottom:0.75rem;margin-top:1.5rem}
 .card h4:first-of-type{margin-top:0}
 .empty{text-align:center;padding:2rem;font-size:0.875rem;color:#9ca3af}
