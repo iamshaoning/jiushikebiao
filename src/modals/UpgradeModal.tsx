@@ -437,7 +437,7 @@ export default function UpgradeModal({
                       type: 'delete',
                       message: (
                         <>
-                          确认对所选学生执行升级（新学期 {draft.newTermStart} 起）？
+                          确认对所选学生执行升级？
                           <br />
                           升级后历史课程将冻结，请仔细核对学生后确认。
                         </>

@@ -684,7 +684,15 @@ export default function Statistics() {
                           {s.name}
                         </td>
                         <td className="px-4 py-3 border-b border-ink-100">{renderOrgTag(s.organization || '未分配')}</td>
-                        <td className="px-4 py-3 border-b border-ink-100">{renderGradeTag(s.grade || '未设置')}</td>
+                        <td className="px-4 py-3 border-b border-ink-100">
+                          <div className="flex flex-wrap gap-1">
+                            {(s.grades && s.grades.length > 0 ? s.grades : [s.grade]).map(
+                              (g, gi) => (
+                                <span key={gi}>{renderGradeTag(g || '未设置')}</span>
+                              ),
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 border-b border-ink-100">
                           <span
                             className="cursor-pointer hover:underline font-medium"

@@ -15,6 +15,7 @@ import {
   setColorAssignment,
   removeColorAssignment,
 } from '@/lib/utils';
+import { recordManageItem, type ManageState } from '@/lib/history';
 import {
   School,
   GraduationCap,
@@ -41,11 +42,13 @@ function parseNames(input: string): string[] {
 
 export default function ManagementModal({ open, onClose, type }: ManagementModalProps) {
   const isOrg = type === 'organization';
+  const manageType = isOrg ? 'manage-org' : 'manage-grade';
   const organizations = useStore((s) => s.organizations);
   const grades = useStore((s) => s.grades);
   const organizationColors = useStore((s) => s.organizationColors);
   const gradeColors = useStore((s) => s.gradeColors);
   const students = useStore((s) => s.students);
+  const courses = useStore((s) => s.courses);
   const mutateData = useStore((s) => s.mutateData);
   const toast = useToast();
 
@@ -90,6 +93,12 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
     }
     let added = 0;
     let skipped = 0;
+    const before: ManageState = {
+      list: items.slice(),
+      colors: { ...colors },
+      students: [],
+      courses: [],
+    };
     mutateData((draft) => {
       const list = (draft as any)[stateListKey] as string[];
       const colorMap = (draft as any)[colorsKey] as Record<string, string>;
@@ -105,6 +114,14 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
       });
     });
     if (added > 0) {
+      const st = useStore.getState();
+      const after: ManageState = {
+        list: isOrg ? st.organizations.slice() : st.grades.slice(),
+        colors: isOrg ? { ...st.organizationColors } : { ...st.gradeColors },
+        students: [],
+        courses: [],
+      };
+      recordManageItem(`添加${itemName}`, manageType, before, after);
       toast.success(added > 1 ? `已添加 ${added} 个${itemName}` : `已添加${itemName}`);
     }
     if (skipped > 0) {
@@ -130,6 +147,15 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
       toast.warning(`${itemName}「${trimmed}」已存在`);
       return;
     }
+
+    const before: ManageState = {
+      list: items.slice(),
+      colors: { ...colors },
+      students: students.filter((s) => (isOrg ? s.organization === oldVal : s.grade === oldVal)),
+      courses: courses.filter((c) =>
+        isOrg ? (c.organizations || []).includes(oldVal) : (c.grades || []).includes(oldVal),
+      ),
+    };
 
     removeColorAssignment(oldVal, type);
     const newColor = generateColor(trimmed, type);
@@ -186,6 +212,17 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
       }
     });
 
+    const st = useStore.getState();
+    const after: ManageState = {
+      list: isOrg ? st.organizations.slice() : st.grades.slice(),
+      colors: isOrg ? { ...st.organizationColors } : { ...st.gradeColors },
+      students: st.students.filter((s) => (isOrg ? s.organization === trimmed : s.grade === trimmed)),
+      courses: st.courses.filter((c) =>
+        isOrg ? (c.organizations || []).includes(trimmed) : (c.grades || []).includes(trimmed),
+      ),
+    };
+    recordManageItem(`重命名${itemName}「${oldVal}」→「${trimmed}」`, manageType, before, after);
+
     toast.success(`已更新${itemName}名称`);
     setEditing(null);
   };
@@ -194,6 +231,12 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
     const val = deleteTarget;
+    const before: ManageState = {
+      list: items.slice(),
+      colors: { ...colors },
+      students: [],
+      courses: [],
+    };
     removeColorAssignment(val, type);
     mutateData((draft) => {
       const list = (draft as any)[stateListKey] as string[];
@@ -202,6 +245,14 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
       const colorMap = (draft as any)[colorsKey] as Record<string, string>;
       delete colorMap[val];
     });
+    const st = useStore.getState();
+    const after: ManageState = {
+      list: isOrg ? st.organizations.slice() : st.grades.slice(),
+      colors: isOrg ? { ...st.organizationColors } : { ...st.gradeColors },
+      students: [],
+      courses: [],
+    };
+    recordManageItem(`删除${itemName}「${val}」`, manageType, before, after);
     toast.success(`已删除${itemName}「${val}」`);
     setDeleteTarget(null);
   };
@@ -210,6 +261,12 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
   const handleColorPick = (newColor: string) => {
     if (!colorPicker) return;
     const item = colorPicker.item;
+    const before: ManageState = {
+      list: items.slice(),
+      colors: { ...colors },
+      students: [],
+      courses: isOrg ? courses.filter((c) => (c.organizations || []).includes(item)) : [],
+    };
     setColorAssignment(item, newColor, type);
     mutateData((draft) => {
       const colorMap = (draft as any)[colorsKey] as Record<string, string>;
@@ -229,6 +286,14 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
         });
       }
     });
+    const st = useStore.getState();
+    const after: ManageState = {
+      list: isOrg ? st.organizations.slice() : st.grades.slice(),
+      colors: isOrg ? { ...st.organizationColors } : { ...st.gradeColors },
+      students: [],
+      courses: isOrg ? st.courses.filter((c) => (c.organizations || []).includes(item)) : [],
+    };
+    recordManageItem(`修改${itemName}「${item}」颜色`, manageType, before, after);
     setColorPicker(null);
     toast.success(`已更新${itemName}颜色`);
   };

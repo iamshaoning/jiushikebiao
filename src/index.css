@@ -85,10 +85,9 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
 .font-display {
   font-family: "LXGW WenKai", Georgia, serif;
 }
-/* 数字字体（统计卡，系统等宽） */
+/* 数字字体：统一使用预设字体 LXGW WenKai（与全文一致） */
 .font-num {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
-  font-feature-settings: "tnum";
+  font-family: "LXGW WenKai", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* ============ 自定义工具类 ============ */
@@ -143,10 +142,6 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   .tag-warning { @apply tag bg-amber-50 text-amber-700; }
   .tag-danger { @apply tag bg-red-50 text-red-700; }
   .tag-neutral { @apply tag bg-gray-100 text-gray-600; }
-
-  .table-row-hover:hover {
-    @apply bg-ink-50;
-  }
 }
 
 /* ============ 路由切换淡入动画 ============ */
@@ -233,14 +228,36 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
 }
 
 /* —— 学生选中状态（box-shadow inset 避免布局抖动） —— */
-.student-row-selected {
-  box-shadow: inset 0 0 0 2px var(--color-primary);
-}
 .student-card-selected {
   box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 
-/* —— 学生机构分组（JS masonry：模块按估算高度分配到最短列，紧密堆叠无列底空白） —— */
+/* —— 学生机构分组（固定分列，每列始终渲染，可拖拽排序） —— */
+/* 机构分列容器：固定渲染所有列（空列也可放置分组），列内分组紧密堆叠 */
+.org-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 140px;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+}
+.org-col-empty {
+  border: 2px dashed var(--border-color);
+}
+.org-col-over {
+  border-color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+.org-col-placeholder {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  padding: 1.5rem 0;
+  user-select: none;
+}
 .student-org-group {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -286,13 +303,6 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
 .student-card-fee {
   font-size: 0.75rem;
   color: var(--text-secondary);
-}
-.student-table-row {
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
-}
-.student-table-row:not(.student-row-selected):hover {
-  background-color: var(--bg-content);
-  box-shadow: inset 0 0 0 2px #8FB5A2;
 }
 
 /* —— 日期选择器 —— */

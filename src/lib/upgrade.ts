@@ -12,6 +12,7 @@
 import { useStore } from '@/stores/useStore';
 import { supabase, TABLES } from './supabase';
 import { saveImmediate } from './data';
+import { recordUpgrade, recordUpgradePlan, type UpgradeState } from './history';
 import type { AppState, Course, UpgradeGradeConfig, UpgradeOrgConfig, UpgradePlan, UpgradeRecord } from './types';
 
 /** 本地日期 YYYY-MM-DD */
@@ -37,9 +38,11 @@ export function saveUpgradePlan(plan: UpgradePlan): { ok: boolean; message?: str
   if (hasActivePlan(cur)) {
     return { ok: false, message: '已存在进行中的升级计划，请先处理' };
   }
+  const before = cur.upgradePlan;
   cur.mutateData((draft) => {
     draft.upgradePlan = { ...plan, status: 'pending' };
   });
+  recordUpgradePlan(`创建升级计划（${plan.newTermStart} 起）`, before, { ...plan, status: 'pending' });
   return { ok: true };
 }
 
@@ -47,9 +50,12 @@ export function saveUpgradePlan(plan: UpgradePlan): { ok: boolean; message?: str
 export function cancelUpgradePlan(): void {
   const cur = useStore.getState();
   if (!cur.upgradePlan) return;
+  const before = cur.upgradePlan;
   cur.mutateData((draft) => {
-    if (draft.upgradePlan) draft.upgradePlan.status = 'cancelled';
+    // 新建引用，避免订阅 upgradePlan 的组件因引用不变而跳过重渲染
+    if (draft.upgradePlan) draft.upgradePlan = { ...draft.upgradePlan, status: 'cancelled' };
   });
+  recordUpgradePlan(`取消升级计划`, before, useStore.getState().upgradePlan);
 }
 
 /**
@@ -122,6 +128,14 @@ export async function executeUpgrade(plan: UpgradePlan): Promise<{ ok: boolean; 
 
   const upgradedAt = Date.now();
 
+  // 升级前快照（用于历史撤销）
+  const beforeState: UpgradeState = {
+    students: JSON.parse(JSON.stringify(cur.students)),
+    courses: JSON.parse(JSON.stringify(cur.courses)),
+    upgradePlan: JSON.parse(JSON.stringify(cur.upgradePlan)),
+    lastUpgrade: JSON.parse(JSON.stringify(cur.lastUpgrade)),
+  };
+
   cur.mutateData((draft) => {
     // 1. 修改学生：年级 = 目标年级，预设课时费 += 加成
     draft.students = draft.students.map((s) => {
@@ -173,13 +187,24 @@ export async function executeUpgrade(plan: UpgradePlan): Promise<{ ok: boolean; 
     });
 
     // 3. 更新计划状态 + 写入执行记录（只保留最新一条）
-    if (draft.upgradePlan) draft.upgradePlan.status = 'executed';
+    // 新建引用，避免订阅 upgradePlan 的组件因引用不变而跳过重渲染
+    if (draft.upgradePlan) draft.upgradePlan = { ...draft.upgradePlan, status: 'executed' };
     draft.lastUpgrade = {
       newTermStart: plan.newTermStart,
       executedAt: upgradedAt,
       studentCount: upgradeInfo.size,
     };
   });
+
+  // 升级后快照（用于历史重做）
+  const st = useStore.getState();
+  const afterState: UpgradeState = {
+    students: JSON.parse(JSON.stringify(st.students)),
+    courses: JSON.parse(JSON.stringify(st.courses)),
+    upgradePlan: JSON.parse(JSON.stringify(st.upgradePlan)),
+    lastUpgrade: JSON.parse(JSON.stringify(st.lastUpgrade)),
+  };
+  recordUpgrade(`执行升级（${plan.newTermStart} 起，共 ${upgradeInfo.size} 名学生）`, beforeState, afterState);
 
   // 立即上传，缩短其他设备的重复执行竞态窗口
   void saveImmediate();

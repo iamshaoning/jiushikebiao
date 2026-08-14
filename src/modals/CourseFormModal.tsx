@@ -9,6 +9,7 @@ import Modal from '@/components/Modal';
 import DatePicker from '@/components/DatePicker';
 import TimePicker from '@/components/TimePicker';
 import ComboBox from '@/components/ComboBox';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { useStore } from '@/stores/useStore';
 import { useToast } from '@/components/Toast';
 import type { Course, Student, LessonType } from '@/lib/types';
@@ -22,7 +23,7 @@ import {
   type PasteConflict,
 } from '@/lib/course';
 import { findConflictingCourses } from '@/lib/conflict';
-import { calculateEndTimeFromDuration, generateColor } from '@/lib/utils';
+import { calculateEndTimeFromDuration, generateColor, generateId } from '@/lib/utils';
 import { recordAddCourse, recordBatchAddCourses, recordUpdateCourse } from '@/lib/history';
 
 interface CourseFormModalProps {
@@ -61,12 +62,18 @@ export default function CourseFormModal({
   const [startTime, setStartTime] = useState('08:00');
   const [duration, setDuration] = useState(120);
   const [fee, setFee] = useState<number>(0);
-  // 冷课程纠错：机构/年级手动输入值（frozen 课程快照，解除联动）
-  const [coldOrg, setColdOrg] = useState('');
-  const [coldGrade, setColdGrade] = useState('');
+  // 冻结课程手动输入值：学生姓名（多个用空格/逗号/顿号分隔）、机构、年级
+  const [manualNames, setManualNames] = useState('');
+  const [manualOrg, setManualOrg] = useState('');
+  const [manualGrade, setManualGrade] = useState('');
+  // 冻结课程提交前的同名关联询问：linkableNames 为存在同名学生的姓名，submit 决定是否关联后继续提交
+  const [linkConfirm, setLinkConfirm] = useState<{
+    linkableNames: string[];
+    submit: (link: boolean) => void;
+  } | null>(null);
 
-  // 是否为冷数据课程（升级后冻结，编辑时机构/年级/课时费解锁可纠错）
-  const isColdEdit = isEdit && !!editCourse?.frozen;
+  // 是否为冻结课程编辑：进入手动输入模式，可纠错冻结数据
+  const isFrozenEdit = isEdit && !!editCourse?.frozen;
 
   // 初始化/重置表单
   useEffect(() => {
@@ -78,8 +85,9 @@ export default function CourseFormModal({
       setStartTime(editCourse.startTime);
       setDuration(editCourse.duration);
       setFee(editCourse.fees[0] ?? 0);
-      setColdOrg(editCourse.organizations?.[0] ?? '');
-      setColdGrade(editCourse.grades?.[0] ?? '');
+      setManualNames((editCourse.studentNames || []).join('、'));
+      setManualOrg(editCourse.organizations?.[0] ?? '');
+      setManualGrade(editCourse.grades?.[0] ?? '');
     } else {
       setFormDate(date);
       setLessonType('一对一');
@@ -87,6 +95,9 @@ export default function CourseFormModal({
       setStartTime('08:00');
       setDuration(120);
       setFee(0);
+      setManualNames('');
+      setManualOrg('');
+      setManualGrade('');
     }
   }, [open, editCourse, date]);
 
@@ -111,7 +122,7 @@ export default function CourseFormModal({
 
   // 一对一费用自动计算
   useEffect(() => {
-    // 冷课程：费用手动纠错，不自动重算
+    // 冻结课程：费用手动输入，不自动重算
     if (editCourse?.frozen) return;
     if (lessonType === '一对一' && selectedStudentIds.length > 0) {
       const student = students.find((s) => s.id === selectedStudentIds[0]);
@@ -125,8 +136,8 @@ export default function CourseFormModal({
   const toggleStudent = (student: Student) => {
     if (lessonType === '一对一') {
       setSelectedStudentIds([student.id]);
-    } else if (!isColdEdit) {
-      // 多人课：检查同机构同年级（普通课程）
+    } else {
+      // 多人课：检查同机构同年级
       const selected = students.filter((s) => selectedStudentIds.includes(s.id));
       if (!selectedStudentIds.includes(student.id)) {
         const { organizationMatch, gradeMatch } = checkMultiStudentSelection(selected, student);
@@ -139,13 +150,6 @@ export default function CourseFormModal({
           return;
         }
       }
-      setSelectedStudentIds((prev) =>
-        prev.includes(student.id)
-          ? prev.filter((id) => id !== student.id)
-          : [...prev, student.id],
-      );
-    } else {
-      // 冷数据课程多人课：自由多选，无同机构同年级限制（机构/年级手动填写）
       setSelectedStudentIds((prev) =>
         prev.includes(student.id)
           ? prev.filter((id) => id !== student.id)
@@ -167,7 +171,8 @@ export default function CourseFormModal({
 
   // 提交表单（支持单日/批量多日添加）
   const handleSubmit = () => {
-    if (selectedStudentIds.length === 0) {
+    // 冻结课程编辑：手动输入模式，不校验学生选择
+    if (!isFrozenEdit && selectedStudentIds.length === 0) {
       toast.warning('请选择学生');
       return;
     }
@@ -231,6 +236,85 @@ export default function CourseFormModal({
       return;
     }
 
+    // 冻结课程编辑：所有字段手动输入，更新冻结课程（纠错冻结数据）
+    if (isFrozenEdit) {
+      if (!formDate) {
+        toast.warning('请选择日期');
+        return;
+      }
+      if (!startTime) {
+        toast.warning('请选择开始时间');
+        return;
+      }
+      const names = manualNames
+        .split(/[\s,，、]+/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (names.length === 0) {
+        toast.warning('请输入学生姓名');
+        return;
+      }
+      if (lessonType === '一对一' && names.length > 1) {
+        toast.warning('一对一课程只能输入一位学生姓名');
+        return;
+      }
+
+      // 提交动作：link 为 true 时，同名学生复用其 ID（统计并入现有学生）；否则使用虚拟 ID（统计独立）
+      const doSubmit = (link: boolean) => {
+        const count = names.length;
+        const frozenId = isEdit && editCourse ? editCourse.id : generateId();
+        const now = new Date().toISOString();
+        const studentIds = names.map((name, idx) => {
+          const matched = link ? students.find((s) => s.name === name) : undefined;
+          return matched ? matched.id : `frozen:${frozenId}:${idx}`;
+        });
+        const frozenCourse: Course = {
+          id: frozenId,
+          date: formDate,
+          lessonType,
+          startTime,
+          duration,
+          fees: Array(count).fill(fee),
+          studentIds,
+          studentNames: names,
+          organizations: Array(count).fill(manualOrg),
+          grades: Array(count).fill(manualGrade),
+          colors: names.map(() => generateColor(manualOrg || '未分配', 'organization')),
+          frozen: true,
+          createdAt: isEdit && editCourse ? editCourse.createdAt : now,
+          updatedAt: now,
+        };
+
+        // 检查冲突
+        const otherCourses = courses.filter((c) => c.id !== frozenCourse.id);
+        const conflicts = findConflictingCourses(frozenCourse, otherCourses);
+        if (conflicts.length > 0 && onConflict) {
+          onConflict([{ newCourse: frozenCourse, conflictingCourses: conflicts }], []);
+          return;
+        }
+
+        if (isEdit && editCourse) {
+          updateCourse(frozenCourse);
+          recordUpdateCourse(editCourse, frozenCourse);
+          toast.success('课程已更新');
+        } else {
+          addCourse(frozenCourse);
+          recordAddCourse(frozenCourse);
+          toast.success('课程已添加');
+        }
+        onClose();
+      };
+
+      // 存在同名学生时先询问是否关联到现有学生（减少统计人数虚增）
+      const linkable = [...new Set(names.filter((n) => students.some((s) => s.name === n)))];
+      if (linkable.length > 0) {
+        setLinkConfirm({ linkableNames: linkable, submit: doSubmit });
+        return;
+      }
+      doSubmit(false);
+      return;
+    }
+
     // 单日添加/编辑
     if (!formDate) {
       toast.warning('请选择日期');
@@ -265,33 +349,9 @@ export default function CourseFormModal({
 
     // 无冲突：直接添加/更新
     if (isEdit) {
-      if (isColdEdit && editCourse) {
-        // 冷课程纠错：学生可重新选择，机构/年级/课时费手动填写（快照随保存重建）
-        const selectedStus = selectedStudentIds
-          .map((id) => students.find((s) => s.id === id))
-          .filter(Boolean) as Student[];
-        const studentCount = Math.max(1, selectedStudentIds.length);
-        const updated: Course = {
-          ...editCourse,
-          date: formDate,
-          lessonType,
-          startTime,
-          duration,
-          studentIds: selectedStudentIds,
-          studentNames: selectedStus.map((s) => s.name),
-          organizations: Array(studentCount).fill(coldOrg),
-          grades: Array(studentCount).fill(coldGrade),
-          colors: selectedStus.map((s) => generateColor(coldOrg || '未分配', 'organization')),
-          fees: Array(studentCount).fill(fee),
-        };
-        updateCourse(updated);
-        recordUpdateCourse(editCourse, updated);
-        toast.success('课程已更新');
-      } else {
-        updateCourse(courseData);
-        recordUpdateCourse(editCourse!, courseData);
-        toast.success('课程已更新');
-      }
+      updateCourse(courseData);
+      recordUpdateCourse(editCourse!, courseData);
+      toast.success('课程已更新');
     } else {
       addCourse(courseData);
       recordAddCourse(courseData);
@@ -301,10 +361,11 @@ export default function CourseFormModal({
   };
 
   return (
+    <>
     <Modal
       open={open}
       onClose={onClose}
-      title={isEdit ? '编辑课程' : isBatchAdd ? `批量添加课程（${batchDates.length}天）` : '添加课程'}
+      title={isFrozenEdit ? '冻结课程（纠错）' : isEdit ? '编辑课程' : isBatchAdd ? `批量添加课程（${batchDates.length}天）` : '添加课程'}
       width="max-w-lg"
       footer={
         <>
@@ -360,16 +421,25 @@ export default function CourseFormModal({
           </div>
         </div>
 
-        {/* 学生选择 */}
+        {/* 学生（冻结模式：手动输入姓名；普通模式：点击选择） */}
         <div>
           <label className="block text-xs text-gray-500 mb-1.5">
-            {isColdEdit
-              ? '冷数据课程（机构/年级/课时费需手动填写）'
+            {isFrozenEdit
+              ? lessonType === '一对一'
+                ? '学生姓名（仅一位）'
+                : '学生姓名（多位，用空格、逗号或顿号分隔）'
               : lessonType === '一对一'
               ? '点击选择一位学生'
               : '点击可选多位学生（同机构同年级）'}
           </label>
-          {sortedStudents.length === 0 ? (
+          {isFrozenEdit ? (
+            <input
+              value={manualNames}
+              onChange={(e) => setManualNames(e.target.value)}
+              placeholder={lessonType === '一对一' ? '输入学生姓名' : '如：张三、李四、王五'}
+              className="input-field"
+            />
+          ) : sortedStudents.length === 0 ? (
             <div className="text-sm p-3 border rounded-md text-gray-400 border-ink-200 bg-[var(--bg-content)]">
               暂无学生，请先添加学生
             </div>
@@ -400,29 +470,29 @@ export default function CourseFormModal({
           )}
         </div>
 
-        {/* 所选学生的机构/年级（普通课程只读展示；冷数据课程可编辑纠错） */}
+        {/* 所选学生的机构/年级（普通课程只读展示；冻结模式手动输入） */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">机构</label>
             <input
-              value={isColdEdit ? coldOrg : selectedStudentsInfo.orgs}
-              onChange={(e) => setColdOrg(e.target.value)}
-              disabled={!isColdEdit}
+              value={isFrozenEdit ? manualOrg : selectedStudentsInfo.orgs}
+              onChange={(e) => setManualOrg(e.target.value)}
+              disabled={!isFrozenEdit}
               placeholder="未设置"
               className={`input-field ${
-                !isColdEdit ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200' : ''
+                !isFrozenEdit ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200' : ''
               }`}
             />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1.5">年级</label>
             <input
-              value={isColdEdit ? coldGrade : selectedStudentsInfo.grades}
-              onChange={(e) => setColdGrade(e.target.value)}
-              disabled={!isColdEdit}
+              value={isFrozenEdit ? manualGrade : selectedStudentsInfo.grades}
+              onChange={(e) => setManualGrade(e.target.value)}
+              disabled={!isFrozenEdit}
               placeholder="未设置"
               className={`input-field ${
-                !isColdEdit ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200' : ''
+                !isFrozenEdit ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200' : ''
               }`}
             />
           </div>
@@ -461,9 +531,9 @@ export default function CourseFormModal({
               type="number"
               value={fee}
               onChange={(e) => setFee(parseFloat(e.target.value) || 0)}
-              disabled={lessonType === '一对一' && !isColdEdit}
+              disabled={lessonType === '一对一' && !isFrozenEdit}
               className={`input-field ${
-                lessonType === '一对一' && !isColdEdit
+                lessonType === '一对一' && !isFrozenEdit
                   ? 'bg-[var(--bg-content)] cursor-default opacity-70 border border-ink-200'
                   : ''
               }`}
@@ -473,5 +543,59 @@ export default function CourseFormModal({
         </div>
       </div>
     </Modal>
+
+    {/* 冻结课程：手输姓名存在同名学生时，询问是否关联到现有学生 */}
+    <ConfirmDialog
+      open={!!linkConfirm}
+      type="confirm"
+      confirmText="关联"
+      cancelText="不关联"
+      message={
+        <span>
+          以下姓名已存在同名学生，是否关联到现有学生？
+          <span className="mt-2 block space-y-1.5">
+            {linkConfirm?.linkableNames.map((n) => {
+              const s = students.find((x) => x.name === n);
+              const nameColor = generateColor(n);
+              const orgColor = generateColor(s?.organization || '未分配', 'organization');
+              const gradeColor = generateColor(s?.grade || '未设置', 'grade');
+              const tagCls = 'px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap';
+              return (
+                <span key={n} className="flex justify-center items-center gap-1.5">
+                  <span
+                    className={tagCls}
+                    style={{ backgroundColor: `color-mix(in srgb, ${nameColor} 15%, transparent)`, color: nameColor }}
+                  >
+                    {n}
+                  </span>
+                  <span
+                    className={tagCls}
+                    style={{ backgroundColor: `color-mix(in srgb, ${orgColor} 15%, transparent)`, color: orgColor }}
+                  >
+                    {s?.organization || '未分配'}
+                  </span>
+                  <span
+                    className={tagCls}
+                    style={{ backgroundColor: `color-mix(in srgb, ${gradeColor} 15%, transparent)`, color: gradeColor }}
+                  >
+                    {s?.grade || '未设置'}
+                  </span>
+                </span>
+              );
+            })}
+          </span>
+          关联后并入现有学生；不关联记为独立学生。
+        </span>
+      }
+      onConfirm={() => {
+        linkConfirm?.submit(true);
+        setLinkConfirm(null);
+      }}
+      onCancel={() => {
+        linkConfirm?.submit(false);
+        setLinkConfirm(null);
+      }}
+    />
+    </>
   );
 }

@@ -31,7 +31,7 @@ export interface Course {
   organizations: string[]; // 冗余
   grades: string[]; // 冗余（年级快照），编辑学生时级联更新；frozen 课程解除联动
   colors: string[]; // 冗余（机构色）
-  frozen?: boolean; // 冷数据标记：升级后冻结，级联字段写死，编辑时解锁可纠错
+  frozen?: boolean; // 冷数据标记：升级后冻结，级联字段写死；只读，不可修改/复制/被覆盖，只能删除
   createdAt: string;
   updatedAt: string;
 }
@@ -88,13 +88,6 @@ export interface AppState {
   lastUpgrade: UpgradeRecord | null;
 }
 
-/** 日历视图状态（非持久化） */
-export interface CalendarView {
-  currentYear: number;
-  currentMonth: number; // 0-11
-  privacyMode: boolean;
-}
-
 /** 会话用户 */
 export interface SessionUser {
   id: string;
@@ -118,7 +111,14 @@ export type HistoryType =
   | 'batch-paste-courses'
   | 'delete-student'
   | 'batch-delete-students'
-  | 'restore-snapshot';
+  | 'restore-snapshot'
+  | 'add-students'
+  | 'update-student'
+  | 'batch-update-students'
+  | 'manage-org'
+  | 'manage-grade'
+  | 'upgrade'
+  | 'upgrade-plan';
 
 /** 快照类型 */
 export type SnapshotType = 'auto' | 'manual';

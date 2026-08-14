@@ -33,6 +33,7 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  Snowflake,
 } from 'lucide-react';
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
@@ -259,6 +260,11 @@ export default function Calendar() {
     return null;
   }, [selectedCourseIds, selectedDates]);
 
+  // 单选课程是否为冻结课程（冻结课程不可编辑/复制，只可删除）
+  const singleCourseFrozen =
+    selectedCourseIds.length === 1 &&
+    !!courses.find((c) => c.id === selectedCourseIds[0])?.frozen;
+
   // 日期选择
   const selectDate = useCallback(
     (dateStr: string, e: React.MouseEvent) => {
@@ -359,11 +365,12 @@ export default function Calendar() {
     });
   };
 
-  // 编辑课程
+  // 编辑课程（冻结课程默认打开只读视图，可打开冻结开关纠错）
   const handleEdit = () => {
     if (selectedCourseIds.length !== 1) return;
     const course = courses.find((c) => c.id === selectedCourseIds[0]);
-    if (course) setFormModal({ open: true, date: course.date, dates: [course.date], editCourse: course });
+    if (!course) return;
+    setFormModal({ open: true, date: course.date, dates: [course.date], editCourse: course });
   };
 
   // 删除（带二次确认）
@@ -420,19 +427,27 @@ export default function Calendar() {
     }
   };
 
-  // 复制课程
+  // 复制课程（冻结课程不可复制，自动排除）
   const handleCopy = () => {
-    const selectedCourses = courses.filter((c) => selectedCourseIds.includes(c.id));
+    const selectedCourses = courses.filter(
+      (c) => selectedCourseIds.includes(c.id) && !c.frozen,
+    );
+    if (selectedCourses.length === 0) {
+      toast.warning('冻结课程不可复制');
+      return;
+    }
     if (copyCourses(selectedCourses)) {
       toast.success(`已复制 ${selectedCourses.length} 节课程`);
     }
   };
 
-  // 复制选中日期的所有课程
+  // 复制选中日期的所有课程（冻结课程不可复制，自动排除）
   const handleCopyDayCourses = () => {
-    const dayCourses = courses.filter((c) => selectedDates.includes(c.date));
+    const dayCourses = courses.filter(
+      (c) => selectedDates.includes(c.date) && !c.frozen,
+    );
     if (dayCourses.length === 0) {
-      toast.warning('所选日期没有课程可复制');
+      toast.warning('所选日期没有可复制的课程');
       return;
     }
     if (copyCourses(dayCourses)) {
@@ -456,11 +471,11 @@ export default function Calendar() {
     if (result.conflicts.length > 0) {
       setConflictData({ open: true, conflicts: result.conflicts, added: result.added, source: 'paste' });
     } else if (result.added.length > 0) {
-      confirmPaste(result.added, []);
+      const deleted = confirmPaste(result.added, []);
       if (result.added.length === 1) {
-        recordPasteCourses(result.added);
+        recordPasteCourses(result.added, deleted);
       } else {
-        recordBatchPasteCourses(result.added);
+        recordBatchPasteCourses(result.added, deleted);
       }
       let msg = `成功粘贴 ${result.added.length} 节课程`;
       if (result.duplicateCount > 0) msg += `，${result.duplicateCount} 节已存在`;
@@ -479,24 +494,24 @@ export default function Calendar() {
     const source = conflictData.source;
     const overrideIds = overridden.flatMap((o) => o.conflictingCourses.map((c) => c.id));
     const allToAdd = [...conflictData.added, ...overridden.map((o) => o.newCourse)];
-    confirmPaste(allToAdd, overrideIds);
+    const deleted = confirmPaste(allToAdd, overrideIds);
     // 全部跳过时没有可添加/粘贴的课程，提示跳过而非"成功 0 节"
     if (allToAdd.length === 0) {
       toast.warning(`已跳过 ${skipped.length} 节冲突课程，未${source === 'add' ? '添加' : '粘贴'}新课程`);
     } else if (source === 'add') {
       if (allToAdd.length === 1) {
-        recordAddCourse(allToAdd[0]);
+        recordAddCourse(allToAdd[0], false, deleted);
       } else {
-        recordBatchAddCourses(allToAdd);
+        recordBatchAddCourses(allToAdd, deleted);
       }
       let msg = `成功添加 ${allToAdd.length} 节课程`;
       if (skipped.length > 0) msg += `，跳过 ${skipped.length} 节`;
       toast.success(msg);
     } else {
       if (allToAdd.length === 1) {
-        recordPasteCourses(allToAdd);
+        recordPasteCourses(allToAdd, deleted);
       } else {
-        recordBatchPasteCourses(allToAdd);
+        recordBatchPasteCourses(allToAdd, deleted);
       }
       let msg = `成功粘贴 ${allToAdd.length} 节课程`;
       if (skipped.length > 0) msg += `，跳过 ${skipped.length} 节`;
@@ -618,7 +633,7 @@ export default function Calendar() {
                       return (
                         <div
                           key={course.id}
-                          className="flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition-all"
+                          className="flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition-all relative"
                           style={{
                             borderLeft: `3px solid ${primaryColor}`,
                             backgroundColor: `color-mix(in srgb, ${primaryColor} 8%, transparent)`,
@@ -626,6 +641,9 @@ export default function Calendar() {
                           }}
                           onClick={(e) => handleCourseClick(course, e)}
                         >
+                          {course.frozen && (
+                            <Snowflake className="absolute top-2 right-2 w-[18px] h-[18px] text-[#7dd3fc] pointer-events-none" strokeWidth={2.5} />
+                          )}
                           <span className="text-xs text-gray-600 shrink-0">
                             {course.startTime}-{calculateEndTimeFromDuration(course.startTime, course.duration)}
                           </span>
@@ -636,7 +654,7 @@ export default function Calendar() {
                             {names || '未命名'}
                           </span>
                           {feeHtml && (
-                            <span className="text-xs text-gray-500 shrink-0">{feeHtml}</span>
+                            <span className={`text-xs text-gray-500 shrink-0 ${course.frozen ? 'mr-5' : ''}`}>{feeHtml}</span>
                           )}
                         </div>
                       );
@@ -757,6 +775,9 @@ export default function Calendar() {
                         } as React.CSSProperties}
                         onClick={(e) => handleCourseClick(course, e)}
                       >
+                        {course.frozen && (
+                          <Snowflake className="absolute top-1.5 right-1.5 w-[18px] h-[18px] text-[#7dd3fc] pointer-events-none z-20" strokeWidth={2.5} />
+                        )}
                         <div className="p-1">
                           {/* 学生姓名 */}
                           <div className="flex flex-wrap gap-0.5 mb-0.5">
@@ -779,7 +800,7 @@ export default function Calendar() {
                           </div>
                           {/* 时间 + 费用 */}
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-gray-500">
+                            <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
                               {course.startTime}-{calculateEndTimeFromDuration(course.startTime, course.duration)}
                             </span>
                             {feeHtml && (
@@ -806,7 +827,15 @@ export default function Calendar() {
         onAdd={selectedDates.length > 0 ? handleAdd : undefined}
         onEdit={selectedCourseIds.length === 1 ? handleEdit : undefined}
         onDelete={selectedCourseIds.length > 0 || selectedDates.length > 0 ? handleDelete : undefined}
-        onCopy={selectedCourseIds.length > 0 ? handleCopy : selectedDates.length > 0 ? handleCopyDayCourses : undefined}
+        onCopy={
+          selectedCourseIds.length > 0
+            ? singleCourseFrozen
+              ? undefined
+              : handleCopy
+            : selectedDates.length > 0
+              ? handleCopyDayCourses
+              : undefined
+        }
         onPaste={selectedDates.length > 0 ? handlePaste : undefined}
         onClear={clearSelections}
       />

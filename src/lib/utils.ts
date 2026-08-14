@@ -8,37 +8,12 @@ export function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
-export function escapeHtml(str: unknown): string {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 export function debounce<T extends (...args: any[]) => void>(fn: T, delay: number): T {
   let timer: ReturnType<typeof setTimeout> | null = null;
   return ((...args: any[]) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => fn(...args), delay);
   }) as T;
-}
-
-export function safe<T>(fn: () => T, defaultValue: T): T {
-  try {
-    return fn();
-  } catch {
-    return defaultValue;
-  }
-}
-
-export function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
-  ]);
 }
 
 /* ---------- 日期/时间工具 ---------- */
@@ -74,22 +49,6 @@ export function calculateEndTimeFromDuration(
   const endHours = Math.floor(finalMinutes / 60);
   const endMinutes = finalMinutes % 60;
   return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-}
-
-/** 格式化日期为 YYYY-MM-DD */
-export function formatDate(year: number, month: number, day: number): string {
-  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
-/** 获取设备唯一 ID（localStorage 持久化） */
-export function getDeviceId(): string {
-  const KEY = 'kb_device_id';
-  let id = localStorage.getItem(KEY);
-  if (!id) {
-    id = generateId();
-    localStorage.setItem(KEY, id);
-  }
-  return id;
 }
 
 /* ---------- 颜色工具 ---------- */

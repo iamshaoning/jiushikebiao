@@ -138,7 +138,7 @@ export function exportStatsHTML(
       (s) => `<tr>
         <td class="font-medium">${escHtml(s.name)}</td>
         <td>${orgTagHtml(s.organization || '未分配', organizationColors)}</td>
-        <td>${gradeTagHtml(s.grade || '未设置', gradeColors)}</td>
+        <td>${(s.grades && s.grades.length > 0 ? s.grades : [s.grade]).map((g) => gradeTagHtml(g || '未设置', gradeColors)).join('')}</td>
         <td>${s.courseCount}节</td>
         <td class="num font-medium">¥${fmt(s.totalFee)}</td>
       </tr>`,
@@ -163,7 +163,7 @@ header p{font-size:0.875rem;color:#6b7280;margin-top:0.25rem}
 .stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
 .stat-card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
 .stat-label{font-size:0.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em}
-.stat-value{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.875rem;font-weight:700;margin-top:0.25rem}
+.stat-value{font-family:"LXGW WenKai",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.875rem;font-weight:700;margin-top:0.25rem}
 .stat-unit{font-size:0.75rem;color:#6b7280;margin-top:0.75rem}
 .card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
 .card h3{font-family:"LXGW WenKai",Georgia,serif;font-size:1.125rem;font-weight:700;color:#08231A;margin-bottom:1rem}
@@ -174,13 +174,13 @@ table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #C7D
 th{padding:0.75rem 1rem;text-align:left;font-size:0.875rem;font-weight:600;color:#6b7280;border-bottom:1px solid #C7DACF;background-color:#FFFFFF}
 td{padding:0.75rem 1rem;font-size:0.875rem;color:#374151;border-bottom:1px solid #C7DACF}
 tr:last-child td{border-bottom:none}
-.num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.num{font-family:"LXGW WenKai",system-ui,-apple-system,"Segoe UI",sans-serif}
 .font-medium{font-weight:500}
 .tag{display:inline-block;padding:0.125rem 0.5rem;font-size:0.75rem;font-weight:500;border-radius:9999px}
 .progress{display:flex;align-items:center;gap:0.5rem}
 .progress-bar{width:6rem;height:0.5rem;background:#FFFFFF;border-radius:9999px;overflow:hidden}
 .progress-fill{height:100%;border-radius:9999px}
-.progress-text{font-size:0.75rem;color:#6b7280;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.progress-text{font-size:0.75rem;color:#6b7280;font-family:"LXGW WenKai",system-ui,-apple-system,"Segoe UI",sans-serif}
 @media(max-width:768px){.stat-cards{grid-template-columns:1fr}}
 @media print{body{padding:0}.card{break-inside:avoid}}
 </style>

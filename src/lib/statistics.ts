@@ -24,6 +24,8 @@ export interface StudentStat {
   name: string;
   organization: string;
   grade: string;
+  /** 该学生实际涉及的所有年级（去重，按首次出现顺序；升级后跨年级时含多个） */
+  grades: string[];
   courseCount: number;
   totalFee: number;
 }
@@ -134,7 +136,11 @@ export function calculateStats(
   filtered.forEach((course) => {
     const lessonType = course.lessonType || '一对一';
     const isGroup = lessonType === '多人课';
-    const studentIds = course.studentIds || [];
+    // 手动录入的冻结课程无学生 ID 关联：退化为按姓名快照遍历（虚拟 ID），保证课程/费用计入统计
+    const hasIds = (course.studentIds || []).length > 0;
+    const studentIds = hasIds
+      ? course.studentIds!
+      : (course.studentNames || []).map((_, i) => `frozen:${course.id}:${i}`);
     const studentCount = Math.max(1, studentIds.length);
     const groupFee = isGroup ? course.fees[0] ?? 0 : 0;
     const perStudentFee = isGroup ? groupFee / studentCount : 0;
@@ -162,6 +168,10 @@ export function calculateStats(
       const grade = course.grades?.[idx] ?? '';
       const name = course.studentNames?.[idx] ?? '';
       if (org && orgName !== org) return;
+      // 虚拟 ID 归一：冻结课程按「姓名+机构+年级」归并（任一不同则独立），避免同名重复计数
+      const effSid = sid.startsWith('frozen:')
+        ? `frozen:${name}|${orgName}|${grade}`
+        : sid;
 
       let fee = 0;
       if (!isGroup) {
@@ -181,21 +191,23 @@ export function calculateStats(
         fee = perStudentFee;
       }
 
-      uniqueStudents.add(sid);
+      uniqueStudents.add(effSid);
       const o2 = ensureOrg(orgName || '未分配');
-      o2.students.add(sid);
+      o2.students.add(effSid);
       const l2 = ensureLesson(lessonType);
-      l2.students.add(sid);
+      l2.students.add(effSid);
 
       // 学生维度：展示信息取该学生最近一次课程的快照（跨课程覆盖，保持最新）
-      let ss = studentMap.get(sid);
+      let ss = studentMap.get(effSid);
       if (!ss) {
-        ss = { studentId: sid, name, organization: orgName, grade, courseCount: 0, totalFee: 0 };
-        studentMap.set(sid, ss);
+        ss = { studentId: effSid, name, organization: orgName, grade, grades: [], courseCount: 0, totalFee: 0 };
+        studentMap.set(effSid, ss);
       }
       ss.name = name;
       ss.organization = orgName;
       ss.grade = grade;
+      // 收集该学生实际涉及的所有年级（去重，保持首次出现顺序）
+      if (!ss.grades.includes(grade)) ss.grades.push(grade);
       ss.totalFee += fee;
       ss.courseCount += 1;
 
@@ -210,7 +222,7 @@ export function calculateStats(
         }
         detailedOneOnOne[gradeKey][orgKey].courses += 1;
         detailedOneOnOne[gradeKey][orgKey].fee += fee;
-        detailedOneOnOne[gradeKey][orgKey].students.add(sid);
+        detailedOneOnOne[gradeKey][orgKey].students.add(effSid);
       } else {
         // 多人课：按上课人数 + 年级 + 机构统计
         const sc = String(studentCount);
@@ -224,7 +236,7 @@ export function calculateStats(
           detailedGroup[sc][gradeKey][orgKey].courses += 1;
           detailedGroup[sc][gradeKey][orgKey].fee += groupFee;
         }
-        detailedGroup[sc][gradeKey][orgKey].students.add(sid);
+        detailedGroup[sc][gradeKey][orgKey].students.add(effSid);
       }
     });
   });

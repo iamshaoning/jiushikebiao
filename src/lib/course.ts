@@ -129,10 +129,11 @@ export function deleteDayCourses(dateStr: string): void {
 
 const CLIPBOARD_KEY = 'copiedCourses';
 
-/** 复制课程到剪贴板 */
+/** 复制课程到剪贴板（冻结课程不可复制，自动排除） */
 export function copyCourses(courses: Course[]): boolean {
-  if (courses.length === 0) return false;
-  localStorage.setItem(CLIPBOARD_KEY, JSON.stringify(courses));
+  const copyable = courses.filter((c) => !c.frozen);
+  if (copyable.length === 0) return false;
+  localStorage.setItem(CLIPBOARD_KEY, JSON.stringify(copyable));
   return true;
 }
 
@@ -192,6 +193,9 @@ export function pasteCoursesToDate(
   let duplicateCount = 0;
 
   for (const course of copied) {
+    // 冻结课程不可作为复制源
+    if (course.frozen) continue;
+
     // 检查重复
     const isDup =
       targetDateCourses.some((existing) => isDuplicateCourse(existing, course)) ||
@@ -217,6 +221,9 @@ export function pasteCoursesToDate(
 
     // 检查与已有课程的冲突
     const conflictingCourses = findConflictingCourses(newCourse, targetDateCourses);
+
+    // 冲突中包含冻结课程时，冻结课程不可被覆盖，该新课程直接跳过（不弹冲突）
+    if (conflictingCourses.some((c) => c.frozen)) continue;
 
     if (conflictingCourses.length > 0) {
       conflicts.push({ newCourse, conflictingCourses });
@@ -259,6 +266,9 @@ export function pasteCoursesToDates(
     const targetDateCourses = existingCourses.filter((c) => c.date === dateStr);
 
     for (const course of copied) {
+      // 冻结课程不可作为复制源
+      if (course.frozen) continue;
+
       // 检查重复
       const isDup =
         targetDateCourses.some((existing) => isDuplicateCourse(existing, course)) ||
@@ -285,6 +295,9 @@ export function pasteCoursesToDates(
       // 检查与已有课程的冲突
       const conflictingCourses = findConflictingCourses(newCourse, targetDateCourses);
 
+      // 冲突中包含冻结课程时，冻结课程不可被覆盖，该新课程直接跳过（不弹冲突）
+      if (conflictingCourses.some((c) => c.frozen)) continue;
+
       if (conflictingCourses.length > 0) {
         conflicts.push({ newCourse, conflictingCourses });
       } else {
@@ -302,20 +315,30 @@ export function pasteCoursesToDates(
   return { added: coursesToAdd, conflicts, duplicateCount };
 }
 
-/** 确认粘贴：添加课程（可能包含覆盖冲突课程） */
+/** 确认粘贴：添加课程（可能包含覆盖冲突课程；冻结课程不可被覆盖删除） */
 export function confirmPaste(
   coursesToAdd: Course[],
   overrideCourseIds: string[],
-): void {
-  const idSet = new Set(overrideCourseIds);
+): Course[] {
+  // 返回被覆盖删除的课程（用于历史撤销时恢复）
+  let deletedOverride: Course[] = [];
   useStore.getState().mutateData((draft) => {
+    // 冻结课程不可被覆盖删除，剔除冻结的覆盖目标
+    const frozenOverrideIds = new Set(
+      draft.courses
+        .filter((c) => c.frozen && overrideCourseIds.includes(c.id))
+        .map((c) => c.id),
+    );
+    const idSet = new Set(overrideCourseIds.filter((id) => !frozenOverrideIds.has(id)));
     // 删除被覆盖的冲突课程
     if (idSet.size > 0) {
+      deletedOverride = draft.courses.filter((c) => idSet.has(c.id));
       draft.courses = draft.courses.filter((c) => !idSet.has(c.id));
     }
     // 添加新课程
     draft.courses.push(...coursesToAdd);
   });
+  return deletedOverride;
 }
 
 /* ---------- 学生选择排序 ---------- */

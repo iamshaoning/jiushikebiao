@@ -62,6 +62,26 @@ function getTimestamp(ts: unknown): number {
 
 /* ---------- 服务器同步 ---------- */
 
+/**
+ * 将服务器返回的行映射为 AppState。
+ * 服务器列 upgradeplan/lastupgrade 为小写，需映射回驼峰 upgradePlan/lastUpgrade；
+ * 其余列（students/courses/.../organizationColors/gradeColors/lastupdated/userid）名称一致。
+ */
+function normalizeServerData(server: any): AppState {
+  return {
+    students: server.students || [],
+    courses: server.courses || [],
+    organizations: server.organizations || [],
+    grades: server.grades || [],
+    organizationColors: server.organizationColors || {},
+    gradeColors: server.gradeColors || {},
+    lastupdated: server.lastupdated ?? null,
+    userid: server.userid,
+    upgradePlan: server.upgradeplan ?? null,
+    lastUpgrade: server.lastupgrade ?? null,
+  };
+}
+
 /** 上传本地数据到服务器（带重试） */
 async function uploadToServer(localData: AppState, userId: string): Promise<void> {
   const payload = {
@@ -110,8 +130,18 @@ async function createDefaultData(userId: string): Promise<void> {
     lastUpgrade: null,
   };
   try {
+    // 服务器列名与 AppState 不同：upgradeplan/lastupgrade 为小写，需显式映射，避免直接展开 defaultData 引入不存在的驼峰列
     const { error } = await supabase.from(TABLES.COURSE_DATA).upsert({
-      ...defaultData,
+      userid: userId,
+      students: defaultData.students,
+      courses: defaultData.courses,
+      organizations: defaultData.organizations,
+      grades: defaultData.grades,
+      organizationColors: defaultData.organizationColors,
+      gradeColors: defaultData.gradeColors,
+      lastupdated: defaultData.lastupdated,
+      upgradeplan: defaultData.upgradePlan,
+      lastupgrade: defaultData.lastUpgrade,
     }, { onConflict: 'userid' });
     if (error) throw error;
     setLocalData(defaultData);
@@ -129,7 +159,10 @@ async function compareAndSync(
   serverData: AppState | null,
   userId: string,
 ): Promise<void> {
-  if (!serverData) {
+  // 服务器返回行的列名为小写 upgradeplan/lastupgrade，先映射回驼峰 AppState
+  const server = serverData ? normalizeServerData(serverData) : null;
+
+  if (!server) {
     if (localData) {
       await uploadToServer(localData, userId);
       useStore.getState().replaceData(localData);
@@ -141,21 +174,21 @@ async function compareAndSync(
   }
 
   const localTs = getTimestamp(localData?.lastupdated);
-  const serverTs = getTimestamp(serverData.lastupdated);
+  const serverTs = getTimestamp(server.lastupdated);
 
   if (localData) {
     if (serverTs > localTs) {
       // 服务器更新 → 覆盖本地
-      setLocalData(serverData);
-      useStore.getState().replaceData(serverData);
+      setLocalData(server);
+      useStore.getState().replaceData(server);
     } else if (localTs > serverTs) {
       // 本地更新 → 上传服务器
       await uploadToServer(localData, userId);
     }
   } else {
     // 无本地数据 → 用服务器数据
-    setLocalData(serverData);
-    useStore.getState().replaceData(serverData);
+    setLocalData(server);
+    useStore.getState().replaceData(server);
   }
   useStore.getState().setSyncStatus('online');
 }
@@ -301,7 +334,7 @@ export function setupRealtime(userId: string): void {
       },
       (payload: any) => {
         if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-          const serverData = payload.new as AppState;
+          const serverData = normalizeServerData(payload.new);
           const localData = getLocalData();
           const serverTs = getTimestamp(serverData.lastupdated);
           const localTs = getTimestamp(localData?.lastupdated);

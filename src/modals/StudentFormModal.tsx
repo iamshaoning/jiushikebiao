@@ -10,8 +10,8 @@ import CustomSelect from '@/components/CustomSelect';
 import { useStore } from '@/stores/useStore';
 import { useToast } from '@/components/Toast';
 import type { Student } from '@/lib/types';
-import { generateId } from '@/lib/utils';
-import { generateColor, setColorAssignment } from '@/lib/utils';
+import { generateId, generateColor, setColorAssignment } from '@/lib/utils';
+import { recordAddStudents, recordUpdateStudent } from '@/lib/history';
 
 interface StudentFormModalProps {
   open: boolean;
@@ -33,6 +33,7 @@ export default function StudentFormModal({
   editStudent,
 }: StudentFormModalProps) {
   const students = useStore((s) => s.students);
+  const courses = useStore((s) => s.courses);
   const organizations = useStore((s) => s.organizations);
   const grades = useStore((s) => s.grades);
   const mutateData = useStore((s) => s.mutateData);
@@ -84,6 +85,8 @@ export default function StudentFormModal({
         fees: { '一对一': fee, '一对一_duration': duration },
       };
 
+      const beforeCourses = courses.filter((c) => (c.studentIds || []).includes(editStudent.id));
+
       mutateData((draft) => {
         const idx = draft.students.findIndex((s) => s.id === editStudent.id);
         if (idx >= 0) draft.students[idx] = updatedStudent;
@@ -113,6 +116,11 @@ export default function StudentFormModal({
         });
       });
 
+      const afterCourses = useStore.getState().courses.filter((c) =>
+        (c.studentIds || []).includes(editStudent.id),
+      );
+      recordUpdateStudent(editStudent, updatedStudent, beforeCourses, afterCourses);
+
       toast.success('学生信息已更新');
     } else {
       // 添加（支持批量）
@@ -127,6 +135,7 @@ export default function StudentFormModal({
       mutateData((draft) => {
         draft.students.push(...newStudents);
       });
+      recordAddStudents(newStudents);
 
       // 为新机构生成颜色
       if (organization && !useStore.getState().organizationColors[organization]) {

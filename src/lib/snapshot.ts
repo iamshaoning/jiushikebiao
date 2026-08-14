@@ -141,7 +141,7 @@ export async function restoreSnapshot(id: string): Promise<boolean> {
     snapshotDate,
   });
 
-  // 替换数据
+  // 替换数据：全面恢复系统当前状态（含 userid、升级计划与执行记录；旧快照无升级字段时视为无）
   useStore.getState().replaceData({
     students: snapshotData.students || [],
     courses: snapshotData.courses || [],
@@ -150,6 +150,9 @@ export async function restoreSnapshot(id: string): Promise<boolean> {
     organizationColors: snapshotData.organizationColors || {},
     gradeColors: snapshotData.gradeColors || {},
     lastupdated: snapshotData.lastupdated,
+    userid: snapshotData.userid,
+    upgradePlan: snapshotData.upgradePlan ?? null,
+    lastUpgrade: snapshotData.lastUpgrade ?? null,
   });
 
   // 立即同步服务器

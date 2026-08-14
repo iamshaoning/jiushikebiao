@@ -51,7 +51,7 @@ export default function ColorPickerModal({
                   onClose();
                 }
               }}
-              className={`h-8 rounded transition-all duration-200 flex items-center justify-center font-mono text-xs font-bold relative ${
+              className={`h-8 rounded transition-all duration-200 flex items-center justify-center text-xs font-bold relative ${
                 isUsed
                   ? 'opacity-40 cursor-not-allowed'
                   : 'cursor-pointer hover:scale-110'
@@ -74,7 +74,7 @@ export default function ColorPickerModal({
             className="w-4 h-4 rounded border border-ink-200"
             style={{ backgroundColor: currentColor || '#ccc' }}
           />
-          <span className="text-sm font-mono text-gray-500">
+          <span className="text-sm text-gray-500">
             {currentColor ? currentColor.toUpperCase() : '未选择'}
           </span>
         </div>

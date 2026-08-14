@@ -10,8 +10,10 @@
     "check": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@supabase/supabase-js": "^2.101.1",
-    "@tanstack/react-virtual": "^3.14.7",
     "chinese-days": "^1.5.9",
     "lucide-react": "^0.511.0",
     "react": "^18.3.1",
