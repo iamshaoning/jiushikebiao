@@ -1,4 +1,4 @@
-/* 主字体 LXGW Bright Medium 由 index.html 提前并行加载；备用使用系统默认字体 */
+/* 主字体 LXGW WenKai 由 index.html 提前并行加载；备用使用系统默认字体 */
 
 @tailwind base;
 @tailwind components;
@@ -36,7 +36,7 @@
 
 /* ============ 基础 ============ */
 :root {
-  font-family: "LXGW Bright Medium", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "LXGW WenKai", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
   font-weight: 400;
   color: var(--text-primary);
@@ -81,9 +81,9 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   background: #8FB5A2;
 }
 
-/* 标题字体（与正文统一使用 LXGW Bright Medium） */
+/* 标题字体（与正文统一使用 LXGW WenKai） */
 .font-display {
-  font-family: "LXGW Bright Medium", Georgia, serif;
+  font-family: "LXGW WenKai", Georgia, serif;
 }
 /* 数字字体（统计卡，系统等宽） */
 .font-num {
