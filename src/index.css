@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap');
-@import url('https://unpkg.com/@chinese-fonts/lxgwwenkaibright@latest/dist/LXGWBright-Medium/result.css');
+/* 主字体 LXGW Bright Medium 由 index.html 提前并行加载；备用使用系统默认字体 */
 
 @tailwind base;
 @tailwind components;
@@ -37,7 +36,7 @@
 
 /* ============ 基础 ============ */
 :root {
-  font-family: "LXGW Bright Medium", "Noto Sans SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "LXGW Bright Medium", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.6;
   font-weight: 400;
   color: var(--text-primary);
@@ -84,11 +83,11 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
 
 /* 标题字体（与正文统一使用 LXGW Bright Medium） */
 .font-display {
-  font-family: "LXGW Bright Medium", "Noto Serif SC", Georgia, serif;
+  font-family: "LXGW Bright Medium", Georgia, serif;
 }
-/* 数字字体（统计卡） */
+/* 数字字体（统计卡，系统等宽） */
 .font-num {
-  font-family: "JetBrains Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
   font-feature-settings: "tnum";
 }
 
