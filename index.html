@@ -6,12 +6,10 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>玖拾课表</title>
-    <!-- 字体：提前建连并并行加载字体 CSS，避免 @import 链式阻塞导致字体加载晚于首屏 -->
+    <!-- 字体：本地 CSS 声明 LXGW WenKai Bold 的 @font-face（已去除 local()，字体 woff2 分片直连 cn-font CDN，
+         避免命中本地安装的 LXGW WenKai Regular 导致 Bold 不生效） -->
     <link rel="preconnect" href="https://cn-font.claude-code-best.win" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://cn-font.claude-code-best.win/packages/lxgwwenkai/dist/LXGWWenKai-Bold/result.css"
-    />
+    <link rel="stylesheet" href="/lxgw-wenkai-bold.css" />
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {
