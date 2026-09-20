@@ -59,7 +59,11 @@ function ToastList() {
   const remove = useToastStore.getState().remove;
 
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col items-end gap-2 max-w-md pointer-events-none">
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed top-4 right-4 z-[100] flex flex-col items-end gap-2 max-w-md pointer-events-none"
+    >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onClose={() => remove(t.id)} />
       ))}

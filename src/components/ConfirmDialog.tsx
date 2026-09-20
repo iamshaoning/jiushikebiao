@@ -6,7 +6,7 @@
  * - 三种类型：confirm(蓝) / delete(红) / warning(琥珀)
  * - 遮罩效果与 Modal 一级一致（z-[45]，不覆盖导航栏）
  */
-import { type ReactNode, useState, useEffect } from 'react';
+import { type ReactNode, useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { HelpCircle, TriangleAlert, CircleAlert } from 'lucide-react';
 
@@ -63,6 +63,7 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   const [shouldRender, setShouldRender] = useState(false);
   const [visible, setVisible] = useState(false);
+  const msgId = useId();
 
   useEffect(() => {
     if (open) {
@@ -81,12 +82,29 @@ export default function ConfirmDialog({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-      if (e.key === 'Enter') onConfirm();
+      if (e.key === 'Escape') {
+        onCancel();
+        return;
+      }
+      if (e.key === 'Enter') {
+        // 焦点已在按钮上时，Enter 会由按钮原生触发 click，此处跳过避免重复触发 onConfirm
+        const el = document.activeElement as HTMLElement | null;
+        if (el && el.tagName === 'BUTTON') return;
+        onConfirm();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onCancel, onConfirm]);
+
+  // 打开时记录触发元素，关闭时归还焦点，便于键盘操作
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.activeElement as HTMLElement | null;
+    return () => {
+      if (prev && document.contains(prev)) prev.focus();
+    };
+  }, [open]);
 
   if (!shouldRender) return null;
 
@@ -100,6 +118,9 @@ export default function ConfirmDialog({
       onClick={onCancel}
     >
       <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-describedby={msgId}
         className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full max-w-sm p-6 transition-all duration-200 ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
         onClick={(e) => e.stopPropagation()}
         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
@@ -113,6 +134,7 @@ export default function ConfirmDialog({
             <Icon className="w-7 h-7" style={{ color: cfg.color }} />
           </div>
           <p
+            id={msgId}
             className="text-sm leading-relaxed text-center"
             style={{ color: 'var(--text-primary)' }}
           >
@@ -128,6 +150,7 @@ export default function ConfirmDialog({
             {cancelText}
           </button>
           <button
+            autoFocus
             onClick={onConfirm}
             className="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors hover:opacity-90"
             style={{ backgroundColor: cfg.btn }}

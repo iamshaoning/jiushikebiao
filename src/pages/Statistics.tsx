@@ -33,8 +33,6 @@ import {
   List,
 } from 'lucide-react';
 
-const NOW = new Date();
-
 export default function Statistics() {
   const courses = useStore((s) => s.courses);
   const organizations = useStore((s) => s.organizations);
@@ -42,8 +40,9 @@ export default function Statistics() {
   const gradeColors = useStore((s) => s.gradeColors);
   const toast = useToast();
 
-  const [year, setYear] = useState(NOW.getFullYear());
-  const [month, setMonth] = useState<number | 'all'>(NOW.getMonth());
+  // 默认筛选当前年月（懒初始化，避免模块级常量跨天失效）
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState<number | 'all'>(() => new Date().getMonth());
   const [orgFilter, setOrgFilter] = useState('');
 
   // 课程详情弹窗筛选条件
@@ -80,8 +79,13 @@ export default function Statistics() {
     measure.style.whiteSpace = 'nowrap';
     measure.appendChild(clone);
     document.body.appendChild(measure);
-    const naturalWidth = clone.offsetWidth;
-    document.body.removeChild(measure);
+    let naturalWidth = 0;
+    try {
+      naturalWidth = clone.offsetWidth;
+    } finally {
+      // 测量容器必须移除，避免异常时残留在 DOM 中
+      document.body.removeChild(measure);
+    }
     // card 宽度不随 tableOverflow 变化（始终全宽），双列每列可用宽度
     const card = orgTableRef.current?.closest('.card') as HTMLElement | null;
     const cardWidth = card?.clientWidth ?? 0;
@@ -110,7 +114,7 @@ export default function Statistics() {
 
   // 年月下拉选项：默认当前年前两年到后一年，若数据超出范围则自适应扩展
   const yearOptions = useMemo(() => {
-    const currentYear = NOW.getFullYear();
+    const currentYear = new Date().getFullYear();
     let minYear = currentYear - 2;
     let maxYear = currentYear + 1;
     for (const c of courses) {
@@ -331,6 +335,7 @@ export default function Statistics() {
         <button
           onClick={prevMonth}
           className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          aria-label="上一周期"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
         </button>
@@ -349,6 +354,7 @@ export default function Statistics() {
         <button
           onClick={nextMonth}
           className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          aria-label="下一周期"
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
@@ -358,9 +364,13 @@ export default function Statistics() {
           onChange={(v) => setOrgFilter(v as string)}
           className="min-w-0 desktop:flex-none desktop:w-32 desktop:shrink-0"
         />
-        <button onClick={handleExport} className="btn-primary hidden desktop:inline-flex ml-auto shrink-0">
+        <button
+          onClick={handleExport}
+          className="btn-primary ml-auto shrink-0 px-2.5 desktop:px-4"
+          aria-label="导出统计"
+        >
           <Download className="w-4 h-4" />
-          导出
+          <span className="hidden desktop:inline">导出</span>
         </button>
       </div>
 
@@ -770,7 +780,7 @@ export default function Statistics() {
             {/* 课程表格 */}
             <div className="max-h-96 overflow-auto rounded-lg border border-ink-100">
               <table
-                className="w-full text-sm"
+                className="w-full text-sm bg-[var(--bg-content)]"
                 style={{
                   borderCollapse: 'collapse',
                   tableLayout: 'fixed',
@@ -799,7 +809,7 @@ export default function Statistics() {
                   </tr>
                 </thead>
                 <tbody>
-                  {detailCourses.map((c, idx) => {
+                  {detailCourses.map((c) => {
                     const studentNames = (c.studentNames || []).join('、') || '-';
                     const startTime = c.startTime ? c.startTime.substring(0, 5) : '-';
                     let feeDisplay = '-';
@@ -811,14 +821,7 @@ export default function Statistics() {
                       ).toLocaleString()}`;
                     }
                     return (
-                      <tr
-                        key={c.id}
-                        className={
-                          idx % 2 === 1
-                            ? 'bg-[var(--bg-content)]/50'
-                            : ''
-                        }
-                      >
+                      <tr key={c.id}>
                         <td className="px-3 py-2.5 text-gray-700 border-b border-ink-100 whitespace-nowrap">
                           {c.date ? c.date.substring(5) : '-'}
                         </td>

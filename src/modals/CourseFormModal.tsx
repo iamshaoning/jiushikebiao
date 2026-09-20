@@ -34,7 +34,7 @@ interface CourseFormModalProps {
   dates?: string[];
   editCourse?: Course | null;
   /** 冲突回调：conflicts 为冲突课程，added 为批量添加中无冲突的课程（解决后一并添加） */
-  onConflict?: (conflicts: PasteConflict[], added: Course[]) => void;
+  onConflict: (conflicts: PasteConflict[], added: Course[]) => void;
 }
 
 const DURATION_OPTIONS = [60, 90, 120];
@@ -135,7 +135,13 @@ export default function CourseFormModal({
   // 学生选择
   const toggleStudent = (student: Student) => {
     if (lessonType === '一对一') {
+      const isReselect = selectedStudentIds[0] === student.id;
       setSelectedStudentIds([student.id]);
+      // 新选择学生时，同步套用其预设的基础时长（课时费随之按比例重算）
+      if (!isReselect) {
+        const baseDuration = student.fees?.['一对一_duration'];
+        setDuration(baseDuration && baseDuration > 0 ? baseDuration : 120);
+      }
     } else {
       // 多人课：检查同机构同年级
       const selected = students.filter((s) => selectedStudentIds.includes(s.id));
@@ -218,7 +224,7 @@ export default function CourseFormModal({
         }
       });
 
-      if (conflicts.length > 0 && onConflict) {
+      if (conflicts.length > 0) {
         // 无冲突的课程随回调一并传递，由冲突解决流程统一提交，避免被静默丢弃
         onConflict(conflicts, coursesToAdd);
         return;
@@ -288,7 +294,7 @@ export default function CourseFormModal({
         // 检查冲突
         const otherCourses = courses.filter((c) => c.id !== frozenCourse.id);
         const conflicts = findConflictingCourses(frozenCourse, otherCourses);
-        if (conflicts.length > 0 && onConflict) {
+        if (conflicts.length > 0) {
           onConflict([{ newCourse: frozenCourse, conflictingCourses: conflicts }], []);
           return;
         }
@@ -342,7 +348,7 @@ export default function CourseFormModal({
     const otherCourses = courses.filter((c) => c.id !== courseData.id);
     const conflicts = findConflictingCourses(courseData, otherCourses);
 
-    if (conflicts.length > 0 && onConflict) {
+    if (conflicts.length > 0) {
       onConflict([{ newCourse: courseData, conflictingCourses: conflicts }], []);
       return;
     }

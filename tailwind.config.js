@@ -3,9 +3,6 @@
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    container: {
-      center: true,
-    },
     extend: {
       screens: {
         desktop: '1100px',
@@ -44,11 +41,6 @@ export default {
         // 中性石板灰
         slate2: "#475569",
       },
-      fontFamily: {
-        serif: ['"LXGW Bright Medium"', '"Noto Serif SC"', 'Georgia', 'serif'],
-        sans: ['"LXGW Bright Medium"', '"Noto Sans SC"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-      },
       boxShadow: {
         'soft': '0 2px 12px rgba(15, 61, 46, 0.06)',
         'card': '0 4px 24px rgba(15, 61, 46, 0.08)',
@@ -58,7 +50,6 @@ export default {
         'xl2': '12px',
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out forwards',
         'fade-in-slow': 'fadeIn 0.6s ease-out forwards',
         'slide-up': 'slideUp 0.4s ease-out forwards',
         'slide-up-slow': 'slideUp 0.6s ease-out forwards',

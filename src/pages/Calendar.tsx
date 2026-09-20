@@ -13,7 +13,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import CourseFormModal from '@/modals/CourseFormModal';
 import ConflictModal from '@/modals/ConflictModal';
 import { getDateInfo, getHolidayTagStyle, simplifyHolidayName } from '@/lib/holiday';
-import { calculateEndTimeFromDuration, safeColor } from '@/lib/utils';
+import { calculateEndTimeFromDuration, safeColor, parseDateLocal } from '@/lib/utils';
 import { maskName, copyCourses, pasteCoursesToDate, pasteCoursesToDates, confirmPaste } from '@/lib/course';
 import { deleteCourse, batchDeleteCourses, deleteDayCourses } from '@/lib/course';
 import { getCourseDisplayFee } from '@/lib/course';
@@ -212,6 +212,10 @@ export default function Calendar() {
       arr.push(c);
       map.set(c.date, arr);
     });
+    // 在此处统一按开始时间排序，避免每个日期格渲染时重复排序
+    map.forEach((arr) =>
+      arr.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || '')),
+    );
     return map;
   }, [courses]);
 
@@ -533,7 +537,11 @@ export default function Calendar() {
 
       {/* 月份导航 */}
       <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
-        <button onClick={prevMonth} className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0">
+        <button
+          onClick={prevMonth}
+          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          aria-label="上个月"
+        >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
         </button>
         <CustomSelect
@@ -548,7 +556,11 @@ export default function Calendar() {
           onChange={(v) => setCurrentMonth(currentYear, v as number)}
           className="w-20 shrink-0"
         />
-        <button onClick={nextMonth} className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0">
+        <button
+          onClick={nextMonth}
+          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          aria-label="下个月"
+        >
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
         {/* 隐私模式：圆角矩形墨绿色按钮（图标区分状态），自动靠右；移动端隐藏 */}
@@ -565,13 +577,11 @@ export default function Calendar() {
       {isMobile && (
         <div className="desktop:hidden space-y-2">
           {cells.filter((c) => c.isCurrent).map((cell) => {
-            const dayCourses = (coursesByDate.get(cell.dateStr) || []).sort((a, b) =>
-              (a.startTime || '').localeCompare(b.startTime || ''),
-            );
+            const dayCourses = coursesByDate.get(cell.dateStr) || [];
             const dateInfo = getDateInfo(cell.dateStr);
             const isToday = cell.dateStr === todayStr;
             const isSelected = selectedDates.includes(cell.dateStr);
-            const wd = new Date(cell.dateStr).getDay();
+            const wd = parseDateLocal(cell.dateStr).getDay();
             const weekdayLabel = WEEKDAYS[wd === 0 ? 6 : wd - 1];
             const isWeekend = wd === 0 || wd === 6;
 
@@ -686,16 +696,14 @@ export default function Calendar() {
         {/* 日期格 */}
         <div className="grid grid-cols-7">
           {cells.map((cell, i) => {
-            const dayCourses = (coursesByDate.get(cell.dateStr) || []).sort((a, b) =>
-              (a.startTime || '').localeCompare(b.startTime || ''),
-            );
+            const dayCourses = coursesByDate.get(cell.dateStr) || [];
             const dateInfo = getDateInfo(cell.dateStr);
             const isToday = cell.dateStr === todayStr;
             const isSelected = selectedDates.includes(cell.dateStr);
 
             return (
               <div
-                key={i}
+                key={cell.dateStr}
                 className={`calendar-cell border-r border-b border-ink-100 p-1.5 min-h-[110px] cursor-pointer ${
                   cell.isCurrent ? 'bg-[var(--bg-secondary)]' : 'bg-[var(--bg-content)]'
                 } ${isToday ? 'today-border' : ''} ${isSelected ? 'selected' : ''} ${
@@ -731,7 +739,7 @@ export default function Calendar() {
                     </span>
                   )}
                   {dateInfo?.isWorkday && (() => {
-                    const d = new Date(cell.dateStr);
+                    const d = parseDateLocal(cell.dateStr);
                     if (d.getDay() === 0 || d.getDay() === 6) {
                       return (
                         <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-white bg-ink">

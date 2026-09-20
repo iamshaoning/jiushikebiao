@@ -12,6 +12,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { parseDateLocal } from '@/lib/utils';
 
 interface DatePickerProps {
   value: string; // YYYY-MM-DD
@@ -37,10 +38,24 @@ export default function DatePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
   const [calendarPos, setCalendarPos] = useState<{ top?: number; bottom?: number; left: number; width: number } | null>(null);
+  // shouldRender 控制弹层 DOM 是否存在；visible 控制淡入/淡出过渡
+  const [shouldRender, setShouldRender] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-  const initial = value ? new Date(value) : new Date();
-  const [viewYear, setViewYear] = useState(initial.getFullYear());
-  const [viewMonth, setViewMonth] = useState(initial.getMonth());
+  const [viewYear, setViewYear] = useState(() =>
+    (value ? parseDateLocal(value) : new Date()).getFullYear(),
+  );
+  const [viewMonth, setViewMonth] = useState(() =>
+    (value ? parseDateLocal(value) : new Date()).getMonth(),
+  );
+
+  // 打开时同步视图月份到当前选中日期（挂载后 value 变化也能跟随）
+  useEffect(() => {
+    if (!open) return;
+    const base = value ? parseDateLocal(value) : new Date();
+    setViewYear(base.getFullYear());
+    setViewMonth(base.getMonth());
+  }, [open, value]);
 
   // 打开时基于 trigger 位置计算日历坐标（fixed 定位，脱离父级 overflow）
   // 底部空间不足时自动向上展开
@@ -57,9 +72,21 @@ export default function DatePicker({
         left: rect.left,
         width: Math.max(rect.width, 280),
       });
-    } else {
-      setCalendarPos(null);
     }
+  }, [open]);
+
+  // 进出场过渡：open 时先挂载再触发淡入；关闭时等淡出结束后卸载
+  useEffect(() => {
+    if (open) {
+      setShouldRender(true);
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    setVisible(false);
+    const t = setTimeout(() => setShouldRender(false), 150);
+    return () => clearTimeout(t);
   }, [open]);
 
   // 点击外部 / 滚动 / 窗口尺寸变化时关闭（fixed 定位需自行同步关闭）
@@ -160,6 +187,8 @@ export default function DatePicker({
         ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className="input-field flex items-center justify-between gap-2"
       >
         <span className={value ? 'text-ink-700' : 'text-gray-400'}>
@@ -168,21 +197,40 @@ export default function DatePicker({
         <CalendarIcon className="w-4 h-4 text-gray-400" />
       </button>
 
-      {open && calendarPos && createPortal(
+      {shouldRender && calendarPos && createPortal(
         <div
           ref={calendarRef}
-          className="fixed z-[70] p-3 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg"
-          style={{ top: calendarPos.top, bottom: calendarPos.bottom, left: calendarPos.left, width: calendarPos.width }}
+          aria-hidden={!visible}
+          className={`fixed z-[70] p-3 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg transition-all duration-150 ${
+            visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+          }`}
+          style={{
+            top: calendarPos.top,
+            bottom: calendarPos.bottom,
+            left: calendarPos.left,
+            width: calendarPos.width,
+            transformOrigin: calendarPos.bottom ? 'bottom' : 'top',
+          }}
         >
           {/* 月份导航 */}
           <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={prevMonth} className="p-1 rounded hover:bg-ink-50">
+            <button
+              type="button"
+              onClick={prevMonth}
+              className="p-1 rounded hover:bg-ink-50"
+              aria-label="上个月"
+            >
               <ChevronLeft className="w-4 h-4 text-gray-500" />
             </button>
             <span className="text-sm font-medium text-ink-700">
               {viewYear}年 {viewMonth + 1}月
             </span>
-            <button type="button" onClick={nextMonth} className="p-1 rounded hover:bg-ink-50">
+            <button
+              type="button"
+              onClick={nextMonth}
+              className="p-1 rounded hover:bg-ink-50"
+              aria-label="下个月"
+            >
               <ChevronRight className="w-4 h-4 text-gray-500" />
             </button>
           </div>
@@ -196,13 +244,13 @@ export default function DatePicker({
 
           {/* 日期网格 */}
           <div className="grid grid-cols-7 gap-1">
-            {cells.map((cell, i) => {
+            {cells.map((cell) => {
               const dateStr = `${cell.year}-${pad(cell.month + 1)}-${pad(cell.day)}`;
               const isToday = dateStr === todayStr;
               const isSelected = dateStr === value;
               return (
                 <button
-                  key={i}
+                  key={dateStr}
                   type="button"
                   onClick={() => selectDate(cell)}
                   className={`date-picker-cell w-8 h-8 rounded text-sm transition-colors ${

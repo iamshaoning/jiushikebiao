@@ -1,4 +1,4 @@
-import { type ReactNode, useState, useEffect } from 'react';
+import { type ReactNode, useState, useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
@@ -21,6 +21,10 @@ interface ModalProps {
 
 const FADE_MS = 200;
 
+/** 可聚焦元素选择器，用于 Tab 焦点陷阱 */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export default function Modal({
   open,
   title,
@@ -36,6 +40,8 @@ export default function Modal({
   // shouldRender 控制 DOM 是否存在；visible 控制淡入/淡出过渡
   const [shouldRender, setShouldRender] = useState(false);
   const [visible, setVisible] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     if (open) {
@@ -61,6 +67,38 @@ export default function Modal({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
+
+  // 焦点陷阱：Tab 在弹窗内循环，避免焦点跑到弹窗背后的页面元素上。
+  // 绑定在弹窗面板上（而非 window），嵌套弹窗因是独立 Portal 子树不会互相干扰。
+  const trapTab = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const focusables = panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+    if (focusables.length === 0) return;
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else if (document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  // 打开时把焦点移入弹窗（键盘可达），关闭时归还给原来的触发元素
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.activeElement as HTMLElement | null;
+    const raf = requestAnimationFrame(() => panelRef.current?.focus());
+    return () => {
+      cancelAnimationFrame(raf);
+      if (prev && document.contains(prev)) prev.focus();
+    };
+  }, [open]);
 
   if (!shouldRender) return null;
 
@@ -88,13 +126,19 @@ export default function Modal({
       }
     >
       <div
-        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full ${width} max-h-[calc(100vh-7.5rem)] desktop:max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden transition-all duration-200 ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        tabIndex={-1}
+        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full ${width} max-h-[calc(100vh-7.5rem)] desktop:max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden transition-all duration-200 focus:outline-none ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
+        onKeyDown={trapTab}
         onClick={(e) => e.stopPropagation()}
         style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
       >
         {!hideHeader && (
           <div className="flex items-center justify-between px-5 py-4 border-b border-ink-100 shrink-0">
-            <h3 className="font-display text-lg font-bold text-ink-700">
+            <h3 id={titleId} className="font-display text-lg font-bold text-ink-700">
               {title}
             </h3>
             <button

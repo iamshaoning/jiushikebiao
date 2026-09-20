@@ -11,27 +11,21 @@
   --color-success: #10b981;
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
-  --color-info: #06b6d4;
   --color-purple: #8b5cf6;
   --color-gold: #FAF408;
   --color-today: #f59e0b;
   --color-secondary: #9ca3af;
-  --color-hover: #f97316;
 
-  /* 背景/文字/边框 —— 页面背景米白，内容模块纯白（层级：primary最浅 → tertiary最深） */
+  /* 背景/文字/边框 —— 页面背景米白，内容模块纯白 */
   --bg-primary: #FAF7F2;
   --bg-secondary: #FFFFFF;
   --bg-content: #FFFFFF;
-  --bg-tertiary: #EBE5DC;
   --bg-input: #FFFFFF;
-  --bg-input2: #FFFFFF;
   --bg-modal: #FCFAF6;
   --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --border-color: #C7DACF;
   --shadow-sm: 0 2px 8px rgba(15, 61, 46, 0.06);
-  --shadow-md: 0 4px 16px rgba(15, 61, 46, 0.08);
-  --shadow-lg: 0 8px 24px rgba(15, 61, 46, 0.1);
 }
 
 /* ============ 基础 ============ */
@@ -60,9 +54,13 @@ body {
 /* 默认禁止 UI 元素文本自动换行，避免屏幕宽度变化时布局错位；
    需要换行的段落/长描述请显式使用 whitespace-normal 类覆盖。
    搭配容器 min-w-0 + truncate 可实现超出部分省略号隐藏 */
-button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
-.stat-label, .stat-unit, .settings-dropdown-item, th {
+button, a, label, .tag, .sync-card, .holiday-tag, th {
   white-space: nowrap;
+}
+
+/* 表格最后一行不画下边框：其外层容器已有边框，两者相邻会叠成 2px 的粗线 */
+tbody tr:last-child > td {
+  border-bottom: none;
 }
 
 /* 自定义滚动条 */
@@ -104,9 +102,6 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700;
   }
-  .btn-ghost {
-    @apply btn text-slate2 hover:bg-ink-50;
-  }
   .btn:disabled,
   .btn[disabled] {
     @apply bg-gray-200 text-gray-400 border border-gray-300 cursor-not-allowed shadow-none hover:bg-gray-200 hover:text-gray-400;
@@ -119,29 +114,15 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   .card {
     @apply bg-[var(--bg-secondary)] rounded-xl2 shadow-soft border border-ink-100;
   }
-  .card-hover {
-    @apply card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5;
-  }
 
   /* 统计卡 */
   .stat-card {
     @apply bg-[var(--bg-secondary)] rounded-xl2 border border-ink-100 px-5 py-4 shadow-soft;
   }
-  .stat-card .stat-label {
-    @apply text-xs text-gray-500 uppercase tracking-wider;
-  }
-  .stat-card .stat-value {
-    @apply text-2xl font-num font-bold text-gray-900 mt-1;
-  }
 
   .tag {
     @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
   }
-  .tag-info { @apply tag bg-blue-50 text-blue-700; }
-  .tag-success { @apply tag bg-green-50 text-green-700; }
-  .tag-warning { @apply tag bg-amber-50 text-amber-700; }
-  .tag-danger { @apply tag bg-red-50 text-red-700; }
-  .tag-neutral { @apply tag bg-gray-100 text-gray-600; }
 }
 
 /* ============ 路由切换淡入动画 ============ */
@@ -306,21 +287,6 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
 }
 
 /* —— 日期选择器 —— */
-.date-picker-popover {
-  position: absolute;
-  z-index: 60;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  box-shadow: var(--shadow-lg);
-  padding: 0.75rem;
-  width: 17rem;
-}
-.date-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
 .date-picker-cell {
   text-align: center;
   padding: 0.35rem 0;
@@ -356,56 +322,6 @@ button, a, label, .tag, .sync-card, .holiday-tag, .schedule-tag,
   font-weight: 600;
   margin-right: 0.5rem;
 }
-.schedule-tag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 9999px;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: 500;
-  margin-right: 0.5rem;
-}
-
-/* —— 进度条（统计占比） —— */
-.progress-bar {
-  height: 6px;
-  border-radius: 9999px;
-  background-color: var(--bg-tertiary);
-  overflow: hidden;
-}
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background-color: var(--color-primary);
-  transition: width 0.3s ease;
-}
-
-/* —— 设置下拉（Layout 侧边栏底部） —— */
-.settings-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-.settings-dropdown-item:hover {
-  background-color: #E8F0EC;
-}
-.settings-dropdown-item.danger:hover {
-  background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
-  color: var(--color-danger);
-}
-
-/* —— 工具类补充 —— */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* 隐藏 number 输入框上下箭头 */
 input[type="number"]::-webkit-inner-spin-button,

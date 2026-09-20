@@ -18,6 +18,12 @@ export function debounce<T extends (...args: any[]) => void>(fn: T, delay: numbe
 
 /* ---------- 日期/时间工具 ---------- */
 
+/** 将 'YYYY-MM-DD' 按本地时区解析为 Date，避免 new Date(str) 按 UTC 解析导致的日期偏移 */
+export function parseDateLocal(dateStr: string): Date {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
 export function timeToMins(timeStr: string | undefined | null): number {
   if (!timeStr || typeof timeStr !== 'string') return 0;
   const parts = timeStr.split(':');

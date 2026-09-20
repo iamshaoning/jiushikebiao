@@ -21,16 +21,6 @@
         })
       }
     </script>
-    <script>
-      // 页面加载早期检测系统深色模式，避免页面闪烁
-      (function () {
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (savedTheme === 'dark' || (!savedTheme && prefersDark) || savedTheme === 'auto' && prefersDark) {
-          document.documentElement.classList.add('dark');
-        }
-      })();
-    </script>
   </head>
   <body>
     <div id="root"></div>
