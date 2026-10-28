@@ -20,44 +20,25 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
-// 嵌套路由：Layout 包裹 Outlet，子路由切换时 Layout 不重挂，保证菜单滑动指示器与侧边栏稳定
+// 嵌套路由：Layout 作为无路径布局路由包裹 Outlet，
+// 子页面切换时 Layout 不重挂，保证菜单滑动指示器与侧边栏稳定
 function AnimatedRoutes() {
-  const location = useLocation();
   return (
-    <Routes location={location}>
+    <Routes>
       <Route path="/login" element={<AuthPage />} />
       <Route path="/register" element={<AuthPage />} />
 
       {/* 课表路由组（单角色，仅判登录） */}
       <Route
-        path="/calendar"
         element={
           <RequireAuth>
             <Layout />
           </RequireAuth>
         }
       >
-        <Route index element={<Calendar />} />
-      </Route>
-      <Route
-        path="/students"
-        element={
-          <RequireAuth>
-            <Layout />
-          </RequireAuth>
-        }
-      >
-        <Route index element={<Students />} />
-      </Route>
-      <Route
-        path="/statistics"
-        element={
-          <RequireAuth>
-            <Layout />
-          </RequireAuth>
-        }
-      >
-        <Route index element={<Statistics />} />
+        <Route path="/calendar" element={<Calendar />} />
+        <Route path="/students" element={<Students />} />
+        <Route path="/statistics" element={<Statistics />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/calendar" replace />} />

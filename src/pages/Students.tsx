@@ -606,7 +606,7 @@ export default function Students() {
       {/* 顶部工具栏：移动端纵向（标题独占一行），桌面端横向 */}
       <div className="flex flex-col gap-3 desktop:flex-row desktop:items-end desktop:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink-700">
+          <h1 className="font-display text-3xl font-bold text-ink-700">
             学生管理
           </h1>
           <p className="text-sm text-gray-500 mt-1">

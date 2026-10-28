@@ -14,6 +14,7 @@ import {
   Bell,
 } from 'lucide-react';
 import SyncStatus from '@/components/SyncStatus';
+import BrandLogo from '@/components/BrandLogo';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ProfileModal from '@/modals/ProfileModal';
 import SnapshotModal from '@/modals/SnapshotModal';
@@ -26,16 +27,11 @@ import { checkConnection } from '@/lib/data';
 import { isUpgradeDue, todayStr } from '@/lib/upgrade';
 import { useToast } from '@/components/Toast';
 
-// 适配 vite base 路径
-const FAVICON = `${import.meta.env.BASE_URL}favicon.svg`;
-
 const navItems = [
   { to: '/calendar', label: '日历排课', icon: CalendarCheck },
   { to: '/students', label: '学生管理', icon: Users },
   { to: '/statistics', label: '费用统计', icon: BarChart3 },
 ];
-
-const roleLabel = '我的工作台';
 
 // 判断菜单项是否激活
 function isActiveItem(pathname: string, to: string): boolean {
@@ -226,14 +222,10 @@ export default function Layout() {
         {/* 品牌区域：logo + 大标题，始终可见，衔接 AuthPage logo 形变后的位置 */}
         <div className="px-5 py-6 border-b border-ink-600/40">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-300 flex items-center justify-center shadow-md p-1.5">
-              <img src={FAVICON} alt="玖拾课表" className="w-full h-full object-contain" />
+            <div className="brand-tile w-12 h-12 rounded-xl flex items-center justify-center p-1.5">
+              <BrandLogo className="w-full h-full" />
             </div>
-            <div className="font-display font-bold text-base leading-tight">玖拾课表</div>
-          </div>
-          {/* 小标题：独立一行，跟随淡入淡出，不影响 logo 和大标题 */}
-          <div className={`text-xs text-ink-100/70 mt-1.5 transition-opacity ${fadeClass}`}>
-            {roleLabel}
+            <div className="font-display font-bold text-lg leading-tight">玖拾课表</div>
           </div>
         </div>
 
@@ -355,7 +347,7 @@ export default function Layout() {
           {/* 品牌：黄框 logo + 标题，shrink-0 防压缩，始终可见 */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="w-5 h-5 rounded bg-amber-300 flex items-center justify-center shadow-sm">
-              <img src={FAVICON} alt="玖拾课表" className="w-3.5 h-3.5 object-contain" />
+              <BrandLogo className="w-3.5 h-3.5" />
             </div>
             <span className="text-sm font-bold text-white whitespace-nowrap">玖拾课表</span>
           </div>
@@ -421,8 +413,9 @@ export default function Layout() {
         </div>
       </div>
 
-      {/* 主内容：进入时淡入，登出时淡出；独立滚动不影响侧边栏 */}
-      <main className={`flex-1 min-w-0 overflow-y-auto pt-[88px] desktop:pt-0 ${mainClass}`}>
+      {/* 主内容：进入时淡入，登出时淡出；独立滚动不影响侧边栏。
+          scrollbar-gutter: stable 预留滚动条宽度，避免内容变长时滚动条出现挤动整页布局 */}
+      <main className={`flex-1 min-w-0 overflow-y-auto [scrollbar-gutter:stable] pt-[88px] desktop:pt-0 ${mainClass}`}>
         {/* 右侧内容：key 变化触发重新挂载，播放 route-fade-in 淡入动画 */}
         <div
           key={loc.pathname}

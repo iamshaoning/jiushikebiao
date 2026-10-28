@@ -31,7 +31,7 @@ const TYPE_CONFIG: Record<
 > = {
   confirm: {
     icon: HelpCircle,
-    bg: 'rgba(59, 130, 246, 0.1)',
+    bg: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
     color: 'var(--color-primary)',
     btn: 'var(--color-primary)',
     defaultText: '确定',

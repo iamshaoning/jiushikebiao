@@ -38,8 +38,6 @@ export default {
         },
         // 背景米白
         cream: "#FAF7F2",
-        // 中性石板灰
-        slate2: "#475569",
       },
       boxShadow: {
         'soft': '0 2px 12px rgba(15, 61, 46, 0.06)',

@@ -529,7 +529,7 @@ export default function Calendar() {
     <div className="space-y-4 select-none">
       {/* 页面标题 */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-ink-700">日历排课</h1>
+        <h1 className="font-display text-3xl font-bold text-ink-700">日历排课</h1>
         <p className="text-sm text-gray-500 mt-1">
           本月已有 {monthCourseCount} 节课，{monthCourseCount >= 30 ? '注意休息哦~' : '保持开心哦~'}
         </p>
@@ -616,7 +616,7 @@ export default function Calendar() {
                     </span>
                   )}
                   {dateInfo?.isInLieu && (
-                    <span className="w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-purple-500 inline-flex items-center justify-center">
+                    <span className="w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-[#B03A5E] inline-flex items-center justify-center">
                       调
                     </span>
                   )}
@@ -734,7 +734,7 @@ export default function Calendar() {
                   )}
                   {/* 调休/班标识 */}
                   {dateInfo?.isInLieu && (
-                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-white bg-purple-500">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium text-white bg-[#B03A5E]">
                       调
                     </span>
                   )}

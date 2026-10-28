@@ -9,10 +9,11 @@
  * 使模态框内容区可正常使用 overflow-y-auto 收起超出的表单内容。
  * 底部空间不足时自动向上展开。
  */
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { parseDateLocal } from '@/lib/utils';
+import { useAnchoredPopover } from '@/hooks/useAnchoredPopover';
 
 interface DatePickerProps {
   value: string; // YYYY-MM-DD
@@ -33,14 +34,18 @@ export default function DatePicker({
   className = '',
   placeholder = '选择日期',
 }: DatePickerProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const calendarRef = useRef<HTMLDivElement>(null);
-  const [calendarPos, setCalendarPos] = useState<{ top?: number; bottom?: number; left: number; width: number } | null>(null);
-  // shouldRender 控制弹层 DOM 是否存在；visible 控制淡入/淡出过渡
-  const [shouldRender, setShouldRender] = useState(false);
-  const [visible, setVisible] = useState(false);
+  // 进出场动画、fixed 定位、点击外部/滚动关闭由共用 Hook 处理
+  const {
+    open,
+    setOpen,
+    toggle,
+    shouldRender,
+    visible,
+    position,
+    containerRef,
+    anchorRef,
+    popoverRef,
+  } = useAnchoredPopover<HTMLButtonElement>({ estimatedHeight: 320, minWidth: 280 });
 
   const [viewYear, setViewYear] = useState(() =>
     (value ? parseDateLocal(value) : new Date()).getFullYear(),
@@ -57,72 +62,7 @@ export default function DatePicker({
     setViewMonth(base.getMonth());
   }, [open, value]);
 
-  // 打开时基于 trigger 位置计算日历坐标（fixed 定位，脱离父级 overflow）
-  // 底部空间不足时自动向上展开
-  useLayoutEffect(() => {
-    if (open && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const CAL_HEIGHT = 320; // 日历预估高度（导航+星期表头+6行日期+padding）
-      const spaceBelow = window.innerHeight - rect.bottom - 4;
-      const spaceAbove = rect.top - 4;
-      const direction = spaceBelow < CAL_HEIGHT && spaceAbove >= CAL_HEIGHT ? 'up' : 'down';
-      setCalendarPos({
-        // 向上展开时用 bottom 定位（相对视口底部），让日历底部紧贴 trigger 顶部
-        ...(direction === 'up' ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 }),
-        left: rect.left,
-        width: Math.max(rect.width, 280),
-      });
-    }
-  }, [open]);
-
-  // 进出场过渡：open 时先挂载再触发淡入；关闭时等淡出结束后卸载
-  useEffect(() => {
-    if (open) {
-      setShouldRender(true);
-      const raf = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true));
-      });
-      return () => cancelAnimationFrame(raf);
-    }
-    setVisible(false);
-    const t = setTimeout(() => setShouldRender(false), 150);
-    return () => clearTimeout(t);
-  }, [open]);
-
-  // 点击外部 / 滚动 / 窗口尺寸变化时关闭（fixed 定位需自行同步关闭）
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        (ref.current && ref.current.contains(e.target as Node)) ||
-        (calendarRef.current && calendarRef.current.contains(e.target as Node))
-      ) {
-        return;
-      }
-      setOpen(false);
-    };
-    const close = () => setOpen(false);
-    document.addEventListener('mousedown', handler);
-    // 任何可滚动祖先滚动时关闭，避免日历与输入框错位
-    let el: HTMLElement | null = ref.current;
-    const scrollParents: HTMLElement[] = [];
-    while (el && el !== document.body) {
-      const style = getComputedStyle(el);
-      if (/(auto|scroll)/.test(style.overflowY) || /(auto|scroll)/.test(style.overflow)) {
-        scrollParents.push(el);
-      }
-      el = el.parentElement;
-    }
-    scrollParents.forEach((p) => p.addEventListener('scroll', close, { passive: true }));
-    window.addEventListener('scroll', close, { passive: true });
-    window.addEventListener('resize', close, { passive: true });
-    return () => {
-      document.removeEventListener('mousedown', handler);
-      scrollParents.forEach((p) => p.removeEventListener('scroll', close));
-      window.removeEventListener('scroll', close);
-      window.removeEventListener('resize', close);
-    };
-  }, [open]);
+  // 进出场动画、定位与关闭逻辑由 useAnchoredPopover 统一处理
 
   // 生成 42 格日历
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
@@ -182,11 +122,11 @@ export default function DatePicker({
   const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
 
   return (
-    <div ref={ref} className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       <button
-        ref={triggerRef}
+        ref={anchorRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         aria-haspopup="dialog"
         aria-expanded={open}
         className="input-field flex items-center justify-between gap-2"
@@ -197,19 +137,19 @@ export default function DatePicker({
         <CalendarIcon className="w-4 h-4 text-gray-400" />
       </button>
 
-      {shouldRender && calendarPos && createPortal(
+      {shouldRender && position && createPortal(
         <div
-          ref={calendarRef}
+          ref={popoverRef}
           aria-hidden={!visible}
-          className={`fixed z-[70] p-3 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg transition-all duration-150 ${
+          className={`fixed z-[70] p-3 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg transition-all duration-200 ${
             visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
           }`}
           style={{
-            top: calendarPos.top,
-            bottom: calendarPos.bottom,
-            left: calendarPos.left,
-            width: calendarPos.width,
-            transformOrigin: calendarPos.bottom ? 'bottom' : 'top',
+            top: position.top,
+            bottom: position.bottom,
+            left: position.left,
+            width: position.width,
+            transformOrigin: position.direction === 'up' ? 'bottom' : 'top',
           }}
         >
           {/* 月份导航 */}

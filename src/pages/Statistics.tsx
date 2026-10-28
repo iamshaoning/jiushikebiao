@@ -321,7 +321,7 @@ export default function Statistics() {
       {/* 顶部工具栏：仅标题 */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display text-2xl font-bold text-ink-700">
+          <h1 className="font-display text-3xl font-bold text-ink-700">
             费用统计
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -382,18 +382,14 @@ export default function Statistics() {
               <h3 className="text-sm font-medium mb-1 text-gray-500">
                 总课节数
               </h3>
-              <p
-                className="text-3xl font-bold font-num"
-                style={{ color: 'var(--color-primary)' }}
-              >
+              <p className="text-3xl font-bold font-num text-ink-700">
                 {stats.totalCourses}
               </p>
             </div>
-            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
-              <CalendarCheck className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+            <div className="p-2 rounded-lg bg-ink-50">
+              <CalendarCheck className="w-5 h-5 text-ink" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">节课程</div>
         </div>
 
         <div className="stat-card p-5">
@@ -402,18 +398,14 @@ export default function Statistics() {
               <h3 className="text-sm font-medium mb-1 text-gray-500">
                 总课时费
               </h3>
-              <p
-                className="text-3xl font-bold font-num"
-                style={{ color: 'var(--color-success)' }}
-              >
+              <p className="text-3xl font-bold font-num text-amber-500">
                 ¥{Math.round(stats.totalFee).toLocaleString()}
               </p>
             </div>
-            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
-              <CircleDollarSign className="w-5 h-5" style={{ color: 'var(--color-success)' }} />
+            <div className="p-2 rounded-lg bg-amber-50">
+              <CircleDollarSign className="w-5 h-5 text-amber-500" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">人民币</div>
         </div>
 
         <div className="stat-card p-5">
@@ -422,18 +414,14 @@ export default function Statistics() {
               <h3 className="text-sm font-medium mb-1 text-gray-500">
                 学生人数
               </h3>
-              <p
-                className="text-3xl font-bold font-num"
-                style={{ color: 'var(--color-purple)' }}
-              >
+              <p className="text-3xl font-bold font-num text-ink-300">
                 {stats.uniqueStudentCount}
               </p>
             </div>
-            <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
-              <UsersRound className="w-5 h-5" style={{ color: 'var(--color-purple)' }} />
+            <div className="p-2 rounded-lg bg-ink-50">
+              <UsersRound className="w-5 h-5 text-ink-300" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-gray-500">名学生</div>
         </div>
       </div>
 
@@ -760,8 +748,8 @@ export default function Statistics() {
               <span
                 className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md"
                 style={{
-                  background: 'color-mix(in srgb, var(--color-purple) 12%, transparent)',
-                  color: 'var(--color-purple)',
+                  background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
+                  color: 'var(--color-accent)',
                 }}
               >
                 多人课 {detailStats.groupCount}

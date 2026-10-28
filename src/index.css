@@ -6,13 +6,12 @@
 
 /* ============ 主题变量 ============ */
 :root {
-  /* 功能标识色 */
-  --color-primary: #3b82f6;
+  /* 功能标识色（与品牌墨绿 + 琥珀色板统一） */
+  --color-primary: #0F3D2E;
+  --color-accent: #9E661F;
   --color-success: #10b981;
   --color-danger: #ef4444;
   --color-warning: #f59e0b;
-  --color-purple: #8b5cf6;
-  --color-gold: #FAF408;
   --color-today: #f59e0b;
   --color-secondary: #9ca3af;
 
@@ -63,6 +62,17 @@ tbody tr:last-child > td {
   border-bottom: none;
 }
 
+/* 键盘焦点环：仅键盘操作时出现，鼠标点击不显示。
+   输入框由 .input-field 的 focus:ring 负责，此处不重复描边。 */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 8px;
@@ -91,7 +101,7 @@ tbody tr:last-child > td {
 /* ============ 自定义工具类 ============ */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200;
   }
   .btn-primary {
     @apply btn bg-ink text-white hover:bg-ink-600;
@@ -115,17 +125,31 @@ tbody tr:last-child > td {
     @apply bg-[var(--bg-secondary)] rounded-xl2 shadow-soft border border-ink-100;
   }
 
-  /* 统计卡 */
+  /* 统计卡：悬停时轻微上浮，给出可读性反馈 */
   .stat-card {
-    @apply bg-[var(--bg-secondary)] rounded-xl2 border border-ink-100 px-5 py-4 shadow-soft;
+    @apply bg-[var(--bg-secondary)] rounded-xl2 border border-ink-100 px-5 py-4 shadow-soft transition-all duration-300;
+  }
+  .stat-card:hover {
+    @apply shadow-card -translate-y-0.5;
   }
 
   .tag {
     @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
   }
+
+  /* 品牌 logo 底板：琥珀微渐变 + 顶部高光 + 柔和外发光，避免纯色块显得单薄 */
+  .brand-tile {
+    background-image: linear-gradient(180deg, #EBC57F 0%, #E0A458 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      0 6px 18px rgba(224, 164, 88, 0.25);
+  }
 }
 
 /* ============ 路由切换淡入动画 ============ */
+/* 注意：此处只能用 opacity，不能加 transform/translate。
+   路由容器是底部操作栏、学生框选框等 position: fixed 元素的祖先，
+   而带变换的祖先会成为 fixed 元素的包含块，导致它们相对页面而非视口定位。 */
 @keyframes routeFadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -299,16 +323,6 @@ tbody tr:last-child > td {
 .date-picker-cell:hover {
   background-color: #E8F0EC;
 }
-.date-picker-cell.other-month {
-  color: var(--color-secondary);
-}
-.date-picker-cell.selected {
-  background-color: var(--color-primary);
-  color: white;
-}
-.date-picker-cell.today {
-  box-shadow: inset 0 0 0 1px var(--color-today);
-}
 
 /* —— 节假日标识 —— */
 .holiday-tag {
@@ -330,3 +344,15 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 input[type="number"] { -moz-appearance: textfield; }
+
+/* 尊重系统「减少动态效果」设置：关闭非必要动画与过渡 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

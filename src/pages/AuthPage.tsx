@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/components/Toast';
 import { useAuth } from '@/context/AuthContext';
+import BrandLogo from '@/components/BrandLogo';
 import { login, register } from '@/lib/auth';
 import {
   Loader2,
@@ -13,9 +14,6 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from 'lucide-react';
-
-// 适配 vite base 路径
-const FAVICON = `${import.meta.env.BASE_URL}favicon.svg`;
 
 type Mode = 'login' | 'register';
 
@@ -318,9 +316,9 @@ export default function AuthPage() {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1100;
     // 移动端：纵向布局，绿色品牌区在上、白色表单区在下；形变目标为系统页顶栏高度（pt-14≈56px）
     if (isMobile) {
-      // 顶栏 logo：px-3(12px) py-2.5(10px) w-5(20px)；idle logo：top-8 left-8(32px) w-10(40px)
-      // 形变后位移至顶栏位置：translate(12-32, 10-32) = (-20, -22)，并 scale(0.5) 缩到顶栏 logo 尺寸
-      const logoAtBar = 'translate(-20px, -22px) scale(0.5)';
+      // 顶栏 logo：px-3(12px) py-3(12px) w-5(20px)；idle logo：top-8 left-8(32px) w-10(40px)
+      // 形变后位移至顶栏位置：translate(12-32, 12-32) = (-20, -20)，并 scale(0.5) 缩到顶栏 logo 尺寸
+      const logoAtBar = 'translate(-20px, -20px) scale(0.5)';
       const logoAtIdle = 'translate(0px, 0px) scale(1)';
       // 文字额外缩放：idle 文字 text-base(16px)，顶栏文字 text-sm(14px)
       // 容器整体 scale(0.5) 后文字视觉 8px，需额外 scale(1.75) 抵消到 14px，精确匹配顶栏文字尺寸
@@ -344,9 +342,11 @@ export default function AuthPage() {
     }
     // 桌面端：左右分栏，形变目标为系统页侧边栏宽度占比（desktop:w-64 = 256px）
     const sidebarWidth = 256;
-    const sidebarPercent = (sidebarWidth / Math.max(window.innerWidth, 1)) * 100;
+    // 用 clientWidth 而非 innerWidth：排除滚动条占用宽度，使形变后的侧栏精确等于 256px
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const sidebarPercent = (sidebarWidth / Math.max(viewportWidth, 1)) * 100;
     const effectiveLogin = targetMode ? targetMode === 'login' : isLogin;
-    // 桌面端文字 text-base 与侧边栏文字 text-base 尺寸一致，无需额外缩放
+    // 桌面端文字 desktop:text-lg 与侧边栏 text-lg 尺寸一致，无需额外缩放
     const titleTransform = 'scale(1)';
     switch (phase) {
       case 'form-fading':
@@ -430,11 +430,11 @@ export default function AuthPage() {
             transition: 'transform 0.5s ease-out',
           }}
         >
-          <div className="w-10 h-10 rounded-lg bg-amber-300 flex items-center justify-center shadow-md p-1.5">
-            <img src={FAVICON} alt="玖拾课表" className="w-full h-full object-contain" />
+          <div className="brand-tile w-10 h-10 desktop:w-12 desktop:h-12 rounded-lg desktop:rounded-xl flex items-center justify-center p-1.5">
+            <BrandLogo className="w-full h-full" />
           </div>
           <div
-            className="font-display text-base font-bold leading-tight"
+            className="font-display text-base desktop:text-lg font-bold leading-tight"
             style={{
               opacity: titleOpacity,
               transform: layout.titleTransform,
