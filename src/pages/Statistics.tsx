@@ -8,12 +8,14 @@
  * 4. 学生课量数据模块（课节数可点击弹窗）
  */
 import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useStore } from '@/stores/useStore';
 import { useToast } from '@/components/Toast';
 import CustomSelect from '@/components/CustomSelect';
 import Modal from '@/components/Modal';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import PieChart, { type PieChartData } from '@/components/PieChart';
+import PageLoading from '@/components/PageLoading';
 import {
   calculateStats,
   filterCoursesForDetail,
@@ -28,6 +30,7 @@ import {
   ChevronLeft,
   ChevronRight,
   CalendarCheck,
+  CalendarPlus,
   CircleDollarSign,
   UsersRound,
   List,
@@ -35,6 +38,7 @@ import {
 
 export default function Statistics() {
   const courses = useStore((s) => s.courses);
+  const dataLoaded = useStore((s) => s.dataLoaded);
   const organizations = useStore((s) => s.organizations);
   const organizationColors = useStore((s) => s.organizationColors);
   const gradeColors = useStore((s) => s.gradeColors);
@@ -312,9 +316,15 @@ export default function Statistics() {
   };
 
   // 表头/单元格样式（仅水平边框，垂直边框由外层容器提供）
+  // 数值列统一右对齐：让不同位数的数字右端对齐，便于纵向比较大小
   const thCls =
     'px-4 py-3 text-left text-sm font-semibold text-gray-500 border-b border-ink-100';
-  const tdCls = 'px-4 py-3 text-sm text-gray-700 border-b border-ink-100';
+  const thNumCls =
+    'px-4 py-3 text-right text-sm font-semibold text-gray-500 border-b border-ink-100';
+  const tdNumCls = 'px-4 py-3 text-right text-sm text-gray-700 border-b border-ink-100';
+
+  // 数据未加载完成且本地为空时先显示加载态，避免闪一下「暂无数据」
+  if (!dataLoaded && courses.length === 0) return <PageLoading label="正在加载统计数据…" />;
 
   return (
     <div className="space-y-4">
@@ -379,9 +389,9 @@ export default function Statistics() {
         <div className="stat-card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-medium mb-1 text-gray-500">
+              <div className="text-sm font-medium mb-1 text-gray-500">
                 总课节数
-              </h3>
+              </div>
               <p className="text-3xl font-bold font-num text-ink-700">
                 {stats.totalCourses}
               </p>
@@ -395,9 +405,9 @@ export default function Statistics() {
         <div className="stat-card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-medium mb-1 text-gray-500">
+              <div className="text-sm font-medium mb-1 text-gray-500">
                 总课时费
-              </h3>
+              </div>
               <p className="text-3xl font-bold font-num text-amber-500">
                 ¥{Math.round(stats.totalFee).toLocaleString()}
               </p>
@@ -411,9 +421,9 @@ export default function Statistics() {
         <div className="stat-card p-5">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-sm font-medium mb-1 text-gray-500">
+              <div className="text-sm font-medium mb-1 text-gray-500">
                 学生人数
-              </h3>
+              </div>
               <p className="text-3xl font-bold font-num text-ink-300">
                 {stats.uniqueStudentCount}
               </p>
@@ -427,26 +437,32 @@ export default function Statistics() {
 
       {stats.totalCourses === 0 ? (
         <div className="card p-12 text-center">
-          <h3 className="font-display text-lg font-bold text-ink-700 mb-1">
+          <div className="w-14 h-14 rounded-full bg-ink-50 flex items-center justify-center mx-auto mb-4">
+            <CalendarPlus className="w-7 h-7 text-ink-300" />
+          </div>
+          <h2 className="font-display text-lg font-bold text-ink-700 mb-1">
             暂无数据
-          </h3>
-          <p className="text-sm text-gray-500">
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
             {rangeLabel} 范围内没有课程记录
           </p>
+          <Link to="/calendar" className="btn-primary">
+            去添加课程
+          </Link>
         </div>
       ) : (
         <>
           {/* 机构数据模块（grid-cols-2：左饼图 + 右机构表含进度条） */}
           <div className="card p-5">
-            <h3 className="font-display font-bold text-ink-700 mb-4">
+            <h2 className="font-display text-lg font-bold text-ink-700 mb-4">
               机构数据
-            </h3>
+            </h2>
             <div className={tableOverflow ? 'flex flex-col gap-6' : 'grid grid-cols-1 desktop:grid-cols-2 gap-6'}>
               {/* 左：饼图（表格溢出时居中独占一行） */}
               <div className={tableOverflow ? 'flex flex-col items-center' : ''}>
-                <h4 className="text-sm font-medium text-gray-600 mb-4 self-start">
+                <h3 className="text-sm font-medium text-gray-600 mb-4 self-start">
                   机构课量分布
-                </h4>
+                </h3>
                 <div className="flex items-center justify-center py-2">
                   <PieChart
                     data={pieData}
@@ -457,17 +473,17 @@ export default function Statistics() {
               </div>
               {/* 右：机构详细数据表（溢出时独占一行） */}
               <div ref={orgTableRef}>
-                <h4 className="text-sm font-medium text-gray-600 mb-4">
+                <h3 className="text-sm font-medium text-gray-600 mb-4">
                   机构详细数据
-                </h4>
+                </h3>
                 <div className="rounded-lg overflow-hidden border border-ink-100"><div className="overflow-x-auto">
                   <table className="min-w-full border-separate border-spacing-0">
                     <thead>
                       <tr className="bg-[var(--bg-content)]">
                         <th className={thCls}>机构名称</th>
-                        <th className={thCls}>课节数</th>
-                        <th className={thCls}>课时费</th>
-                        <th className={thCls}>学生数</th>
+                        <th className={thNumCls}>课节数</th>
+                        <th className={thNumCls}>课时费</th>
+                        <th className={thNumCls}>学生数</th>
                         <th className={thCls}>占比</th>
                       </tr>
                     </thead>
@@ -479,11 +495,11 @@ export default function Statistics() {
                         return (
                           <tr key={o.organization}>
                             <td className="px-4 py-3 border-b border-ink-100">{renderOrgTag(o.organization)}</td>
-                            <td className={`${tdCls} font-num`}>{o.courseCount}节</td>
-                            <td className={`${tdCls} font-num`}>
+                            <td className={`${tdNumCls} font-num`}>{o.courseCount}节</td>
+                            <td className={`${tdNumCls} font-num`}>
                               ¥{Math.round(o.totalFee).toLocaleString()}
                             </td>
-                            <td className={`${tdCls} font-num`}>{o.studentCount}人</td>
+                            <td className={`${tdNumCls} font-num`}>{o.studentCount}人</td>
                             <td className="px-4 py-3 border-b border-ink-100">
                               <div className="flex items-center gap-2">
                                 <div
@@ -516,17 +532,17 @@ export default function Statistics() {
 
           {/* 机构课型数据模块（一对一分布 + 多人课分布） */}
           <div className="card p-5">
-            <h3 className="font-display font-bold text-ink-700 mb-4">
+            <h2 className="font-display text-lg font-bold text-ink-700 mb-4">
               机构课型数据
-            </h3>
+            </h2>
 
             {/* 一对一分布数据 */}
             <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-600 mb-3">
+              <h3 className="text-sm font-medium text-gray-600 mb-3">
                 一对一分布数据
-              </h4>
+              </h3>
               {oneOnOneRows.length === 0 ? (
-                <div className="text-center py-8 text-sm text-gray-400">暂无数据</div>
+                <div className="text-center py-8 text-sm text-gray-500">暂无数据</div>
               ) : (
                 <div className="rounded-lg overflow-hidden border border-ink-100"><div className="overflow-x-auto">
                   <table
@@ -544,9 +560,9 @@ export default function Statistics() {
                       <tr className="bg-[var(--bg-content)]">
                         <th className={thCls}>机构</th>
                         <th className={thCls}>年级</th>
-                        <th className={thCls}>学生数</th>
-                        <th className={thCls}>课节数</th>
-                        <th className={thCls}>课时费</th>
+                        <th className={thNumCls}>学生数</th>
+                        <th className={thNumCls}>课节数</th>
+                        <th className={thNumCls}>课时费</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -554,8 +570,8 @@ export default function Statistics() {
                         <tr key={`1v1-${i}`}>
                           <td className="px-4 py-3 border-b border-ink-100">{renderOrgTag(r.org)}</td>
                           <td className="px-4 py-3 border-b border-ink-100">{renderGradeTag(r.grade)}</td>
-                          <td className={tdCls}>{r.item.studentCount}人</td>
-                          <td className="px-4 py-3 border-b border-ink-100">
+                          <td className={tdNumCls}>{r.item.studentCount}人</td>
+                          <td className="px-4 py-3 border-b border-ink-100 text-right">
                             <span
                               className="cursor-pointer hover:underline font-medium"
                               style={{ color: 'var(--color-primary)' }}
@@ -570,7 +586,7 @@ export default function Statistics() {
                               {r.item.courses}节
                             </span>
                           </td>
-                          <td className={`${tdCls} font-num`}>
+                          <td className={`${tdNumCls} font-num`}>
                             ¥{Math.round(r.item.fee).toLocaleString()}
                           </td>
                         </tr>
@@ -584,11 +600,11 @@ export default function Statistics() {
 
             {/* 多人课分布数据 */}
             <div>
-              <h4 className="text-sm font-medium text-gray-600 mb-3">
+              <h3 className="text-sm font-medium text-gray-600 mb-3">
                 多人课分布数据
-              </h4>
+              </h3>
               {groupRows.length === 0 ? (
-                <div className="text-center py-8 text-sm text-gray-400">暂无数据</div>
+                <div className="text-center py-8 text-sm text-gray-500">暂无数据</div>
               ) : (
                 <div className="rounded-lg overflow-hidden border border-ink-100"><div className="overflow-x-auto">
                   <table
@@ -606,9 +622,9 @@ export default function Statistics() {
                       <tr className="bg-[var(--bg-content)]">
                         <th className={thCls}>机构</th>
                         <th className={thCls}>年级</th>
-                        <th className={thCls}>上课人数</th>
-                        <th className={thCls}>课节数</th>
-                        <th className={thCls}>课时费</th>
+                        <th className={thNumCls}>上课人数</th>
+                        <th className={thNumCls}>课节数</th>
+                        <th className={thNumCls}>课时费</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -616,8 +632,8 @@ export default function Statistics() {
                         <tr key={`grp-${i}`}>
                           <td className="px-4 py-3 border-b border-ink-100">{renderOrgTag(r.org)}</td>
                           <td className="px-4 py-3 border-b border-ink-100">{renderGradeTag(r.grade)}</td>
-                          <td className={tdCls}>{r.studentCount}人</td>
-                          <td className="px-4 py-3 border-b border-ink-100">
+                          <td className={tdNumCls}>{r.studentCount}人</td>
+                          <td className="px-4 py-3 border-b border-ink-100 text-right">
                             <span
                               className="cursor-pointer hover:underline font-medium"
                               style={{ color: 'var(--color-primary)' }}
@@ -633,7 +649,7 @@ export default function Statistics() {
                               {r.item.courses}节
                             </span>
                           </td>
-                          <td className={`${tdCls} font-num`}>
+                          <td className={`${tdNumCls} font-num`}>
                             ¥{Math.round(r.item.fee).toLocaleString()}
                           </td>
                         </tr>
@@ -648,11 +664,11 @@ export default function Statistics() {
 
           {/* 学生课量数据模块 */}
           <div className="card p-5">
-            <h3 className="font-display font-bold text-ink-700 mb-4">
+            <h2 className="font-display text-lg font-bold text-ink-700 mb-4">
               学生课量数据
-            </h3>
+            </h2>
             {stats.studentStats.length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-400">暂无数据</div>
+              <div className="text-center py-8 text-sm text-gray-500">暂无数据</div>
             ) : (
               <div className="rounded-lg overflow-hidden border border-ink-100"><div className="overflow-x-auto">
                 <table
@@ -671,8 +687,8 @@ export default function Statistics() {
                       <th className={thCls}>学生姓名</th>
                       <th className={thCls}>所属机构</th>
                       <th className={thCls}>年级</th>
-                      <th className={thCls}>课节数</th>
-                      <th className={thCls}>课时费</th>
+                      <th className={thNumCls}>课节数</th>
+                      <th className={thNumCls}>课时费</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -691,7 +707,7 @@ export default function Statistics() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 border-b border-ink-100">
+                        <td className="px-4 py-3 border-b border-ink-100 text-right">
                           <span
                             className="cursor-pointer hover:underline font-medium"
                             style={{ color: 'var(--color-primary)' }}
@@ -700,7 +716,7 @@ export default function Statistics() {
                             {s.courseCount}节
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 font-num border-b border-ink-100">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 font-num border-b border-ink-100 text-right">
                           ¥{Math.round(s.totalFee).toLocaleString()}
                         </td>
                       </tr>
@@ -730,7 +746,7 @@ export default function Statistics() {
           {rangeLabel}
         </div>
         {detailCourses.length === 0 ? (
-          <div className="text-center py-6 text-sm text-gray-400">暂无可显示的课程</div>
+          <div className="text-center py-6 text-sm text-gray-500">暂无可显示的课程</div>
         ) : (
           <>
             {/* 统计信息条 */}
@@ -748,8 +764,8 @@ export default function Statistics() {
               <span
                 className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md"
                 style={{
-                  background: 'color-mix(in srgb, var(--color-accent) 12%, transparent)',
-                  color: 'var(--color-accent)',
+                  background: 'color-mix(in srgb, #B03A5E 12%, transparent)',
+                  color: '#B03A5E',
                 }}
               >
                 多人课 {detailStats.groupCount}
@@ -758,8 +774,8 @@ export default function Statistics() {
                 className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-md"
                 style={{
                   background:
-                    'color-mix(in srgb, var(--color-success) 10%, transparent)',
-                  color: 'var(--color-success)',
+                    'color-mix(in srgb, var(--color-accent) 10%, transparent)',
+                  color: 'var(--color-accent)',
                 }}
               >
                 ¥{Math.round(detailStats.totalFee).toLocaleString()}
@@ -821,7 +837,7 @@ export default function Statistics() {
                         </td>
                         <td
                           className="px-3 pr-4 py-2.5 text-right font-medium border-b border-ink-100"
-                          style={{ color: 'var(--color-success)' }}
+                          style={{ color: 'var(--color-accent)' }}
                         >
                           {feeDisplay}
                         </td>

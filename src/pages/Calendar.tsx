@@ -36,6 +36,8 @@ import {
   Snowflake,
 } from 'lucide-react';
 
+import PageLoading from '@/components/PageLoading';
+
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
 function pad(n: number): string {
@@ -75,6 +77,7 @@ function buildCells(year: number, month: number) {
 
 export default function Calendar() {
   const courses = useStore((s) => s.courses);
+  const dataLoaded = useStore((s) => s.dataLoaded);
   const currentYear = useStore((s) => s.currentYear);
   const currentMonth = useStore((s) => s.currentMonth);
   const privacyMode = useStore((s) => s.privacyMode);
@@ -525,6 +528,9 @@ export default function Calendar() {
     clearSelections();
   };
 
+  // 数据未加载完成且本地为空时先显示加载态，避免先闪一下空日历
+  if (!dataLoaded && courses.length === 0) return <PageLoading label="正在加载课表…" />;
+
   return (
     <div className="space-y-4 select-none">
       {/* 页面标题 */}
@@ -601,12 +607,12 @@ export default function Calendar() {
                 <div className="flex items-center gap-2 px-3 py-2">
                   <span
                     className={`text-sm font-medium ${
-                      isToday ? 'text-amber-600' : isWeekend ? 'text-gray-400' : 'text-gray-700'
+                      isToday ? 'text-amber-600' : isWeekend ? 'text-gray-500' : 'text-gray-700'
                     }`}
                   >
                     {cell.day}
                   </span>
-                  <span className="text-xs text-gray-400">{weekdayLabel}</span>
+                  <span className="text-xs text-gray-500">{weekdayLabel}</span>
                   {dateInfo?.isHoliday && dateInfo.name && (
                     <span
                       className="px-1.5 h-5 rounded text-[10px] font-semibold inline-flex items-center justify-center"
@@ -626,7 +632,7 @@ export default function Calendar() {
                     </span>
                   )}
                   {dayCourses.length > 0 && (
-                    <span className="ml-auto text-xs text-gray-400">{dayCourses.length} 节</span>
+                    <span className="ml-auto text-xs text-gray-500">{dayCourses.length} 节</span>
                   )}
                 </div>
                 {/* 课程列表：左色条 + 时间 + 学生名 + 费用，全宽横向排列 */}
@@ -685,7 +691,7 @@ export default function Calendar() {
             <div
               key={w}
               className={`text-center text-xs py-2 font-medium ${
-                i >= 5 ? 'text-gray-400' : 'text-gray-600'
+                i >= 5 ? 'text-gray-500' : 'text-gray-600'
               } ${i < 6 ? 'border-r border-ink-100' : ''}`}
             >
               {w}

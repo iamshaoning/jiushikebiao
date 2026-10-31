@@ -349,11 +349,11 @@ export default function ManagementModal({ open, onClose, type }: ManagementModal
 
           {/* 已有列表 */}
           <div>
-            <h4 className="text-xs text-gray-500 mb-2">
-              已有{itemName} <span className="text-gray-400">（点击颜色标签可修改颜色）</span>
-            </h4>
+            <h3 className="text-xs text-gray-500 mb-2">
+              已有{itemName} <span className="text-gray-500">（点击颜色标签可修改颜色）</span>
+            </h3>
             {items.length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-400">
+              <div className="text-center py-8 text-sm text-gray-500">
                 暂无{itemName}，请在上方添加
               </div>
             ) : (

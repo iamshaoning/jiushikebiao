@@ -104,6 +104,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import StudentFormModal from '@/modals/StudentFormModal';
 import ManagementModal from '@/modals/ManagementModal';
 import UpgradeModal, { type UpgradeModalMode } from '@/modals/UpgradeModal';
+import PageLoading from '@/components/PageLoading';
 import {
   filterStudents,
   sortStudentsByOrgGradeName,
@@ -601,6 +602,9 @@ export default function Students() {
     );
   };
 
+  // 数据未加载完成且本地为空时先显示加载态，避免闪一下「暂无学生」
+  if (!dataLoaded && students.length === 0) return <PageLoading label="正在加载学生数据…" />;
+
   return (
     <div className="space-y-4 select-none">
       {/* 顶部工具栏：移动端纵向（标题独占一行），桌面端横向 */}
@@ -688,12 +692,21 @@ export default function Students() {
           <div className="w-14 h-14 rounded-full bg-ink-50 flex items-center justify-center mx-auto mb-4">
             <UserRoundX className="w-7 h-7 text-ink-300" />
           </div>
-          <h3 className="font-display text-lg font-bold text-ink-700 mb-1">
+          <h2 className="font-display text-lg font-bold text-ink-700 mb-1">
             {searchTerm ? '未找到匹配学生' : '暂无学生信息'}
-          </h3>
-          <p className="text-sm text-gray-500">
-            {searchTerm ? '尝试修改搜索条件' : '点击"添加学生"开始管理'}
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            {searchTerm ? '尝试修改搜索条件' : '还没有学生，先添加第一位学生吧'}
           </p>
+          {!searchTerm && (
+            <button
+              onClick={() => setFormModal({ open: true, editStudent: null })}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4" />
+              添加学生
+            </button>
+          )}
         </div>
       ) : (
         /* 机构分组瀑布流：长按表头拖拽排序（被拖组浮起预览，拖拽中实时重排，FLIP 平滑过渡） */
@@ -945,7 +958,7 @@ function SortableOrgGroup({
         >
           {org}
         </span>
-        <span className="text-xs text-gray-400">{students.length} 人</span>
+        <span className="text-xs text-gray-500">{students.length} 人</span>
       </div>
       <div className="student-org-group-body">
         {students.map((s) => (
@@ -989,7 +1002,7 @@ function OrgPreview({
         >
           {org}
         </span>
-        <span className="text-xs text-gray-400">{students.length} 人</span>
+        <span className="text-xs text-gray-500">{students.length} 人</span>
       </div>
       <div className="student-org-group-body">
         {students.map((s) => (

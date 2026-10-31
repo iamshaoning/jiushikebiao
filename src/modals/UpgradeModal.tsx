@@ -245,7 +245,7 @@ export default function UpgradeModal({
       </div>
 
       {draft.orgs.length === 0 ? (
-        <div className="text-center py-6 text-sm text-gray-400">暂无机构，请先添加学生</div>
+        <div className="text-center py-6 text-sm text-gray-500">暂无机构，请先添加学生</div>
       ) : (
         <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
           {draft.orgs.map((org, oi) => {
@@ -254,7 +254,7 @@ export default function UpgradeModal({
               <div key={org.organization} className="border rounded-lg p-3 border-ink-200 bg-[var(--bg-content)]">
                 <div className="font-medium text-sm text-ink-700 mb-2">{org.organization}</div>
                 {org.grades.length === 0 && (
-                  <div className="text-xs text-gray-400">该机构暂无学生</div>
+                  <div className="text-xs text-gray-500">该机构暂无学生</div>
                 )}
                 {org.grades.map((g, gi) => {
                   const gradeStudents = orgStudents.filter((s) => s.grade === g.grade);
@@ -298,7 +298,7 @@ export default function UpgradeModal({
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-1.5 ml-5">
                         {gradeStudents.length === 0 && (
-                          <span className="text-xs text-gray-400">无学生</span>
+                          <span className="text-xs text-gray-500">无学生</span>
                         )}
                         {gradeStudents.map((s) => {
                           const checked = org.studentIds.includes(s.id);

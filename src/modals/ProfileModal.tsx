@@ -108,7 +108,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="个人资料" footer={footer}>
       {loading ? (
-        <div className="flex items-center justify-center py-10 text-gray-400">
+        <div className="flex items-center justify-center py-10 text-gray-500">
           <Loader2 className="w-5 h-5 animate-spin mr-2" />
           加载中...
         </div>
@@ -144,7 +144,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
               className="hidden"
               onChange={handleFileChange}
             />
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-500">
               支持 JPEG/PNG/GIF/WEBP，最大 200KB，自动压缩为 256×256
             </p>
           </div>

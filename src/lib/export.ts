@@ -70,23 +70,20 @@ export function exportStatsHTML(
 
   const fmt = (n: number) => Math.round(n).toLocaleString();
 
-  // 统计卡片
+  // 统计卡片（配色与系统内一致：墨绿 / 琥珀 / 灰绿）
   const cardsHtml = `
     <div class="stat-cards">
       <div class="stat-card">
         <div class="stat-label">总课节数</div>
-        <div class="stat-value" style="color:#3b82f6">${stats.totalCourses}</div>
-        <div class="stat-unit">节课程</div>
+        <div class="stat-value" style="color:#0F3D2E">${stats.totalCourses}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">总课时费</div>
-        <div class="stat-value" style="color:#10b981">¥${fmt(stats.totalFee)}</div>
-        <div class="stat-unit">人民币</div>
+        <div class="stat-value" style="color:#9E661F">¥${fmt(stats.totalFee)}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">学生人数</div>
-        <div class="stat-value" style="color:#8b5cf6">${stats.uniqueStudentCount}</div>
-        <div class="stat-unit">名学生</div>
+        <div class="stat-value" style="color:#577E68">${stats.uniqueStudentCount}</div>
       </div>
     </div>`;
 
@@ -112,8 +109,8 @@ export function exportStatsHTML(
       (r) => `<tr>
         <td>${orgTagHtml(r.org, organizationColors)}</td>
         <td>${gradeTagHtml(r.grade, gradeColors)}</td>
-        <td>${r.item.studentCount}人</td>
-        <td>${r.item.courses}节</td>
+        <td class="num">${r.item.studentCount}人</td>
+        <td class="num">${r.item.courses}节</td>
         <td class="num">¥${fmt(r.item.fee)}</td>
       </tr>`,
     )
@@ -125,8 +122,8 @@ export function exportStatsHTML(
       (r) => `<tr>
         <td>${orgTagHtml(r.org, organizationColors)}</td>
         <td>${gradeTagHtml(r.grade, gradeColors)}</td>
-        <td>${r.sc}人</td>
-        <td>${r.item.courses}节</td>
+        <td class="num">${r.sc}人</td>
+        <td class="num">${r.item.courses}节</td>
         <td class="num">¥${fmt(r.item.fee)}</td>
       </tr>`,
     )
@@ -139,7 +136,7 @@ export function exportStatsHTML(
         <td class="font-medium">${escHtml(s.name)}</td>
         <td>${orgTagHtml(s.organization || '未分配', organizationColors)}</td>
         <td>${(s.grades && s.grades.length > 0 ? s.grades : [s.grade]).map((g) => gradeTagHtml(g || '未设置', gradeColors)).join('')}</td>
-        <td>${s.courseCount}节</td>
+        <td class="num">${s.courseCount}节</td>
         <td class="num font-medium">¥${fmt(s.totalFee)}</td>
       </tr>`,
     )
@@ -164,7 +161,6 @@ header p{font-size:0.875rem;color:#6b7280;margin-top:0.25rem}
 .stat-card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
 .stat-label{font-size:0.75rem;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em}
 .stat-value{font-family:"LXGW WenKai",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1.875rem;font-weight:700;margin-top:0.25rem}
-.stat-unit{font-size:0.75rem;color:#6b7280;margin-top:0.75rem}
 .card{background:#FFFFFF;border:1px solid #C7DACF;border-radius:0.75rem;padding:1.25rem;margin-bottom:1rem;box-shadow:0 2px 8px rgba(15,61,46,0.06)}
 .card h3{font-family:"LXGW WenKai",Georgia,serif;font-size:1.125rem;font-weight:700;color:#08231A;margin-bottom:1rem}
 .card h4{font-size:0.875rem;font-weight:500;color:#4b5563;margin-bottom:0.75rem;margin-top:1.5rem}
@@ -174,7 +170,7 @@ table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid #C7D
 th{padding:0.75rem 1rem;text-align:left;font-size:0.875rem;font-weight:600;color:#6b7280;border-bottom:1px solid #C7DACF;background-color:#FFFFFF}
 td{padding:0.75rem 1rem;font-size:0.875rem;color:#374151;border-bottom:1px solid #C7DACF}
 tr:last-child td{border-bottom:none}
-.num{font-family:"LXGW WenKai",system-ui,-apple-system,"Segoe UI",sans-serif}
+.num{font-family:"LXGW WenKai",system-ui,-apple-system,"Segoe UI",sans-serif;text-align:right}
 .font-medium{font-weight:500}
 .tag{display:inline-block;padding:0.125rem 0.5rem;font-size:0.75rem;font-weight:500;border-radius:9999px}
 .progress{display:flex;align-items:center;gap:0.5rem}
@@ -199,18 +195,18 @@ tr:last-child td{border-bottom:none}
   <div class="card">
     <h3>机构数据</h3>
     <h4>机构详细数据</h4>
-    ${stats.orgStats.length > 0 ? `<table><thead><tr><th>机构名称</th><th>课节数</th><th>课时费</th><th>学生数</th><th>占比</th></tr></thead><tbody>${orgRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
+    ${stats.orgStats.length > 0 ? `<table><thead><tr><th>机构名称</th><th class="num">课节数</th><th class="num">课时费</th><th class="num">学生数</th><th>占比</th></tr></thead><tbody>${orgRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
   </div>
   <div class="card">
     <h3>机构课型数据</h3>
     <h4>一对一分布数据</h4>
-    ${oneOnOneRows.length > 0 ? `<table><thead><tr><th>机构</th><th>年级</th><th>学生数</th><th>课节数</th><th>课时费</th></tr></thead><tbody>${oneOnOneRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
+    ${oneOnOneRows.length > 0 ? `<table><thead><tr><th>机构</th><th>年级</th><th class="num">学生数</th><th class="num">课节数</th><th class="num">课时费</th></tr></thead><tbody>${oneOnOneRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
     <h4>多人课分布数据</h4>
-    ${groupRows.length > 0 ? `<table><thead><tr><th>机构</th><th>年级</th><th>上课人数</th><th>课节数</th><th>课时费</th></tr></thead><tbody>${groupRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
+    ${groupRows.length > 0 ? `<table><thead><tr><th>机构</th><th>年级</th><th class="num">上课人数</th><th class="num">课节数</th><th class="num">课时费</th></tr></thead><tbody>${groupRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
   </div>
   <div class="card">
     <h3>学生课量数据</h3>
-    ${stats.studentStats.length > 0 ? `<table><thead><tr><th>学生姓名</th><th>所属机构</th><th>年级</th><th>课节数</th><th>课时费</th></tr></thead><tbody>${studentRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
+    ${stats.studentStats.length > 0 ? `<table><thead><tr><th>学生姓名</th><th>所属机构</th><th>年级</th><th class="num">课节数</th><th class="num">课时费</th></tr></thead><tbody>${studentRowsHtml}</tbody></table>` : '<div class="empty">暂无数据</div>'}
   </div>
 </div>
 </body>

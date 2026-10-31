@@ -119,7 +119,7 @@ export default function ConflictModal({
               </div>
 
               {/* 冲突的已有课程 */}
-              <div className="text-xs text-gray-400">与以下课程冲突：</div>
+              <div className="text-xs text-gray-500">与以下课程冲突：</div>
               {conflict.conflictingCourses.map((c) => (
                 <div
                   key={c.id}

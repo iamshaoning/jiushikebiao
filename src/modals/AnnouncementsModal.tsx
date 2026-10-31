@@ -76,9 +76,9 @@ export default function AnnouncementsModal({ open, onClose }: AnnouncementsModal
   return (
     <Modal open={open} onClose={onClose} title="公告板" width="max-w-lg">
       {loading ? (
-        <div className="text-center py-10 text-gray-400">加载中...</div>
+        <div className="text-center py-10 text-gray-500">加载中...</div>
       ) : announcements.length === 0 ? (
-        <div className="text-center py-10 text-gray-400">
+        <div className="text-center py-10 text-gray-500">
           <Bell className="w-10 h-10 mx-auto mb-2 opacity-50" />
           <p>暂无公告</p>
         </div>
@@ -92,7 +92,7 @@ export default function AnnouncementsModal({ open, onClose }: AnnouncementsModal
               <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
                 {a.content}
               </div>
-              <div className="text-xs text-gray-400 flex items-center gap-1 mt-2">
+              <div className="text-xs text-gray-500 flex items-center gap-1 mt-2">
                 <Clock className="w-3 h-3" />
                 {formatTime(a.created_at)}
               </div>

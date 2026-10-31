@@ -446,7 +446,7 @@ export default function CourseFormModal({
               className="input-field"
             />
           ) : sortedStudents.length === 0 ? (
-            <div className="text-sm p-3 border rounded-md text-gray-400 border-ink-200 bg-[var(--bg-content)]">
+            <div className="text-sm p-3 border rounded-md text-gray-500 border-ink-200 bg-[var(--bg-content)]">
               暂无学生，请先添加学生
             </div>
           ) : (

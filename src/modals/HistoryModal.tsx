@@ -167,7 +167,7 @@ function renderStudentDiff(before: Student, after: Student): ReactNode {
   };
   const renderRow = (s: Student, label: string) => (
     <div className="text-xs flex items-center gap-1 flex-wrap">
-      <span className="text-gray-400">{label}</span>
+      <span className="text-gray-500">{label}</span>
       {renderCourseField('姓名', s.name, changed.name)}
       {renderSep()}
       {renderCourseField('机构', s.organization || '未设置', changed.org)}
@@ -202,7 +202,7 @@ function renderManageDiff(before: ManageState, after: ManageState, isOrg: boolea
       if (beforeList[i] !== afterList[i]) {
         lines.push(
           <div key={`rn-${i}`} className="text-xs flex items-center gap-1 flex-wrap">
-            <span className="text-gray-400">旧</span>
+            <span className="text-gray-500">旧</span>
             {renderCourseField(itemName, beforeList[i], true)}
             <span className="text-amber-500 text-xs">→</span>
             {renderCourseField(itemName, afterList[i], true)}
@@ -216,7 +216,7 @@ function renderManageDiff(before: ManageState, after: ManageState, isOrg: boolea
       if (afterColors[k] !== beforeColors[k]) {
         lines.push(
           <div key={`cl-${k}`} className="text-xs flex items-center gap-1 flex-wrap">
-            <span className="text-gray-400">{itemName}</span>
+            <span className="text-gray-500">{itemName}</span>
             <span className="text-gray-600">{k}</span>
             <span className="text-amber-500 text-xs">颜色</span>
             <span
@@ -236,7 +236,7 @@ function renderManageDiff(before: ManageState, after: ManageState, isOrg: boolea
     if (removed.length > 0) {
       lines.push(
         <div key="rm" className="text-xs flex items-center gap-1 flex-wrap">
-          <span className="text-gray-400">删除</span>
+          <span className="text-gray-500">删除</span>
           {removed.map((r, i) => (
             <span key={r} className="bg-red-100 text-red-600 px-1 rounded font-medium">
               {r}
@@ -249,7 +249,7 @@ function renderManageDiff(before: ManageState, after: ManageState, isOrg: boolea
     if (added.length > 0) {
       lines.push(
         <div key="ad" className="text-xs flex items-center gap-1 flex-wrap">
-          <span className="text-gray-400">新增</span>
+          <span className="text-gray-500">新增</span>
           {added.map((a, i) => (
             <span key={a} className="bg-green-100 text-green-700 px-1 rounded font-medium">
               {a}
@@ -284,7 +284,7 @@ function renderManageDiff(before: ManageState, after: ManageState, isOrg: boolea
 function renderUpgradeDiff(before: UpgradeState, after: UpgradeState): ReactNode {
   const renderRow = (label: string, st: UpgradeState, changed: boolean) => (
     <div className="text-xs flex items-center gap-1 flex-wrap">
-      <span className="text-gray-400">{label}</span>
+      <span className="text-gray-500">{label}</span>
       {renderCourseField('学生', `${st.students.length} 人`, changed)}
       {renderSep()}
       {renderCourseField('课程', `${st.courses.length} 节`, changed)}
@@ -308,7 +308,7 @@ function renderUpgradePlanDiff(before: UpgradePlan | null, after: UpgradePlan | 
     (before?.status ?? '') !== (after?.status ?? '');
   const renderRow = (label: string, plan: UpgradePlan | null) => (
     <div className="text-xs flex items-center gap-1 flex-wrap">
-      <span className="text-gray-400">{label}</span>
+      <span className="text-gray-500">{label}</span>
       {plan
         ? renderCourseField('计划', `${plan.newTermStart} 起（${plan.status}）`, changed)
         : renderCourseField('计划', '无', changed)}
@@ -398,9 +398,9 @@ function renderDetail(record: HistoryRecord): ReactNode {
         <div className="space-y-1">
           {students.map((s) => (
             <div key={s.id} className="text-xs text-gray-500">
-              <span className="text-gray-400">机构:</span> {s.organization || '未设置'}
+              <span className="text-gray-500">机构:</span> {s.organization || '未设置'}
               <span className="mx-2 text-gray-400">·</span>
-              <span className="text-gray-400">年级:</span> {s.grade || '未设置'}
+              <span className="text-gray-500">年级:</span> {s.grade || '未设置'}
             </div>
           ))}
           {deletedCourses.length > 0 && (
@@ -445,8 +445,8 @@ function renderDetail(record: HistoryRecord): ReactNode {
       const snapshotDate = record.meta?.snapshotDate as string;
       return (
         <div className="text-xs text-gray-500 space-y-0.5">
-          {snapshotType && <div><span className="text-gray-400">快照类型:</span> {snapshotType}</div>}
-          {snapshotDate && <div><span className="text-gray-400">快照时间:</span> {snapshotDate}</div>}
+          {snapshotType && <div><span className="text-gray-500">快照类型:</span> {snapshotType}</div>}
+          {snapshotDate && <div><span className="text-gray-500">快照时间:</span> {snapshotDate}</div>}
         </div>
       );
     }
@@ -568,7 +568,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="操作历史" footer={footer} width="max-w-lg">
       {records.length === 0 ? (
-        <div className="text-center py-10 text-gray-400">
+        <div className="text-center py-10 text-gray-500">
           <HistoryIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
           <p>暂无操作历史</p>
           <p className="text-xs mt-1">添加/修改/删除课程等操作将记录在此</p>

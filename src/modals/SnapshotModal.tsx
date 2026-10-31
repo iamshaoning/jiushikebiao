@@ -132,7 +132,7 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
     return (
       <div
         key={snap.id}
-        className="p-3 border border-ink-200 rounded-lg mb-2 flex justify-between items-center bg-white"
+        className="p-3 border border-ink-200 rounded-lg mb-2 min-h-[70px] flex justify-between items-center bg-white"
       >
         <div className="flex items-center gap-2 min-w-0">
           <Icon className={`w-4 h-4 flex-shrink-0 ${meta.color}`} />
@@ -186,14 +186,14 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
       <div className="max-h-[60vh] overflow-y-auto">
         {/* 自动快照：已有 + 空栏位 */}
         <div className="mb-6">
-          <h4 className="text-sm font-medium mb-2 text-gray-700">自动快照（每15分钟，保留2个）</h4>
+          <h3 className="text-sm font-medium mb-2 text-gray-700">自动快照（每15分钟，保留2个）</h3>
           {autoSnapshots.map((snap) => renderSnapshotItem(snap, false, false))}
           {Array.from({ length: autoEmptySlots }).map((_, i) => (
             <div
               key={`auto-empty-${i}`}
-              className="p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center bg-white"
+              className="p-3 border border-ink-200 rounded-lg mb-2 min-h-[70px] flex justify-center items-center bg-white"
             >
-              <div className="text-center text-gray-400">
+              <div className="text-center text-gray-500">
                 <Clock className="w-4 h-4 mx-auto mb-1" />
                 <div className="text-sm">等待自动创建</div>
               </div>
@@ -203,24 +203,24 @@ export default function SnapshotModal({ open, onClose }: SnapshotModalProps) {
 
         {/* 手动快照：已有 + 空栏位 */}
         <div className="mb-6">
-          <h4 className="text-sm font-medium mb-2 text-gray-700">手动快照（最多3个）</h4>
+          <h3 className="text-sm font-medium mb-2 text-gray-700">手动快照（最多3个）</h3>
           {manualSnapshots.map((snap) => renderSnapshotItem(snap, true, true))}
           {/* 空栏位：点击创建 */}
           {Array.from({ length: manualEmptySlots }).map((_, i) => (
             <button
               key={`empty-${i}`}
               onClick={handleCreate}
-              className="w-full p-3 border border-ink-200 rounded-lg mb-2 flex justify-center items-center cursor-pointer bg-white hover:bg-ink-50 transition-colors"
+              className="w-full p-3 border border-ink-200 rounded-lg mb-2 min-h-[70px] flex flex-col justify-center items-center cursor-pointer bg-white hover:bg-ink-50 transition-colors"
             >
-              <div className="text-center">
-                <Plus className="w-4 h-4 mx-auto mb-1 text-gray-400" />
-                <div className="text-sm text-gray-400">空快照栏位 {manualSnapshots.length + i + 1}</div>
-                <div className="text-xs text-gray-400">点击创建快照</div>
+              <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                <Plus className="w-4 h-4 text-gray-400" />
+                空快照栏位 {manualSnapshots.length + i + 1}
               </div>
+              <div className="text-xs text-gray-500 mt-0.5">点击创建快照</div>
             </button>
           ))}
           {manualSnapshots.length === 0 && manualEmptySlots === 0 && (
-            <p className="text-center p-3 border border-ink-200 rounded-lg text-sm text-gray-400">
+            <p className="text-center p-3 border border-ink-200 rounded-lg text-sm text-gray-500">
               暂无快照
             </p>
           )}

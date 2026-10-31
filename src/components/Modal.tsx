@@ -107,7 +107,7 @@ export default function Modal({
   // 断点统一为 desktop(1100px)，与侧边栏显示断点一致，避免 md/lg 与 desktop 错位产生空白
   const overlayCls = nested
     ? 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[60] flex items-center justify-center p-4'
-    : 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 backdrop-blur-sm z-40 flex items-center justify-center p-4';
+    : 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-40 flex items-center justify-center p-4';
 
   // 遮罩关闭：用 onMouseDown + target 判断，而非 onClick。
   // onClick 会在 mousedown/mouseup 目标不一致时触发在共同祖先（遮罩）上，
@@ -138,9 +138,9 @@ export default function Modal({
       >
         {!hideHeader && (
           <div className="flex items-center justify-between px-5 py-4 border-b border-ink-100 shrink-0">
-            <h3 id={titleId} className="font-display text-lg font-bold text-ink-700">
+            <h2 id={titleId} className="font-display text-lg font-bold text-ink-700">
               {title}
-            </h3>
+            </h2>
             <button
               onClick={onClose}
               className="p-1 rounded hover:bg-ink-50 text-gray-400 hover:text-ink-700"
