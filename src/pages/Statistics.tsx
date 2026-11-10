@@ -148,11 +148,9 @@ export default function Statistics() {
     ...organizations.map((o) => ({ value: o, label: o })),
   ];
 
-  // 机构选择器固定宽度：按最长机构名计算，保证所有选项文本完整显示，不被拉满剩余空间
-  const orgSelectWidth = useMemo(() => {
-    const maxLen = orgOptions.reduce((m, o) => Math.max(m, o.label.length), 0);
-    return Math.min(176, Math.max(96, maxLen * 14 + 48));
-  }, [organizations]);
+  // 机构选择器固定宽度：等于「年份选择器 + 间距 + 月份选择器」的宽度，
+  // 使其在窄屏换行后右边缘与月份选择器右边缘对齐（38 + 96 + 6 + 80 - 38 = 182）
+  const ORG_SELECT_WIDTH = 182;
 
   // 月份切换
   const prevMonth = () => {
@@ -375,23 +373,25 @@ export default function Statistics() {
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
-        <div className="shrink-0" style={{ width: orgSelectWidth }}>
-          <CustomSelect
-            value={orgFilter}
-            options={orgOptions}
-            onChange={(v) => setOrgFilter(v as string)}
-            className="w-full"
-          />
+        {/* 窄屏独占一行：左侧留出「上一周期」按钮的宽度与间距，使选择器左边缘与年份选择器对齐；桌面端由 contents 打回外层 */}
+        <div className="basis-full pl-[38px] pr-4 flex items-center gap-1.5 desktop:pl-0 desktop:pr-0 desktop:basis-auto desktop:contents">
+          <div className="shrink-0" style={{ width: ORG_SELECT_WIDTH }}>
+            <CustomSelect
+              value={orgFilter}
+              options={orgOptions}
+              onChange={(v) => setOrgFilter(v as string)}
+              className="w-full"
+            />
+          </div>
+          <button
+            onClick={handleExport}
+            className="btn-primary shrink-0 px-4 desktop:ml-auto"
+            aria-label="导出统计"
+          >
+            <Download className="w-4 h-4" />
+            导出
+          </button>
         </div>
-        {/* 导出按钮在窄屏隐藏，把宽度让给机构选择器 */}
-        <button
-          onClick={handleExport}
-          className="hidden desktop:flex btn-primary ml-auto shrink-0 px-4"
-          aria-label="导出统计"
-        >
-          <Download className="w-4 h-4" />
-          导出
-        </button>
       </div>
 
       {/* 统计卡片（3张，含图标） */}
