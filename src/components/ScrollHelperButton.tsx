@@ -50,7 +50,8 @@ export default function ScrollHelperButton({ mode, onClick, hidden = false }: Sc
   // bottom 取值使按钮竖直中心线与浮动操作栏中心线重合（移动端 FAB 高 56 → 中心 52，按钮 44 高 → bottom 30）
   return (
     <div className="fixed inset-x-0 bottom-[30px] desktop:bottom-6 z-40 pointer-events-none">
-      <div className="max-w-7xl mx-auto px-4 desktop:px-10 flex justify-end">
+      {/* 窄屏与内容区右边缘对齐（留 16px）；桌面端脱离内容容器，距窗口右侧 40px */}
+      <div className="mx-auto px-4 max-w-7xl desktop:max-w-none desktop:px-[40px] flex justify-end">
         <button
           onClick={() => {
             onClick();
@@ -58,7 +59,7 @@ export default function ScrollHelperButton({ mode, onClick, hidden = false }: Sc
           }}
           aria-label={label}
           title={label}
-          className={`mr-4 w-11 h-11 desktop:w-12 desktop:h-12 rounded-full bg-ink-700 text-white shadow-lift flex items-center justify-center transition-all duration-300 hover:bg-ink-600 active:scale-95 ${
+          className={`mr-4 desktop:mr-0 w-11 h-11 desktop:w-12 desktop:h-12 rounded-full bg-ink-700 text-white shadow-lift flex items-center justify-center transition-all duration-300 hover:bg-ink-600 active:scale-95 ${
             shown ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none'
           }`}
         >

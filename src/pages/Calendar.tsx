@@ -132,6 +132,10 @@ export default function Calendar() {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+  // 窄屏多选模式：长按进入，点击空白处退出（滚动不退出，便于跨屏多选）
+  const [multiDateMode, setMultiDateMode] = useState(false);
+  const [multiCourseMode, setMultiCourseMode] = useState(false);
+
   // 全局拖拽监听：mousedown 在页面任意空白处启动自由拖拽，mousemove 绘制框线，mouseup 结束
   useEffect(() => {
     const onGlobalMouseDown = (e: MouseEvent) => {
@@ -147,6 +151,8 @@ export default function Calendar() {
           return;
         }
         clearSelections();
+        setMultiDateMode(false);
+        setMultiCourseMode(false);
         return;
       }
       // 点击交互元素/课程标签/模态框/FAB：不启动拖拽
@@ -174,6 +180,8 @@ export default function Calendar() {
         return;
       }
       clearSelections();
+      setMultiDateMode(false);
+      setMultiCourseMode(false);
     };
 
     const onGlobalMouseMove = (e: MouseEvent) => {
@@ -306,7 +314,6 @@ export default function Calendar() {
 
   // —— 窄屏日期多选 ——
   // 长按日期格 500ms 进入多选模式，之后点击格子为切换选中；点击空白处退出
-  const [multiDateMode, setMultiDateMode] = useState(false);
   const multiDateModeRef = useRef(false);
   multiDateModeRef.current = multiDateMode;
   const datePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -323,6 +330,8 @@ export default function Calendar() {
   const handleDateTouchStart = (dateStr: string, e: React.TouchEvent) => {
     // 课程标签有自己的点击/长按语义，不启动日期多选
     if ((e.target as HTMLElement).closest('.course-tag-item')) return;
+    // 已在多选中：不再计时长按，点击交给 click 处理（方便跨屏滚动多选）
+    if (multiDateModeRef.current) return;
     const t = e.touches[0];
     datePressStartRef.current = { x: t.clientX, y: t.clientY };
     dateLongPressFiredRef.current = false;
@@ -353,7 +362,7 @@ export default function Calendar() {
     datePressStartRef.current = null;
   };
 
-  // 选中项被清空时自动退出多选模式
+  // 选中项被清空时退出多选模式
   useEffect(() => {
     if (selectedDates.length === 0 && multiDateMode) setMultiDateMode(false);
   }, [selectedDates.length, multiDateMode]);
@@ -452,9 +461,79 @@ export default function Calendar() {
     setSelectedDates(dates);
   };
 
+  // —— 窄屏课程多选 ——
+  // 长按课程标签 500ms 进入课程多选，之后点击标签为切换选中
+  const multiCourseModeRef = useRef(false);
+  multiCourseModeRef.current = multiCourseMode;
+  const coursePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const coursePressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const courseLongPressFiredRef = useRef(false);
+
+  const clearCoursePressTimer = () => {
+    if (coursePressTimerRef.current) {
+      clearTimeout(coursePressTimerRef.current);
+      coursePressTimerRef.current = null;
+    }
+  };
+
+  const handleCourseTouchStart = (course: Course, e: React.TouchEvent) => {
+    // 阻止冒泡到日期格，避免同时触发日期多选
+    e.stopPropagation();
+    // 已在多选中：不再计时长按，点击交给 click 处理（方便跨屏滚动多选）
+    if (multiCourseModeRef.current) return;
+    const t = e.touches[0];
+    coursePressStartRef.current = { x: t.clientX, y: t.clientY };
+    courseLongPressFiredRef.current = false;
+    clearCoursePressTimer();
+    coursePressTimerRef.current = setTimeout(() => {
+      courseLongPressFiredRef.current = true;
+      setMultiCourseMode(true);
+      setSelectedDates([]);
+      const current = useStore.getState().selectedCourseIds;
+      if (!current.includes(course.id)) setSelectedCourseIds([...current, course.id]);
+      toast.info('已进入课程多选，点击课程继续选择');
+    }, 500);
+  };
+
+  // 手指移动超过 10px 视为滚动，取消长按
+  const handleCourseTouchMove = (e: React.TouchEvent) => {
+    const start = coursePressStartRef.current;
+    if (!start) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - start.x) > 10 || Math.abs(t.clientY - start.y) > 10) {
+      clearCoursePressTimer();
+      coursePressStartRef.current = null;
+    }
+  };
+
+  const handleCourseTouchEnd = () => {
+    clearCoursePressTimer();
+    coursePressStartRef.current = null;
+  };
+
+  // 选中项被清空时退出多选模式
+  useEffect(() => {
+    if (selectedCourseIds.length === 0 && multiCourseMode) setMultiCourseMode(false);
+  }, [selectedCourseIds.length, multiCourseMode]);
+
   // 课程点击
   const handleCourseClick = (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
+    // 长按触发的那次点击已由长按逻辑处理，忽略随后的 click
+    if (courseLongPressFiredRef.current) {
+      courseLongPressFiredRef.current = false;
+      return;
+    }
+    // 课程多选模式：点击切换，不覆盖已有选择
+    if (multiCourseModeRef.current) {
+      setSelectedDates([]);
+      setSelectedCourseIds(
+        selectedCourseIds.includes(course.id)
+          ? selectedCourseIds.filter((id) => id !== course.id)
+          : [...selectedCourseIds, course.id],
+      );
+      return;
+    }
     // 再次点击已选中的课程即取消选中（窄屏没有 Ctrl 键，用点击切换更直接）
     if (
       !e.ctrlKey &&
@@ -781,12 +860,16 @@ export default function Calendar() {
                             backgroundColor: `color-mix(in srgb, ${primaryColor} 10%, transparent)`,
                           } as React.CSSProperties}
                           onClick={(e) => handleCourseClick(course, e)}
+                          onTouchStart={(e) => handleCourseTouchStart(course, e)}
+                          onTouchMove={handleCourseTouchMove}
+                          onTouchEnd={handleCourseTouchEnd}
+                          onTouchCancel={handleCourseTouchEnd}
                         >
                           {course.frozen && (
                             <Snowflake className="absolute top-1.5 right-1.5 w-[18px] h-[18px] text-[#7dd3fc] pointer-events-none z-20" strokeWidth={2.5} />
                           )}
                           <div className="p-1">
-                            {/* 学生姓名：单行不换行，过长渐隐；选中后左右滚动播放 */}
+                            {/* 学生姓名：单行不换行，过长渐隐；选中该课程或该日期后左右滚动播放 */}
                             <Marquee
                               active={isSelectedCourse || isSelected}
                               className="mb-0.5"

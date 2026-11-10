@@ -148,6 +148,12 @@ export default function Statistics() {
     ...organizations.map((o) => ({ value: o, label: o })),
   ];
 
+  // 机构选择器固定宽度：按最长机构名计算，保证所有选项文本完整显示，不被拉满剩余空间
+  const orgSelectWidth = useMemo(() => {
+    const maxLen = orgOptions.reduce((m, o) => Math.max(m, o.label.length), 0);
+    return Math.min(176, Math.max(96, maxLen * 14 + 48));
+  }, [organizations]);
+
   // 月份切换
   const prevMonth = () => {
     if (month === 'all') {
@@ -342,7 +348,7 @@ export default function Statistics() {
       </div>
 
       {/* 筛选器：无外轮廓；本月移到下月右侧，导出按钮移到末尾（原本月位置） */}
-      <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
+      <div className="flex items-center gap-1.5 desktop:gap-3 flex-wrap desktop:flex-nowrap">
         <button
           onClick={prevMonth}
           className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
@@ -369,19 +375,22 @@ export default function Statistics() {
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
         </button>
-        <CustomSelect
-          value={orgFilter}
-          options={orgOptions}
-          onChange={(v) => setOrgFilter(v as string)}
-          className="min-w-0 desktop:flex-none desktop:w-32 desktop:shrink-0"
-        />
+        <div className="shrink-0" style={{ width: orgSelectWidth }}>
+          <CustomSelect
+            value={orgFilter}
+            options={orgOptions}
+            onChange={(v) => setOrgFilter(v as string)}
+            className="w-full"
+          />
+        </div>
+        {/* 导出按钮在窄屏隐藏，把宽度让给机构选择器 */}
         <button
           onClick={handleExport}
-          className="btn-primary ml-auto shrink-0 px-2.5 desktop:px-4"
+          className="hidden desktop:flex btn-primary ml-auto shrink-0 px-4"
           aria-label="导出统计"
         >
           <Download className="w-4 h-4" />
-          <span className="hidden desktop:inline">导出</span>
+          导出
         </button>
       </div>
 

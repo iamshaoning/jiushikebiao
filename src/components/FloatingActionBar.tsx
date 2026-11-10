@@ -119,7 +119,7 @@ export default function FloatingActionBar({
             title={isMultiDate ? '批量添加课程' : '添加课程'}
           >
             <Plus className="w-4 h-4" />
-            {isMultiDate ? '批量添加' : '添加'}
+            添加
           </button>
         )}
 
@@ -131,7 +131,7 @@ export default function FloatingActionBar({
             title={isMultiStudent ? '批量编辑学生' : isSingleCourse ? '编辑课程' : '编辑学生'}
           >
             <Pencil className="w-4 h-4" />
-            {isMultiStudent ? '批量编辑' : '编辑'}
+            编辑
           </button>
         )}
 
@@ -155,7 +155,7 @@ export default function FloatingActionBar({
             title={isMultiDate ? '批量粘贴课程' : '粘贴课程'}
           >
             <ClipboardPaste className="w-4 h-4" />
-            {isMultiDate ? '批量粘贴' : '粘贴'}
+            粘贴
           </button>
         )}
 
@@ -167,7 +167,7 @@ export default function FloatingActionBar({
             title={isMulti ? '批量删除' : '删除'}
           >
             <Trash2 className="w-4 h-4" />
-            {isMulti ? '批量删除' : '删除'}
+            删除
           </button>
         )}
       </div>

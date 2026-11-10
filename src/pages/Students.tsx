@@ -184,11 +184,27 @@ export default function Students() {
     onConfirm: () => void;
   }>({ open: false, message: '', type: 'confirm', onConfirm: () => {} });
 
+  // 移动端多选模式：长按卡片进入，点击空白处退出（滚动不退出，便于跨屏多选）
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+
   // 全局拖拽监听：mousedown 在页面任意空白处启动自由拖拽，mousemove 绘制框线+相交检测，mouseup 结束
   useEffect(() => {
     const onGlobalMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       const target = e.target as HTMLElement;
+      // 窄屏（手机触摸或窄桌面窗口）：不做自由拖拽框选，点击空白处仅取消选中
+      if (window.innerWidth < 1100) {
+        if (
+          target.closest(
+            'button, input, select, textarea, .modal-overlay, .floating-action-bar, .student-card, .student-org-group-header',
+          )
+        ) {
+          return;
+        }
+        setSelectedStudentIds([]);
+        setMultiSelectMode(false);
+        return;
+      }
       // 点击交互元素/FAB/模态框/机构表头（表头用于长按排序）：不启动拖拽
       if (target.closest('button, input, select, textarea, .modal-overlay, .floating-action-bar, .student-org-group-header')) return;
       // 点击学生行/卡片：由行的 onMouseDown 处理
@@ -250,6 +266,7 @@ export default function Students() {
         return;
       }
       setSelectedStudentIds([]);
+      setMultiSelectMode(false);
     };
 
     window.addEventListener('mousedown', onGlobalMouseDown);
@@ -479,7 +496,6 @@ export default function Students() {
 
   // —— 移动端长按多选 ——
   // 手指无法像鼠标那样框选，改为长按卡片 500ms 进入多选模式，之后单击即切换选中
-  const [multiSelectMode, setMultiSelectMode] = useState(false);
   const multiSelectModeRef = useRef(false);
   multiSelectModeRef.current = multiSelectMode;
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -494,6 +510,8 @@ export default function Students() {
   };
 
   const handleCardTouchStart = (id: string, e: React.TouchEvent) => {
+    // 已在多选中：不再计时长按，点击交给 click 处理（方便跨屏滚动多选）
+    if (multiSelectModeRef.current) return;
     const t = e.touches[0];
     pressStartRef.current = { x: t.clientX, y: t.clientY };
     longPressFiredRef.current = false;
@@ -523,7 +541,7 @@ export default function Students() {
     pressStartRef.current = null;
   };
 
-  // 选中项被清空时自动退出多选模式
+  // 选中项被清空时退出多选模式
   useEffect(() => {
     if (selectedStudentIds.length === 0 && multiSelectMode) setMultiSelectMode(false);
   }, [selectedStudentIds.length, multiSelectMode]);
@@ -554,6 +572,9 @@ export default function Students() {
           ? selectedStudentIds.filter((x) => x !== id)
           : [...selectedStudentIds, id],
       );
+    } else if (selectedStudentIds.includes(id)) {
+      // 再次点击已选中的学生即取消选择
+      setSelectedStudentIds(selectedStudentIds.filter((x) => x !== id));
     } else {
       setSelectedStudentIds([id]);
     }
@@ -561,6 +582,8 @@ export default function Students() {
 
   // 拖拽框选（从卡片/行上按下鼠标启动）
   const handleDragStart = (e: React.MouseEvent) => {
+    // 窄屏不支持框选，仅保留点击/长按多选
+    if (window.innerWidth < 1100) return;
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
