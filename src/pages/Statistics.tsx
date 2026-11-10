@@ -24,7 +24,8 @@ import {
   type DetailedStatItem,
 } from '@/lib/statistics';
 import { exportStatsHTML } from '@/lib/export';
-import { generateColor } from '@/lib/utils';
+import { generateColor, scrollMainToTop } from '@/lib/utils';
+import ScrollHelperButton from '@/components/ScrollHelperButton';
 import {
   Download,
   ChevronLeft,
@@ -344,7 +345,7 @@ export default function Statistics() {
       <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
         <button
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
           aria-label="上一周期"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
@@ -363,7 +364,7 @@ export default function Statistics() {
         />
         <button
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
           aria-label="下一周期"
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
@@ -729,6 +730,9 @@ export default function Statistics() {
           </div>
         </>
       )}
+
+      {/* 右下角快捷按钮：回到顶部 */}
+      <ScrollHelperButton mode="top" onClick={scrollMainToTop} />
 
       {/* 课程详情弹窗（统一处理学生/课型/机构+年级+人数筛选） */}
       <Modal

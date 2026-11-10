@@ -37,6 +37,8 @@ import {
 } from 'lucide-react';
 
 import PageLoading from '@/components/PageLoading';
+import ScrollHelperButton from '@/components/ScrollHelperButton';
+import Marquee from '@/components/Marquee';
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
@@ -134,9 +136,19 @@ export default function Calendar() {
   useEffect(() => {
     const onGlobalMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
-      // 移动端列表视图不启用自由拖拽（触摸交互由 touchstart 处理）
-      if (isMobile) return;
       const target = e.target as HTMLElement;
+      // 窄屏（手机触摸或窄桌面窗口）：不做自由拖拽框选，点击空白处直接取消选中
+      if (isMobile) {
+        if (
+          target.closest(
+            'button, input, select, textarea, .modal-overlay, .floating-action-bar, .course-tag-item, .mobile-day-card',
+          )
+        ) {
+          return;
+        }
+        clearSelections();
+        return;
+      }
       // 点击交互元素/课程标签/模态框/FAB：不启动拖拽
       if (target.closest('button, input, select, textarea, .modal-overlay, .floating-action-bar, .course-tag-item')) return;
       // 点击日历格子：由格子的 onMouseDown 处理
@@ -292,6 +304,101 @@ export default function Calendar() {
     [selectedDates, selectedCourseIds, setSelectedDates, setSelectedCourseIds],
   );
 
+  // —— 窄屏日期多选 ——
+  // 长按日期格 500ms 进入多选模式，之后点击格子为切换选中；点击空白处退出
+  const [multiDateMode, setMultiDateMode] = useState(false);
+  const multiDateModeRef = useRef(false);
+  multiDateModeRef.current = multiDateMode;
+  const datePressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const datePressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const dateLongPressFiredRef = useRef(false);
+
+  const clearDatePressTimer = () => {
+    if (datePressTimerRef.current) {
+      clearTimeout(datePressTimerRef.current);
+      datePressTimerRef.current = null;
+    }
+  };
+
+  const handleDateTouchStart = (dateStr: string, e: React.TouchEvent) => {
+    // 课程标签有自己的点击/长按语义，不启动日期多选
+    if ((e.target as HTMLElement).closest('.course-tag-item')) return;
+    const t = e.touches[0];
+    datePressStartRef.current = { x: t.clientX, y: t.clientY };
+    dateLongPressFiredRef.current = false;
+    clearDatePressTimer();
+    datePressTimerRef.current = setTimeout(() => {
+      dateLongPressFiredRef.current = true;
+      setMultiDateMode(true);
+      const current = useStore.getState().selectedDates;
+      setSelectedCourseIds([]);
+      if (!current.includes(dateStr)) setSelectedDates([...current, dateStr]);
+      toast.info('已进入日期多选，点击格子继续选择');
+    }, 500);
+  };
+
+  // 手指移动超过 10px 视为滚动，取消长按
+  const handleDateTouchMove = (e: React.TouchEvent) => {
+    const start = datePressStartRef.current;
+    if (!start) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - start.x) > 10 || Math.abs(t.clientY - start.y) > 10) {
+      clearDatePressTimer();
+      datePressStartRef.current = null;
+    }
+  };
+
+  const handleDateTouchEnd = () => {
+    clearDatePressTimer();
+    datePressStartRef.current = null;
+  };
+
+  // 选中项被清空时自动退出多选模式
+  useEffect(() => {
+    if (selectedDates.length === 0 && multiDateMode) setMultiDateMode(false);
+  }, [selectedDates.length, multiDateMode]);
+
+  // 窄屏日期点选：多选模式切换选中；否则单选，再点已选日期则取消
+  const toggleDateMobile = useCallback(
+    (dateStr: string) => {
+      // 长按触发的那次点击已由长按逻辑处理，忽略随后的 click
+      if (dateLongPressFiredRef.current) {
+        dateLongPressFiredRef.current = false;
+        return;
+      }
+      setSelectedCourseIds([]);
+      if (multiDateModeRef.current) {
+        setSelectedDates(
+          selectedDates.includes(dateStr)
+            ? selectedDates.filter((d) => d !== dateStr)
+            : [...selectedDates, dateStr],
+        );
+        return;
+      }
+      if (selectedDates.length === 1 && selectedDates[0] === dateStr) {
+        clearSelections();
+        return;
+      }
+      setSelectedDates([dateStr]);
+    },
+    [selectedDates, clearSelections, setSelectedDates, setSelectedCourseIds],
+  );
+
+  // 定位到今天：不在当前月份时先切月，等渲染完成后再滚动到格子中部
+  const locateToday = useCallback(() => {
+    const now = new Date();
+    const doScroll = () => {
+      const el = document.querySelector<HTMLElement>(`[data-date="${todayStr}"]`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    if (now.getFullYear() !== currentYear || now.getMonth() !== currentMonth) {
+      setCurrentMonth(now.getFullYear(), now.getMonth());
+      requestAnimationFrame(() => requestAnimationFrame(doScroll));
+    } else {
+      doScroll();
+    }
+  }, [currentYear, currentMonth, setCurrentMonth, todayStr]);
+
   // 拖拽开始
   const handleMouseDown = (dateStr: string, e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -348,6 +455,16 @@ export default function Calendar() {
   // 课程点击
   const handleCourseClick = (course: Course, e: React.MouseEvent) => {
     e.stopPropagation();
+    // 再次点击已选中的课程即取消选中（窄屏没有 Ctrl 键，用点击切换更直接）
+    if (
+      !e.ctrlKey &&
+      !e.metaKey &&
+      selectedCourseIds.length === 1 &&
+      selectedCourseIds[0] === course.id
+    ) {
+      clearSelections();
+      return;
+    }
     setSelectedDates([]);
 
     if (e.ctrlKey || e.metaKey) {
@@ -545,7 +662,7 @@ export default function Calendar() {
       <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
         <button
           onClick={prevMonth}
-          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
           aria-label="上个月"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
@@ -564,7 +681,7 @@ export default function Calendar() {
         />
         <button
           onClick={nextMonth}
-          className="p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
           aria-label="下个月"
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
@@ -579,9 +696,9 @@ export default function Calendar() {
         </button>
       </div>
 
-      {/* 移动端：列表视图（每天一卡，全宽显示课程，避免 7 列格子过窄） */}
+      {/* 移动端：自适应多格布局（空日期格自动变矮，每行按可用宽度排列多个格子） */}
       {isMobile && (
-        <div className="desktop:hidden space-y-2">
+        <div className="desktop:hidden flex flex-wrap items-start gap-2">
           {cells.filter((c) => c.isCurrent).map((cell) => {
             const dayCourses = coursesByDate.get(cell.dateStr) || [];
             const dateInfo = getDateInfo(cell.dateStr);
@@ -594,84 +711,114 @@ export default function Calendar() {
             return (
               <div
                 key={cell.dateStr}
-                className={`mobile-day-card rounded-lg border overflow-hidden cursor-pointer transition-colors bg-[var(--bg-content)] ${
+                data-date={cell.dateStr}
+                className={`mobile-day-card min-w-0 shrink-0 rounded-lg border overflow-hidden cursor-pointer transition-shadow bg-[var(--bg-content)] ${
+                  dayCourses.length > 0
+                    ? 'basis-full'
+                    : 'grow basis-[140px] min-w-[130px] min-h-[60px] flex flex-col justify-center'
+                } ${
                   isSelected
-                    ? 'border-amber-400 bg-amber-50/60'
+                    ? 'border-ink ring-2 ring-inset ring-ink'
                     : isToday
-                      ? 'border-amber-300'
-                      : 'border-ink-200'
+                      ? 'border-amber-500 ring-2 ring-inset ring-amber-500'
+                      : 'border-ink-100'
                 }`}
-                onClick={(e) => selectDate(cell.dateStr, e)}
+                onClick={() => toggleDateMobile(cell.dateStr)}
+                onTouchStart={(e) => handleDateTouchStart(cell.dateStr, e)}
+                onTouchMove={handleDateTouchMove}
+                onTouchEnd={handleDateTouchEnd}
+                onTouchCancel={handleDateTouchEnd}
               >
                 {/* 日期头 */}
-                <div className="flex items-center gap-2 px-3 py-2">
+                <div className="flex items-center gap-1 px-2 py-1.5 flex-wrap">
                   <span
-                    className={`text-sm font-medium ${
+                    className={`text-base font-semibold leading-none ${
                       isToday ? 'text-amber-600' : isWeekend ? 'text-gray-500' : 'text-gray-700'
                     }`}
                   >
                     {cell.day}
                   </span>
-                  <span className="text-xs text-gray-500">{weekdayLabel}</span>
+                  <span className="text-[11px] text-gray-500">{weekdayLabel}</span>
                   {dateInfo?.isHoliday && dateInfo.name && (
                     <span
-                      className="px-1.5 h-5 rounded text-[10px] font-semibold inline-flex items-center justify-center"
+                      className="px-1 h-4 rounded text-[10px] font-semibold inline-flex items-center justify-center"
                       style={getHolidayTagStyle(dateInfo.name)}
                     >
                       {simplifyHolidayName(dateInfo.name)}
                     </span>
                   )}
                   {dateInfo?.isInLieu && (
-                    <span className="w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-[#B03A5E] inline-flex items-center justify-center">
+                    <span className="w-4 h-4 rounded-full text-[10px] font-semibold text-white bg-[#B03A5E] inline-flex items-center justify-center">
                       调
                     </span>
                   )}
                   {dateInfo?.isWorkday && isWeekend && (
-                    <span className="w-5 h-5 rounded-full text-[10px] font-semibold text-white bg-ink inline-flex items-center justify-center">
+                    <span className="w-4 h-4 rounded-full text-[10px] font-semibold text-white bg-ink inline-flex items-center justify-center">
                       班
                     </span>
                   )}
                   {dayCourses.length > 0 && (
-                    <span className="ml-auto text-xs text-gray-500">{dayCourses.length} 节</span>
+                    <span className="ml-auto text-[11px] text-gray-500">{dayCourses.length} 节</span>
                   )}
                 </div>
-                {/* 课程列表：左色条 + 时间 + 学生名 + 费用，全宽横向排列 */}
+
+                {/* 课程标签：与桌面端一致（学生名胶囊 + 时间/费用），等分铺满整行，最小宽度保证时间完整显示 */}
                 {dayCourses.length > 0 && (
-                  <div className="px-3 pb-2 space-y-1">
+                  <div className="px-2 pb-2 flex flex-wrap gap-2">
                     {dayCourses.map((course) => {
                       const isSelectedCourse = selectedCourseIds.includes(course.id);
                       const primaryColor = safeColor(course.colors?.[0] || 'var(--color-secondary)');
                       const fee = getCourseDisplayFee(course);
                       const feeHtml = !privacyMode && fee > 0 ? `¥${fee}` : '';
-                      const names = (course.studentNames || [])
-                        .map((n) => (privacyMode ? maskName(n) : n))
-                        .join('、');
                       return (
                         <div
                           key={course.id}
-                          className="flex items-center gap-2 rounded px-2 py-1.5 cursor-pointer transition-all relative"
+                          className={`course-tag-item rounded grow basis-[150px] min-w-[150px] relative cursor-pointer transition-all ${
+                            isSelectedCourse ? 'is-selected' : ''
+                          }`}
                           style={{
-                            borderLeft: `3px solid ${primaryColor}`,
-                            backgroundColor: `color-mix(in srgb, ${primaryColor} 8%, transparent)`,
-                            boxShadow: isSelectedCourse ? `inset 0 0 0 2px ${primaryColor}` : undefined,
-                          }}
+                            '--tag-theme-color': primaryColor,
+                            backgroundColor: `color-mix(in srgb, ${primaryColor} 10%, transparent)`,
+                          } as React.CSSProperties}
                           onClick={(e) => handleCourseClick(course, e)}
                         >
                           {course.frozen && (
-                            <Snowflake className="absolute top-2 right-2 w-[18px] h-[18px] text-[#7dd3fc] pointer-events-none" strokeWidth={2.5} />
+                            <Snowflake className="absolute top-1.5 right-1.5 w-[18px] h-[18px] text-[#7dd3fc] pointer-events-none z-20" strokeWidth={2.5} />
                           )}
-                          <span className="text-xs text-gray-600 shrink-0">
-                            {course.startTime}-{calculateEndTimeFromDuration(course.startTime, course.duration)}
-                          </span>
-                          <span
-                            className="text-xs flex-1 truncate font-medium"
-                            style={{ color: primaryColor }}
-                          >
-                            {names || '未命名'}
-                          </span>
-                          {feeHtml && (
-                            <span className={`text-xs text-gray-500 shrink-0 ${course.frozen ? 'mr-5' : ''}`}>{feeHtml}</span>
-                          )}
+                          <div className="p-1">
+                            {/* 学生姓名：单行不换行，过长渐隐；选中后左右滚动播放 */}
+                            <Marquee
+                              active={isSelectedCourse || isSelected}
+                              className="mb-0.5"
+                              innerClassName="gap-0.5"
+                            >
+                              {(course.studentNames || []).map((name, idx) => {
+                                const color = safeColor(course.colors?.[idx] || primaryColor);
+                                const displayName = privacyMode ? maskName(name) : name;
+                                return (
+                                  <span
+                                    key={idx}
+                                    className="shrink-0 px-1 py-0.5 rounded text-[10px]"
+                                    style={{
+                                      backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`,
+                                      color,
+                                    }}
+                                  >
+                                    {displayName}
+                                  </span>
+                                );
+                              })}
+                            </Marquee>
+                            {/* 时间 + 费用 */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                                {course.startTime}-{calculateEndTimeFromDuration(course.startTime, course.duration)}
+                              </span>
+                              {feeHtml && (
+                                <span className="text-[10px] text-gray-600">{feeHtml}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
@@ -710,6 +857,7 @@ export default function Calendar() {
             return (
               <div
                 key={cell.dateStr}
+                data-date={cell.dateStr}
                 className={`calendar-cell border-r border-b border-ink-100 p-1.5 min-h-[110px] cursor-pointer ${
                   cell.isCurrent ? 'bg-[var(--bg-secondary)]' : 'bg-[var(--bg-content)]'
                 } ${isToday ? 'today-border' : ''} ${isSelected ? 'selected' : ''} ${
@@ -793,15 +941,19 @@ export default function Calendar() {
                           <Snowflake className="absolute top-1.5 right-1.5 w-[18px] h-[18px] text-[#7dd3fc] pointer-events-none z-20" strokeWidth={2.5} />
                         )}
                         <div className="p-1">
-                          {/* 学生姓名 */}
-                          <div className="flex flex-wrap gap-0.5 mb-0.5">
+                          {/* 学生姓名：单行不换行，过长渐隐；选中后左右滚动播放 */}
+                          <Marquee
+                            active={isSelectedCourse || isSelected}
+                            className="mb-0.5"
+                            innerClassName="gap-0.5"
+                          >
                             {(course.studentNames || []).map((name, idx) => {
                               const color = safeColor(course.colors?.[idx] || primaryColor);
                               const displayName = privacyMode ? maskName(name) : name;
                               return (
                                 <span
                                   key={idx}
-                                  className="px-1 py-0.5 rounded text-[10px]"
+                                  className="shrink-0 px-1 py-0.5 rounded text-[10px]"
                                   style={{
                                     backgroundColor: `color-mix(in srgb, ${color} 20%, transparent)`,
                                     color,
@@ -811,7 +963,7 @@ export default function Calendar() {
                                 </span>
                               );
                             })}
-                          </div>
+                          </Marquee>
                           {/* 时间 + 费用 */}
                           <div className="flex items-center justify-between">
                             <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
@@ -834,6 +986,9 @@ export default function Calendar() {
         </div>
       </div>
 
+      {/* 右下角快捷按钮：定位到今天（浮动操作栏出现时隐藏，避免重叠） */}
+      <ScrollHelperButton mode="today" onClick={locateToday} hidden={!!fabType} />
+
       {/* 浮动操作栏 */}
       <FloatingActionBar
         type={fabType}
@@ -851,7 +1006,6 @@ export default function Calendar() {
               : undefined
         }
         onPaste={selectedDates.length > 0 ? handlePaste : undefined}
-        onClear={clearSelections}
       />
 
       {/* 课程表单模态框 */}

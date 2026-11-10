@@ -102,12 +102,12 @@ export default function Modal({
 
   if (!shouldRender) return null;
 
-  // 遮罩覆盖内容区域：移动端从次级导航栏下方开始（top-88px），避免模态框伸进导航栏被遮盖；
+  // 遮罩覆盖内容区域：移动端从次级导航栏下方开始（top-104px），避免模态框伸进导航栏被遮盖；
   // 桌面端从侧边栏右侧开始（desktop:left-64），顶部贴顶。
   // 断点统一为 desktop(1100px)，与侧边栏显示断点一致，避免 md/lg 与 desktop 错位产生空白
   const overlayCls = nested
-    ? 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[60] flex items-center justify-center p-4'
-    : 'modal-overlay fixed top-[88px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-40 flex items-center justify-center p-4';
+    ? 'modal-overlay fixed top-[104px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[60] flex items-center justify-center p-4'
+    : 'modal-overlay fixed top-[104px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-40 flex items-center justify-center p-4';
 
   // 遮罩关闭：用 onMouseDown + target 判断，而非 onClick。
   // onClick 会在 mousedown/mouseup 目标不一致时触发在共同祖先（遮罩）上，

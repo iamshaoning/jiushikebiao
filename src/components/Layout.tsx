@@ -342,17 +342,18 @@ export default function Layout() {
       {/* 移动端 fixed 顶部块：顶栏 + 次级导航合并（无空行，整体不随滚动）。
           父块统一墨绿背景，次级导航文字淡出时背景由父块填充，避免登出闪烁 */}
       <div className="desktop:hidden fixed top-0 inset-x-0 z-50 bg-ink-700">
-        {/* 顶栏：logo+标题+操作一行不换行；py-3 让顶部块总高度精确为 88px（顶栏 44 + 次级导航 44），与 main pt-[88px] 及模态框 top-[88px] 对齐，消除遮罩上部空白 */}
-        <div className="bg-ink-700 text-white px-3 py-3 flex items-center justify-between shadow-md">
-          {/* 品牌：黄框 logo + 标题，shrink-0 防压缩，始终可见 */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div className="w-5 h-5 rounded bg-amber-300 flex items-center justify-center shadow-sm">
-              <BrandLogo className="w-3.5 h-3.5" />
+        {/* 顶栏：logo+标题+操作一行不换行；高度由 32px 头像 + py-2.5 决定，共 52px；
+            加上次级导航 52px 使顶部块总高精确为 104px，与 main pt-[104px] 及模态框 top-[104px] 对齐 */}
+        <div className="bg-ink-700 text-white px-4 py-2.5 flex items-center justify-between shadow-md">
+          {/* 品牌：渐变徽章 logo + 标题，shrink-0 防压缩，始终可见 */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="brand-tile w-7 h-7 rounded-lg flex items-center justify-center p-1">
+              <BrandLogo className="w-full h-full" />
             </div>
-            <span className="text-sm font-bold text-white whitespace-nowrap">玖拾课表</span>
+            <span className="text-base font-bold text-white whitespace-nowrap">玖拾课表</span>
           </div>
           {/* 右侧操作：同步+快照+历史+公告+头像+退出，shrink-0 防换行，淡入淡出 */}
-          <div className={`flex items-center gap-1.5 shrink-0 ${asideContentClass}`}>
+          <div className={`flex items-center gap-2 shrink-0 ${asideContentClass}`}>
             <button
               onClick={handleSyncCheck}
               className={`sync-card ${syncDotCls} cursor-pointer select-none`}
@@ -361,48 +362,48 @@ export default function Layout() {
             >
               <span className="sync-dot" />
             </button>
-            <button onClick={() => setActiveModal('snapshot')} aria-label="快照" title="快照管理">
-              <Camera className="w-4 h-4 text-ink-100/70" />
+            <button onClick={() => setActiveModal('snapshot')} aria-label="快照" title="快照管理" className="p-0.5">
+              <Camera className="w-5 h-5 text-ink-100/70" />
             </button>
-            <button onClick={() => setActiveModal('history')} aria-label="历史" title="操作历史">
-              <HistoryIcon className="w-4 h-4 text-ink-100/70" />
+            <button onClick={() => setActiveModal('history')} aria-label="历史" title="操作历史" className="p-0.5">
+              <HistoryIcon className="w-5 h-5 text-ink-100/70" />
             </button>
-            <button onClick={handleOpenAnnouncements} aria-label="公告" title="公告板" className="relative">
-              <Bell className="w-4 h-4 text-ink-100/70" />
+            <button onClick={handleOpenAnnouncements} aria-label="公告" title="公告板" className="relative p-0.5">
+              <Bell className="w-5 h-5 text-ink-100/70" />
               {hasUnread && (
-                <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500" />
+                <span className="absolute -top-0.5 right-0 w-2 h-2 rounded-full bg-red-500" />
               )}
             </button>
             <button
               onClick={() => setActiveModal('profile')}
               aria-label="个人资料"
               title={user.display_name}
-              className="w-6 h-6 rounded-full overflow-hidden border border-ink-600/40 shrink-0 bg-ink-600/40"
+              className="w-8 h-8 rounded-full overflow-hidden border border-ink-600/40 shrink-0 bg-ink-600/40"
             >
               {avatarUrl ? (
                 <img src={avatarUrl} alt={user.display_name} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-[10px] font-medium text-ink-100/70">
+                <div className="w-full h-full flex items-center justify-center text-xs font-medium text-ink-100/70">
                   {(user.display_name || user.email || '?').charAt(0).toUpperCase()}
                 </div>
               )}
             </button>
-            <button onClick={handleLogout} aria-label="退出" title="退出登录">
-              <LogOut className="w-4 h-4 text-ink-100/70" />
+            <button onClick={handleLogout} aria-label="退出" title="退出登录" className="p-0.5">
+              <LogOut className="w-5 h-5 text-ink-100/70" />
             </button>
           </div>
         </div>
         {/* 次级导航：紧贴顶栏，文字跟随登出/进入淡出，背景由父块提供保持墨绿；选中琥珀色（同步桌面端菜单配色），无横线间隔 */}
-        <div className={`px-4 py-2 flex gap-2 overflow-x-auto transition-opacity ${fadeClass}`}>
+        <div className={`px-3 py-2 flex gap-1.5 overflow-x-auto no-scrollbar transition-opacity ${fadeClass}`}>
           {navItems.map((item) => {
             const active = isActiveItem(loc.pathname, item.to);
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex-shrink-0 px-3 py-1.5 rounded text-xs transition-colors ${
+                className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm transition-colors ${
                   active
-                    ? 'text-amber-200 font-medium'
+                    ? 'text-amber-200 font-medium bg-ink-600/50'
                     : 'text-ink-100/70 hover:text-white'
                 }`}
               >
@@ -415,7 +416,7 @@ export default function Layout() {
 
       {/* 主内容：进入时淡入，登出时淡出；独立滚动不影响侧边栏。
           scrollbar-gutter: stable 预留滚动条宽度，避免内容变长时滚动条出现挤动整页布局 */}
-      <main className={`flex-1 min-w-0 overflow-y-auto [scrollbar-gutter:stable] pt-[88px] desktop:pt-0 ${mainClass}`}>
+      <main className={`flex-1 min-w-0 overflow-y-auto [scrollbar-gutter:stable] pt-[104px] desktop:pt-0 ${mainClass}`}>
         {/* 右侧内容：key 变化触发重新挂载，播放 route-fade-in 淡入动画 */}
         <div
           key={loc.pathname}

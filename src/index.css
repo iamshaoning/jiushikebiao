@@ -73,6 +73,15 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+/* 隐藏滚动条但保留滚动能力（移动端横向导航、浮动操作栏使用） */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* 自定义滚动条 */
 ::-webkit-scrollbar {
   width: 8px;
@@ -169,11 +178,11 @@ textarea:focus-visible {
   box-shadow: inset 0 0 0 2px #8FB5A2;
 }
 .calendar-cell.today-border {
-  box-shadow: inset 0 0 0 2px var(--color-today);
+  box-shadow: inset 0 0 0 3px var(--color-today);
   z-index: 2;
 }
 .calendar-cell.selected {
-  box-shadow: inset 0 0 0 2px var(--color-primary);
+  box-shadow: inset 0 0 0 3px var(--color-primary);
   z-index: 3;
 }
 
@@ -335,6 +344,21 @@ textarea:focus-visible {
   font-size: 0.7rem;
   font-weight: 600;
   margin-right: 0.5rem;
+}
+
+/* —— 学生名单滚动播放（仅选中且内容溢出时启用） —— */
+@keyframes marqueeRun {
+  0%,
+  8% {
+    transform: translateX(0);
+  }
+  92%,
+  100% {
+    transform: translateX(var(--marquee-shift, 0px));
+  }
+}
+.marquee-run {
+  animation: marqueeRun var(--marquee-duration, 6s) ease-in-out infinite alternate;
 }
 
 /* 隐藏 number 输入框上下箭头 */

@@ -100,6 +100,7 @@ import { useToast } from '@/components/Toast';
 import Modal from '@/components/Modal';
 import CustomSelect from '@/components/CustomSelect';
 import FloatingActionBar, { type FabType } from '@/components/FloatingActionBar';
+import ScrollHelperButton from '@/components/ScrollHelperButton';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import StudentFormModal from '@/modals/StudentFormModal';
 import ManagementModal from '@/modals/ManagementModal';
@@ -112,7 +113,7 @@ import {
   groupStudentsByOrg,
   batchUpdateStudents,
 } from '@/lib/student';
-import { generateColor } from '@/lib/utils';
+import { generateColor, scrollMainToTop } from '@/lib/utils';
 import { recordDeleteStudent, recordBatchDeleteStudents, recordBatchUpdateStudents } from '@/lib/history';
 import type { Student, StudentFees } from '@/lib/types';
 import {
@@ -238,13 +239,28 @@ export default function Students() {
       setDragRect(null);
     };
 
+    // 移动端：点击空白处取消选中并收起浮动操作栏
+    const onGlobalTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest(
+          'button, input, select, textarea, .modal-overlay, .floating-action-bar, .student-card, .student-org-group-header',
+        )
+      ) {
+        return;
+      }
+      setSelectedStudentIds([]);
+    };
+
     window.addEventListener('mousedown', onGlobalMouseDown);
+    window.addEventListener('touchstart', onGlobalTouchStart, { passive: true });
     if (isDragging) {
       window.addEventListener('mousemove', onGlobalMouseMove);
       window.addEventListener('mouseup', onGlobalMouseUp);
     }
     return () => {
       window.removeEventListener('mousedown', onGlobalMouseDown);
+      window.removeEventListener('touchstart', onGlobalTouchStart);
       window.removeEventListener('mousemove', onGlobalMouseMove);
       window.removeEventListener('mouseup', onGlobalMouseUp);
     };
@@ -461,10 +477,75 @@ export default function Students() {
     prevRectsRef.current = next;
   }, [orgCols, captureOrgRects]);
 
+  // —— 移动端长按多选 ——
+  // 手指无法像鼠标那样框选，改为长按卡片 500ms 进入多选模式，之后单击即切换选中
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const multiSelectModeRef = useRef(false);
+  multiSelectModeRef.current = multiSelectMode;
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const longPressFiredRef = useRef(false);
+
+  const clearPressTimer = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+
+  const handleCardTouchStart = (id: string, e: React.TouchEvent) => {
+    const t = e.touches[0];
+    pressStartRef.current = { x: t.clientX, y: t.clientY };
+    longPressFiredRef.current = false;
+    clearPressTimer();
+    pressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      setMultiSelectMode(true);
+      const current = useStore.getState().selectedStudentIds;
+      if (!current.includes(id)) setSelectedStudentIds([...current, id]);
+      toast.info('已进入多选模式，点击卡片继续选择');
+    }, 500);
+  };
+
+  // 手指移动超过 10px 视为滚动，取消长按
+  const handleCardTouchMove = (e: React.TouchEvent) => {
+    const start = pressStartRef.current;
+    if (!start) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - start.x) > 10 || Math.abs(t.clientY - start.y) > 10) {
+      clearPressTimer();
+      pressStartRef.current = null;
+    }
+  };
+
+  const handleCardTouchEnd = () => {
+    clearPressTimer();
+    pressStartRef.current = null;
+  };
+
+  // 选中项被清空时自动退出多选模式
+  useEffect(() => {
+    if (selectedStudentIds.length === 0 && multiSelectMode) setMultiSelectMode(false);
+  }, [selectedStudentIds.length, multiSelectMode]);
+
   // 选择
   const handleSelect = (id: string, e: React.MouseEvent) => {
     if (dragOccurredRef.current) {
       dragOccurredRef.current = false;
+      return;
+    }
+    // 长按已由触摸逻辑处理，忽略紧随其后的 click
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+    // 多选模式下单击即切换，不覆盖已有选择
+    if (multiSelectModeRef.current) {
+      setSelectedStudentIds(
+        selectedStudentIds.includes(id)
+          ? selectedStudentIds.filter((x) => x !== id)
+          : [...selectedStudentIds, id],
+      );
       return;
     }
     if (e.ctrlKey || e.metaKey) {
@@ -584,6 +665,10 @@ export default function Students() {
         key={student.id}
         className={`student-card ${isSelected ? 'student-card-selected' : ''}`}
         onClick={(e) => handleSelect(student.id, e)}
+        onTouchStart={(e) => handleCardTouchStart(student.id, e)}
+        onTouchMove={handleCardTouchMove}
+        onTouchEnd={handleCardTouchEnd}
+        onTouchCancel={handleCardTouchEnd}
       >
         <span className="student-card-name truncate">{student.name || '未命名'}</span>
         <span
@@ -621,7 +706,7 @@ export default function Students() {
         <div className="flex items-center gap-2 shrink-0 desktop:hidden">
           <button
             onClick={() => setMgmtModal({ open: true, type: 'organization' })}
-            className="btn-secondary"
+            className="btn-secondary py-2.5 desktop:py-2"
           >
             <School className="w-4 h-4" />
             <span className="hidden desktop:inline">机构管理</span>
@@ -629,18 +714,18 @@ export default function Students() {
           </button>
           <button
             onClick={() => setMgmtModal({ open: true, type: 'grade' })}
-            className="btn-secondary"
+            className="btn-secondary py-2.5 desktop:py-2"
           >
             <GraduationCap className="w-4 h-4" />
             <span className="hidden desktop:inline">年级管理</span>
             <span className="desktop:hidden">年级</span>
           </button>
-          <button onClick={handleOpenUpgrade} className="btn-secondary">
+          <button onClick={handleOpenUpgrade} className="btn-secondary py-2.5 desktop:py-2">
             <Rocket className="w-4 h-4" />
             <span className="hidden desktop:inline">年级升级</span>
             <span className="desktop:hidden">升级</span>
           </button>
-          <button onClick={() => setFormModal({ open: true, editStudent: null })} className="btn-primary">
+          <button onClick={() => setFormModal({ open: true, editStudent: null })} className="btn-primary py-2.5 desktop:py-2">
             <Plus className="w-4 h-4" />
             <span className="hidden desktop:inline">添加学生</span>
             <span className="desktop:hidden">新增</span>
@@ -748,13 +833,15 @@ export default function Students() {
         </DndContext>
       )}
 
+      {/* 右下角快捷按钮：回到顶部（浮动操作栏出现时隐藏，避免重叠） */}
+      <ScrollHelperButton mode="top" onClick={scrollMainToTop} hidden={!!fabType} />
+
       {/* 浮动操作栏 */}
       <FloatingActionBar
         type={fabType}
         count={selectedStudentIds.length}
         onEdit={selectedStudentIds.length >= 1 ? handleEdit : undefined}
         onDelete={selectedStudentIds.length > 0 ? handleDelete : undefined}
-        onClear={() => setSelectedStudentIds([])}
       />
 
       {/* 学生表单模态框 */}

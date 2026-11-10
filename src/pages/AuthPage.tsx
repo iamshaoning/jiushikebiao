@@ -314,24 +314,23 @@ export default function AuthPage() {
   // 根据 phase 计算布局参数
   const getLayout = () => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 1100;
-    // 移动端：纵向布局，绿色品牌区在上、白色表单区在下；形变目标为系统页顶栏高度（pt-14≈56px）
+    // 移动端：纵向布局，绿色品牌区在上、白色表单区在下；形变目标为系统页顶部块高度（104px）
     if (isMobile) {
-      // 顶栏 logo：px-3(12px) py-3(12px) w-5(20px)；idle logo：top-8 left-8(32px) w-10(40px)
-      // 形变后位移至顶栏位置：translate(12-32, 12-32) = (-20, -20)，并 scale(0.5) 缩到顶栏 logo 尺寸
-      const logoAtBar = 'translate(-20px, -20px) scale(0.5)';
+      // 顶栏 logo：px-4(16px)、行高 32px 内垂直居中 → 顶部偏移 12px、宽 28px；idle logo：top-8 left-8(32px) w-10(40px)
+      // 形变后位移至顶栏位置：translate(16-32, 12-32) = (-16, -20)，并 scale(0.7) 缩到顶栏 logo 尺寸
+      const logoAtBar = 'translate(-16px, -20px) scale(0.7)';
       const logoAtIdle = 'translate(0px, 0px) scale(1)';
-      // 文字额外缩放：idle 文字 text-base(16px)，顶栏文字 text-sm(14px)
-      // 容器整体 scale(0.5) 后文字视觉 8px，需额外 scale(1.75) 抵消到 14px，精确匹配顶栏文字尺寸
-      // 配合 transformOrigin: left center，文字左边对齐顶栏文字左边（logo 右 gap-1.5 处）
-      const titleAtBar = 'scale(1.75)';
+      // 文字额外缩放：idle 文字 text-base(16px)，顶栏文字同为 text-base
+      // 容器整体 scale(0.7) 后文字视觉 11.2px，需额外 scale(1.43) 恢复到 16px
+      const titleAtBar = 'scale(1.43)';
       const titleAtIdle = 'scale(1)';
       switch (phase) {
         case 'form-fading':
           return { leftBasis: '40vh', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
         case 'expanding':
-          return { leftBasis: '88px', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtBar, titleTransform: titleAtBar };
+          return { leftBasis: '104px', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtBar, titleTransform: titleAtBar };
         case 'leaving-start':
-          return { leftBasis: '88px', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtBar, titleTransform: titleAtBar };
+          return { leftBasis: '104px', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtBar, titleTransform: titleAtBar };
         case 'leaving-expand':
           return { leftBasis: '40vh', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
         case 'mode-switching':

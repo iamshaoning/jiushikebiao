@@ -173,3 +173,8 @@ export function safeColor(color: string): string {
   if (/^#[0-9a-fA-F]{3,8}$/.test(color) || /^var\(--[\w-]+\)$/.test(color)) return color;
   return 'var(--color-secondary)';
 }
+
+/** 将主内容区平滑滚动到顶部（滚动容器为 Layout 中的 main） */
+export function scrollMainToTop(): void {
+  document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+}

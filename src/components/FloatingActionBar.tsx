@@ -12,7 +12,6 @@ import {
   Trash2,
   Copy,
   ClipboardPaste,
-  X,
 } from 'lucide-react';
 
 export type FabType =
@@ -32,7 +31,6 @@ interface FloatingActionBarProps {
   onDelete?: () => void;
   onCopy?: () => void;
   onPaste?: () => void;
-  onClear?: () => void;
 }
 
 export default function FloatingActionBar({
@@ -43,7 +41,6 @@ export default function FloatingActionBar({
   onDelete,
   onCopy,
   onPaste,
-  onClear,
 }: FloatingActionBarProps) {
   const [visible, setVisible] = useState(false);
   const [renderContent, setRenderContent] = useState(false);
@@ -51,8 +48,8 @@ export default function FloatingActionBar({
   const [displayType, setDisplayType] = useState<FabType>(null);
 
   // 最新 props（每次渲染更新）
-  const latestRef = useRef({ count, onAdd, onEdit, onDelete, onCopy, onPaste, onClear });
-  latestRef.current = { count, onAdd, onEdit, onDelete, onCopy, onPaste, onClear };
+  const latestRef = useRef({ count, onAdd, onEdit, onDelete, onCopy, onPaste });
+  latestRef.current = { count, onAdd, onEdit, onDelete, onCopy, onPaste };
   // 缓存的 props（退出动画期间使用，保持按钮内容不变）
   const cachedRef = useRef(latestRef.current);
 
@@ -101,26 +98,24 @@ export default function FloatingActionBar({
   const showPaste = (isSingleDate || isMultiDate) && p.onPaste;
   // 删除：全部类型
   const showDelete = p.onDelete;
-  // 清除选择：所有多选
-  const showClear = isMulti && p.onClear;
 
   return (
     <div
-      className={`floating-action-bar fixed bottom-6 left-1/2 -translate-x-1/2 desktop:left-[calc(50%+128px)] z-40 transition-transform duration-300 ease-out ${
+      className={`floating-action-bar fixed bottom-6 left-1/2 -translate-x-1/2 desktop:left-[calc(50%+128px)] z-40 max-w-[calc(100vw-1.5rem)] transition-transform duration-300 ease-out ${
         visible ? 'translate-y-0 pointer-events-auto' : 'translate-y-32 pointer-events-none'
       }`}
     >
-      <div className="flex items-center gap-1 px-3 py-2 rounded-xl bg-ink-700 text-white shadow-lift whitespace-nowrap">
+      <div className="flex items-center gap-1 px-2.5 py-2 desktop:px-3 desktop:py-2 rounded-xl bg-ink-700 text-white shadow-lift whitespace-nowrap overflow-x-auto no-scrollbar">
         {/* 计数 */}
         {isMulti && (
-          <span className="text-xs text-ink-100/70 px-2">已选 {p.count} 项</span>
+          <span className="text-sm desktop:text-xs text-ink-100/70 px-2">已选 {p.count} 项</span>
         )}
 
         {/* 添加（单日期 / 多日期） */}
         {showAdd && (
           <button
             onClick={p.onAdd}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2.5 desktop:px-3 desktop:py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isMultiDate ? '批量添加课程' : '添加课程'}
           >
             <Plus className="w-4 h-4" />
@@ -132,7 +127,7 @@ export default function FloatingActionBar({
         {showEdit && (
           <button
             onClick={p.onEdit}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2.5 desktop:px-3 desktop:py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isMultiStudent ? '批量编辑学生' : isSingleCourse ? '编辑课程' : '编辑学生'}
           >
             <Pencil className="w-4 h-4" />
@@ -144,7 +139,7 @@ export default function FloatingActionBar({
         {showCopy && (
           <button
             onClick={p.onCopy}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2.5 desktop:px-3 desktop:py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isSingleDate ? '复制当天所有课程' : '复制课程'}
           >
             <Copy className="w-4 h-4" />
@@ -156,7 +151,7 @@ export default function FloatingActionBar({
         {showPaste && (
           <button
             onClick={p.onPaste}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2.5 desktop:px-3 desktop:py-1.5 rounded-lg text-sm hover:bg-ink-600 hover:text-white transition-colors"
             title={isMultiDate ? '批量粘贴课程' : '粘贴课程'}
           >
             <ClipboardPaste className="w-4 h-4" />
@@ -168,22 +163,11 @@ export default function FloatingActionBar({
         {showDelete && (
           <button
             onClick={p.onDelete}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm hover:bg-red-500 hover:text-white transition-colors"
+            className="flex items-center gap-1 px-3.5 py-2.5 desktop:px-3 desktop:py-1.5 rounded-lg text-sm hover:bg-red-500 hover:text-white transition-colors"
             title={isMulti ? '批量删除' : '删除'}
           >
             <Trash2 className="w-4 h-4" />
             {isMulti ? '批量删除' : '删除'}
-          </button>
-        )}
-
-        {/* 清除选择 */}
-        {showClear && (
-          <button
-            onClick={p.onClear}
-            className="flex items-center px-2 py-1.5 rounded-lg text-sm text-ink-100/70 hover:text-white hover:bg-ink-600 transition-colors"
-            title="取消选择"
-          >
-            <X className="w-4 h-4" />
           </button>
         )}
       </div>
