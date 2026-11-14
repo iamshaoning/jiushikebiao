@@ -8,7 +8,8 @@ import { useState, useMemo, useRef, useEffect, useLayoutEffect, useCallback } fr
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   closestCenter,
   useDroppable,
   useSensor,
@@ -123,6 +124,7 @@ import {
   GraduationCap,
   Rocket,
   UserRoundX,
+  GripVertical,
 } from 'lucide-react';
 
 export default function Students() {
@@ -329,10 +331,13 @@ export default function Students() {
     const w = window.innerWidth;
     return w >= 1300 ? 3 : w >= 650 ? 2 : 1;
   });
+  // 窄屏（移动端）：拖拽排序只允许从专用手柄发起，避免竖屏滚动误触发
+  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 1100);
   const gridRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const calc = () => {
       const w = window.innerWidth;
+      setIsNarrow(w < 1100);
       if (w >= 1300) setNumCols(3);
       else if (w >= 650) setNumCols(2);
       else setNumCols(1);
@@ -398,10 +403,15 @@ export default function Students() {
     [orgCols, grouped],
   );
 
-  // 拖拽触发：按住表头 250ms（容差 30px，避免轻微抖动取消）或直接拖动 8px，任一满足即进入排序
+  // 拖拽触发：
+  // - 鼠标：移动 8px 即进入排序，桌面上更跟手
+  // - 触摸：必须长按 400ms 且位移不超过 6px，避免竖屏滚动/轻扫误触发
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { delay: 250, tolerance: 30, distance: 8 },
+    useSensor(MouseSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 400, tolerance: 6 },
     }),
   );
 
@@ -839,6 +849,7 @@ export default function Students() {
                   onCardMouseDown={handleDragStart}
                   renderCard={renderCard}
                   disabled={!!searchTerm}
+                  isNarrow={isNarrow}
                 />
               ))}
             </div>
@@ -997,12 +1008,14 @@ function OrgColumn({
   onCardMouseDown,
   renderCard,
   disabled,
+  isNarrow,
 }: {
   colIdx: number;
   items: { org: string; students: Student[] }[];
   onCardMouseDown: (e: React.MouseEvent) => void;
   renderCard: (s: Student) => React.ReactNode;
   disabled?: boolean;
+  isNarrow: boolean;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${ORG_COL_PREFIX}${colIdx}` });
   return (
@@ -1019,6 +1032,7 @@ function OrgColumn({
           onCardMouseDown={onCardMouseDown}
           renderCard={renderCard}
           disabled={disabled}
+          isNarrow={isNarrow}
         />
       ))}
       {items.length === 0 && <div className="org-col-placeholder">拖拽分组放置到此列</div>}
@@ -1028,7 +1042,7 @@ function OrgColumn({
 
 /**
  * 可排序机构分组组件
- * 长按表头（左键按住 250ms）进入拖拽；拖拽期间由父级实时重排 DOM + FLIP 动画（不用 dnd-kit 让位 transform）
+ * 桌面端：按住表头拖动排序；窄屏：仅右侧手柄可拖（长按 400ms），表头区域保持可滚动
  */
 function SortableOrgGroup({
   org,
@@ -1036,12 +1050,14 @@ function SortableOrgGroup({
   onCardMouseDown,
   renderCard,
   disabled,
+  isNarrow,
 }: {
   org: string;
   students: Student[];
   onCardMouseDown: (e: React.MouseEvent) => void;
   renderCard: (s: Student) => React.ReactNode;
   disabled?: boolean;
+  isNarrow: boolean;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useSortable({ id: org, disabled });
   const orgColor = generateColor(org, 'organization');
@@ -1054,10 +1070,9 @@ function SortableOrgGroup({
     >
       <div
         className="student-org-group-header"
-        style={{ cursor: 'grab', touchAction: 'none' }}
-        title="长按拖动排序"
-        {...attributes}
-        {...listeners}
+        style={{ cursor: isNarrow ? 'default' : 'grab' }}
+        title={isNarrow ? undefined : '拖动排序'}
+        {...(!isNarrow ? { ...attributes, ...listeners } : {})}
       >
         <span
           className="px-2 py-0.5 text-xs font-medium rounded-full"
@@ -1068,7 +1083,21 @@ function SortableOrgGroup({
         >
           {org}
         </span>
-        <span className="text-xs text-gray-500">{students.length} 人</span>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-gray-500">{students.length} 人</span>
+          {isNarrow && (
+            <button
+              type="button"
+              className="student-org-drag-handle"
+              aria-label="拖动排序"
+              title="长按拖动排序"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="w-4 h-4" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="student-org-group-body">
         {students.map((s) => (

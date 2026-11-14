@@ -167,6 +167,119 @@ textarea:focus-visible {
   animation: routeFadeIn 0.6s ease-out forwards;
 }
 
+/* ============ 首屏真实 DOM 骨架 ============ */
+/* 字体加载期间把真实文本元素变成占位块：
+   --sk-x/y/w/h 由 bootSkeleton.ts 按文本实际渲染矩形写入，位置与文字逐像素一致 */
+html.boot-sk-active .boot-sk-text {
+  color: transparent !important;
+  background: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+/* 仅原本为 static 的元素需要提升为定位元素，作为占位层的包含块 */
+html.boot-sk-active .boot-sk-pos {
+  position: relative !important;
+}
+html.boot-sk-active .boot-sk-text * {
+  color: transparent !important;
+}
+/* 占位块 + 流光动画 */
+html.boot-sk-active .boot-sk-text::after {
+  content: '';
+  position: absolute;
+  left: var(--sk-x, 0);
+  top: var(--sk-y, 0);
+  width: var(--sk-w, 0);
+  height: var(--sk-h, 0);
+  border-radius: 3px;
+  background-color: #ece6dc;
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 68%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: boot-sk-shimmer 1.6s linear infinite;
+  pointer-events: none;
+}
+/* 墨绿侧栏/深色底上的文本使用浅色占位块 */
+html.boot-sk-active .boot-sk-dark::after {
+  background-color: rgba(255, 255, 255, 0.16);
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 68%
+  );
+}
+/* 仅图标控件（快照/历史/公告/头像等）：隐藏原图标，用占位块替代 */
+html.boot-sk-active .boot-sk-icon > * {
+  visibility: hidden !important;
+}
+html.boot-sk-active .boot-sk-icon::after {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 4px;
+  background-color: #ece6dc;
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 68%
+  );
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: boot-sk-shimmer 1.6s linear infinite;
+  pointer-events: none;
+}
+html.boot-sk-active .boot-sk-icon.boot-sk-dark::after {
+  background-color: rgba(255, 255, 255, 0.18);
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 68%
+  );
+}
+html.boot-sk-active .boot-sk-input {
+  background-color: #ece6dc !important;
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0) 32%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 68%
+  ) !important;
+  background-size: 220% 100% !important;
+  background-repeat: no-repeat !important;
+  border-color: transparent !important;
+  color: transparent !important;
+  animation: boot-sk-shimmer 1.6s linear infinite;
+}
+html.boot-sk-active .boot-sk-input::placeholder {
+  color: transparent !important;
+}
+html.boot-sk-active .boot-sk-img {
+  visibility: hidden !important;
+}
+@keyframes boot-sk-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.boot-sk-active .boot-sk-text::after,
+  html.boot-sk-active .boot-sk-icon::after,
+  html.boot-sk-active .boot-sk-input {
+    animation: none;
+  }
+}
+
 /* ============ 课表功能组件样式 ============ */
 
 /* —— 日历单元格（仅保留 Tailwind 无法表达的功能性样式） —— */
@@ -287,6 +400,24 @@ textarea:focus-visible {
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--border-color);
+}
+/* 窄屏排序手柄：只有手柄可长按拖动，表头其余区域保持正常滚动 */
+.student-org-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  margin-right: -0.35rem;
+  border-radius: 6px;
+  color: var(--color-primary);
+  opacity: 0.55;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.student-org-drag-handle:active {
+  background: rgba(15, 61, 46, 0.1);
+  opacity: 1;
 }
 .student-org-group-body {
   display: flex;
