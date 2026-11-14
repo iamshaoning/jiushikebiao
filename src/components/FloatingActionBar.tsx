@@ -101,7 +101,7 @@ export default function FloatingActionBar({
 
   return (
     <div
-      className={`floating-action-bar fixed bottom-6 left-1/2 -translate-x-1/2 desktop:left-[calc(50%+128px)] z-40 max-w-[calc(100vw-1.5rem)] transition-transform duration-300 ease-out ${
+      className={`floating-action-bar fixed bottom-6 left-1/2 -translate-x-1/2 desktop:left-[calc(50%+128px)] z-[var(--z-fab)] max-w-[calc(100vw-1.5rem)] transition-transform duration-[var(--motion-slow)] ease-out ${
         visible ? 'translate-y-0 pointer-events-auto' : 'translate-y-32 pointer-events-none'
       }`}
     >

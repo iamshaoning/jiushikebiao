@@ -25,6 +25,30 @@
   --text-secondary: #555555;
   --border-color: #C7DACF;
   --shadow-sm: 0 2px 8px rgba(15, 61, 46, 0.06);
+
+  /* 移动端固定顶栏总高（含刘海安全区）：内容区偏移、模态框遮罩共用 */
+  --mobile-chrome-h: calc(104px + env(safe-area-inset-top, 0px));
+
+  /* 层级：按语义使用，避免散落的魔法数字 */
+  --z-fab: 40;
+  --z-modal-base: 40;
+  --z-confirm: 45;
+  --z-chrome: 50;
+  --z-drag: 55;
+  --z-modal: 60;
+  --z-popover: 70;
+  --z-toast: 100;
+
+  /* 动效时长与缓动 */
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* 骨架占位色 */
+  --skeleton-bg: #ECE6DC;
+  --skeleton-shimmer: rgba(255, 255, 255, 0.65);
 }
 
 /* ============ 基础 ============ */
@@ -136,7 +160,7 @@ textarea:focus-visible {
 
   /* 统计卡：悬停时轻微上浮，给出可读性反馈 */
   .stat-card {
-    @apply bg-[var(--bg-secondary)] rounded-xl2 border border-ink-100 px-5 py-4 shadow-soft transition-all duration-300;
+    @apply bg-[var(--bg-secondary)] rounded-xl2 border border-ink-100 px-5 py-4 shadow-soft transition-[transform,box-shadow] duration-[var(--motion-base)];
   }
   .stat-card:hover {
     @apply shadow-card -translate-y-0.5;
@@ -192,7 +216,7 @@ html.boot-sk-active .boot-sk-text::after {
   width: var(--sk-w, 0);
   height: var(--sk-h, 0);
   border-radius: 3px;
-  background-color: #ece6dc;
+  background-color: var(--skeleton-bg);
   background-image: linear-gradient(
     100deg,
     rgba(255, 255, 255, 0) 32%,
@@ -223,7 +247,7 @@ html.boot-sk-active .boot-sk-icon::after {
   position: absolute;
   inset: 12%;
   border-radius: 4px;
-  background-color: #ece6dc;
+  background-color: var(--skeleton-bg);
   background-image: linear-gradient(
     100deg,
     rgba(255, 255, 255, 0) 32%,
@@ -245,7 +269,7 @@ html.boot-sk-active .boot-sk-icon.boot-sk-dark::after {
   );
 }
 html.boot-sk-active .boot-sk-input {
-  background-color: #ece6dc !important;
+  background-color: var(--skeleton-bg) !important;
   background-image: linear-gradient(
     100deg,
     rgba(255, 255, 255, 0) 32%,
@@ -338,6 +362,10 @@ html.boot-sk-active .boot-sk-img {
 }
 .sync-card.offline .sync-dot {
   background-color: #9ca3af;
+  animation: none;
+}
+.sync-card.realtime .sync-dot {
+  background-color: #f97316;
   animation: none;
 }
 .sync-card.loggedout .sync-dot {
@@ -499,6 +527,16 @@ input[type="number"]::-webkit-outer-spin-button {
   margin: 0;
 }
 input[type="number"] { -moz-appearance: textfield; }
+
+/* 触控目标扩展：视觉尺寸不变，命中区域向外扩 8px（适配 44px 触控标准） */
+.tap-target {
+  position: relative;
+}
+.tap-target::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
 
 /* 尊重系统「减少动态效果」设置：关闭非必要动画与过渡 */
 @media (prefers-reduced-motion: reduce) {

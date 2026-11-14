@@ -12,7 +12,7 @@ import { useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useStore } from '@/stores/useStore';
 import { getSession, onAuthStateChange, logout as authLogout } from '@/lib/auth';
-import { loadData, initDataSave, cleanupRealtime, cleanupDataSave } from '@/lib/data';
+import { loadData, initDataSave, cleanupRealtime, cleanupDataSave, syncNow } from '@/lib/data';
 import { clearCopiedCourses } from '@/lib/course';
 
 const SESSION_CHECK_INTERVAL = 60 * 1000; // 60s
@@ -37,6 +37,7 @@ export function useAuthSync(): void {
       cleanupRealtime();
       cleanupDataSave();
       localStorage.removeItem(LOGIN_TIME_KEY);
+      useStore.getState().setSyncPending(false);
       useStore.getState().setDataLoaded(false);
       useStore.getState().setSyncStatus('loggedout');
     }
@@ -98,6 +99,22 @@ export function useAuthSync(): void {
         intervalRef.current = null;
       }
       document.removeEventListener('visibilitychange', handleVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // 网络恢复/断开：即时反映到同步状态，恢复时自动对齐一次数据
+  useEffect(() => {
+    if (!user) return;
+    const onOffline = () => useStore.getState().setSyncStatus('offline');
+    const onOnline = () => {
+      void syncNow(user.id);
+    };
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('online', onOnline);
+    return () => {
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('online', onOnline);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);

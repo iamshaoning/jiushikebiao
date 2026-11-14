@@ -18,12 +18,12 @@ const SAVE_DEBOUNCE = 2000;
 /* ---------- 离线限制 ---------- */
 
 /**
- * 是否处于离线限制状态：已登录、数据已加载、但同步状态非在线。
- * 此时禁止一切增删改操作（含快照/历史/升级等），仅可查看数据。
+ * 是否处于离线限制状态：已登录、数据已加载、且确认离线。
+ * 同步中/检测中不阻塞操作，避免保存窗口内误判。
  */
 export function isOffline(): boolean {
   const { user, dataLoaded, syncStatus } = useStore.getState();
-  return !!user && dataLoaded && syncStatus !== 'online';
+  return !!user && dataLoaded && syncStatus === 'offline';
 }
 
 /* ---------- 本地数据读写 ---------- */
@@ -191,6 +191,7 @@ async function compareAndSync(
     useStore.getState().replaceData(server);
   }
   useStore.getState().setSyncStatus('online');
+  useStore.getState().setSyncPending(false);
 }
 
 /* ---------- 加载数据（主流程） ---------- */
@@ -276,6 +277,7 @@ export async function saveImmediate(): Promise<void> {
   try {
     await uploadToServer(data, user.id);
     store.setSyncStatus('online');
+    store.setSyncPending(false);
   } catch {
     store.setSyncStatus('offline');
   }
@@ -286,28 +288,28 @@ export const saveData = debounce(async () => {
   await saveImmediate();
 }, SAVE_DEBOUNCE);
 
-/* ---------- 连接检测 ---------- */
+/* ---------- 主动同步 ---------- */
 
 /**
- * 主动检测 Supabase 连接状态
- * 用于同步指示器点击检测：设置 checking（橙色呼吸灯）→ 查询 → online/offline
- * @returns 是否连接正常
+ * 主动同步：重建 Realtime 通道 → 拉取服务器数据 → 按 lastupdated 对齐。
+ * 用于同步状态点击与网络恢复：连接正常意味着数据已对齐，而不仅是接口可达。
+ * @returns 是否同步成功
  */
-export async function checkConnection(userId: string): Promise<boolean> {
+export async function syncNow(userId: string): Promise<boolean> {
   const store = useStore.getState();
   store.setSyncStatus('checking');
+  setupRealtime(userId);
   try {
-    const { error } = await supabase
+    const { data: serverData, error } = await supabase
       .from(TABLES.COURSE_DATA)
-      .select('userid')
+      .select('*')
       .eq('userid', userId)
-      .limit(1)
       .maybeSingle();
     if (error) throw error;
-    store.setSyncStatus('online');
+    await compareAndSync(getLocalData(), (serverData as AppState) ?? null, userId);
     return true;
   } catch (e) {
-    console.error('连接检测失败:', e);
+    console.error('主动同步失败:', e);
     store.setSyncStatus('offline');
     return false;
   }
@@ -347,9 +349,13 @@ export function setupRealtime(userId: string): void {
         }
       },
     );
-    realtimeChannel.subscribe();
+    realtimeChannel.subscribe((status) => {
+      // 只有 SUBSCRIBED 才代表实时同步可用；断线/错误时状态卡会如实提示
+      useStore.getState().setRealtimeConnected(status === 'SUBSCRIBED');
+    });
   } catch (e) {
     console.error('建立 Realtime 通道失败:', e);
+    useStore.getState().setRealtimeConnected(false);
   }
 }
 
@@ -363,6 +369,7 @@ export function cleanupRealtime(): void {
     }
     realtimeChannel = null;
   }
+  useStore.getState().setRealtimeConnected(false);
 }
 
 /* ---------- 注入 store 变化监听 ---------- */

@@ -51,7 +51,7 @@ export default function ColorPickerModal({
                   onClose();
                 }
               }}
-              className={`h-8 rounded transition-all duration-200 flex items-center justify-center text-xs font-bold relative ${
+              className={`h-8 rounded transition-[transform,box-shadow,border-color] duration-[var(--motion-fast)] flex items-center justify-center text-xs font-bold relative ${
                 isUsed
                   ? 'opacity-40 cursor-not-allowed'
                   : 'cursor-pointer hover:scale-110'

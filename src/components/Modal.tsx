@@ -1,6 +1,8 @@
 import { type ReactNode, useState, useEffect, useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useInertBackground } from '@/hooks/useInertBackground';
+import { pushModal, popModal, isTopModal } from '@/lib/modalStack';
 
 interface ModalProps {
   open: boolean;
@@ -42,6 +44,33 @@ export default function Modal({
   const [visible, setVisible] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const modalIdRef = useRef(Symbol('modal'));
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // 打开时背景不可聚焦/不可被读屏访问
+  useInertBackground(open);
+
+  // 点击弹窗外的任意区域（含导航栏空白区）关闭最上层弹窗
+  useEffect(() => {
+    if (!open) return;
+    const id = modalIdRef.current;
+    pushModal(id);
+    const onPointerDown = (e: PointerEvent) => {
+      if (!isTopModal(id)) return;
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (panelRef.current?.contains(target)) return;
+      // 其他弹窗 / 下拉浮层 / Toast 上的点击不视为“外部点击”
+      if (target.closest('[role="dialog"], [role="alertdialog"], [data-popover], [data-toast]')) return;
+      onCloseRef.current();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      popModal(id);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -62,7 +91,9 @@ export default function Modal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      if (!isTopModal(modalIdRef.current)) return;
+      onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -102,12 +133,12 @@ export default function Modal({
 
   if (!shouldRender) return null;
 
-  // 遮罩覆盖内容区域：移动端从次级导航栏下方开始（top-104px），避免模态框伸进导航栏被遮盖；
+  // 遮罩覆盖内容区域：移动端从顶部导航块下方开始（--mobile-chrome-h），避免模态框伸进导航栏被遮盖；
   // 桌面端从侧边栏右侧开始（desktop:left-64），顶部贴顶。
   // 断点统一为 desktop(1100px)，与侧边栏显示断点一致，避免 md/lg 与 desktop 错位产生空白
   const overlayCls = nested
-    ? 'modal-overlay fixed top-[104px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[60] flex items-center justify-center p-4'
-    : 'modal-overlay fixed top-[104px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-40 flex items-center justify-center p-4';
+    ? 'modal-overlay fixed top-[var(--mobile-chrome-h)] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-black/70 z-[var(--z-modal)] flex items-center justify-center p-4'
+    : 'modal-overlay fixed top-[var(--mobile-chrome-h)] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-[var(--z-modal-base)] flex items-center justify-center p-4';
 
   // 遮罩关闭：用 onMouseDown + target 判断，而非 onClick。
   // onClick 会在 mousedown/mouseup 目标不一致时触发在共同祖先（遮罩）上，
@@ -116,7 +147,7 @@ export default function Modal({
   // 同时保留事件冒泡，不影响 CustomSelect 等基于 document mousedown 的关闭逻辑。
   return createPortal(
     <div
-      className={`${overlayCls} transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`${overlayCls} transition-opacity duration-[var(--motion-base)] ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onMouseDown={
         closeOnOverlay
           ? (e: React.MouseEvent) => {
@@ -131,10 +162,10 @@ export default function Modal({
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
-        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full ${width} max-h-[calc(100vh-7.5rem)] desktop:max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden transition-all duration-200 focus:outline-none ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
+        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full ${width} max-h-[calc(100dvh-var(--mobile-chrome-h)-16px)] desktop:max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden transition-[transform,opacity] duration-[var(--motion-base)] focus:outline-none ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
         onKeyDown={trapTab}
         onClick={(e) => e.stopPropagation()}
-        style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+        style={{ transitionTimingFunction: 'var(--ease-emphasized)' }}
       >
         {!hideHeader && (
           <div className="flex items-center justify-between px-5 py-4 border-b border-ink-100 shrink-0">
@@ -143,7 +174,7 @@ export default function Modal({
             </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded hover:bg-ink-50 text-gray-400 hover:text-ink-700"
+              className="p-1 rounded hover:bg-ink-50 text-gray-400 hover:text-ink-700 tap-target"
               aria-label="关闭"
             >
               <X className="w-4 h-4" />

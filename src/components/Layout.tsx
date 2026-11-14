@@ -1,4 +1,4 @@
-import { useRef, useState, useLayoutEffect, useEffect, useCallback } from 'react';
+import { useRef, useState, useLayoutEffect, useEffect, useCallback, Suspense } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useStore } from '@/stores/useStore';
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import SyncStatus from '@/components/SyncStatus';
 import BrandLogo from '@/components/BrandLogo';
+import { DeferredPageLoading } from '@/components/PageLoading';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ProfileModal from '@/modals/ProfileModal';
 import SnapshotModal from '@/modals/SnapshotModal';
@@ -23,7 +24,8 @@ import AnnouncementsModal from '@/modals/AnnouncementsModal';
 import UpgradeModal, { type UpgradeModalMode } from '@/modals/UpgradeModal';
 import { startAutoSnapshotTimer } from '@/lib/snapshot';
 import { subscribeAnnouncements, type Announcement } from '@/lib/announcement';
-import { checkConnection } from '@/lib/data';
+import { syncNow } from '@/lib/data';
+import { getSyncDisplay } from '@/lib/syncDisplay';
 import { isUpgradeDue, todayStr } from '@/lib/upgrade';
 import { useToast } from '@/components/Toast';
 
@@ -59,6 +61,8 @@ export default function Layout() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [hasUnread, setHasUnread] = useState(false);
   const syncStatus = useStore((s) => s.syncStatus);
+  const syncPending = useStore((s) => s.syncPending);
+  const realtimeConnected = useStore((s) => s.realtimeConnected);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
 
   // 滑动指示器：记录每个菜单项的 DOM 位置
@@ -192,33 +196,25 @@ export default function Layout() {
   const asideContentClass = `transition-opacity ${fadeClass}`;
   const mainClass = `transition-opacity ${fadeClass}`;
   // 移动端同步圆点：复用 .sync-card/.sync-dot 样式，状态颜色与文字
-  const syncDotCls = syncStatus === 'online' ? '' : syncStatus;
-  const syncDotLabel =
-    syncStatus === 'online'
-      ? '已同步'
-      : syncStatus === 'syncing'
-        ? '同步中'
-        : syncStatus === 'checking'
-          ? '检测中'
-          : syncStatus === 'offline'
-            ? '离线'
-            : '未登录';
-  // 点击同步指示器主动检测连接
+  const syncDisplay = getSyncDisplay(syncStatus, syncPending, realtimeConnected);
+  const syncDotCls = syncDisplay.cls;
+  const syncDotLabel = syncDisplay.label;
+  // 点击同步指示器：重建通道并真正对齐数据
   const handleSyncCheck = async () => {
     if (syncStatus === 'checking' || syncStatus === 'syncing') return;
     if (!user) {
       toast.warning('请先登录');
       return;
     }
-    const ok = await checkConnection(user.id);
-    if (ok) toast.success('连接正常');
+    const ok = await syncNow(user.id);
+    if (ok) toast.success('连接正常，数据已对齐');
     else toast.warning('连接失败，请检查网络');
   };
 
   return (
-    <div className="h-screen flex overflow-hidden">
+    <div className="h-dvh flex overflow-hidden">
       {/* 侧边栏：背景色保持，logo 区域始终可见，菜单/用户信息淡入淡出 */}
-      <aside className="hidden desktop:flex desktop:w-64 flex-col bg-ink-700 text-white shadow-lg z-50">
+      <aside className="hidden desktop:flex desktop:w-64 flex-col bg-ink-700 text-white shadow-lg z-[var(--z-chrome)]">
         {/* 品牌区域：logo + 大标题，始终可见，衔接 AuthPage logo 形变后的位置 */}
         <div className="px-5 py-6 border-b border-ink-600/40">
           <div className="flex items-center gap-3">
@@ -237,9 +233,11 @@ export default function Layout() {
               <div
                 className="absolute left-0 right-0 bg-amber-300/15 border-l-2 border-amber-300 pointer-events-none"
                 style={{
-                  top: indicator.top,
+                  top: 0,
                   height: indicator.height,
-                  transition: 'top 0.3s ease-out, height 0.3s ease-out',
+                  transform: `translateY(${indicator.top}px)`,
+                  transition:
+                    'transform var(--motion-slow) var(--ease-standard), height var(--motion-slow) var(--ease-standard)',
                 }}
               />
             )}
@@ -341,9 +339,9 @@ export default function Layout() {
 
       {/* 移动端 fixed 顶部块：顶栏 + 次级导航合并（无空行，整体不随滚动）。
           父块统一墨绿背景，次级导航文字淡出时背景由父块填充，避免登出闪烁 */}
-      <div className="desktop:hidden fixed top-0 inset-x-0 z-50 bg-ink-700">
+      <div className="desktop:hidden fixed top-0 inset-x-0 z-[var(--z-chrome)] bg-ink-700 pt-[env(safe-area-inset-top)]">
         {/* 顶栏：logo+标题+操作一行不换行；高度由 32px 头像 + py-2.5 决定，共 52px；
-            加上次级导航 52px 使顶部块总高精确为 104px，与 main pt-[104px] 及模态框 top-[104px] 对齐 */}
+            加上次级导航 52px 使顶部块总高精确为 104px（另加刘海安全区，见 --mobile-chrome-h） */}
         <div className="bg-ink-700 text-white px-4 py-2.5 flex items-center justify-between shadow-md">
           {/* 品牌：渐变徽章 logo + 标题，shrink-0 防压缩，始终可见 */}
           <div className="flex items-center gap-2 shrink-0">
@@ -356,19 +354,19 @@ export default function Layout() {
           <div className={`flex items-center gap-2 shrink-0 ${asideContentClass}`}>
             <button
               onClick={handleSyncCheck}
-              className={`sync-card ${syncDotCls} cursor-pointer select-none`}
+              className={`sync-card ${syncDotCls} cursor-pointer select-none tap-target`}
               style={{ padding: '0.15rem' }}
-              title={`同步状态：${syncDotLabel}（点击检测连接）`}
+              title={`同步状态：${syncDotLabel}（点击立即同步）`}
             >
               <span className="sync-dot" />
             </button>
-            <button onClick={() => setActiveModal('snapshot')} aria-label="快照" title="快照管理" className="p-0.5">
+            <button onClick={() => setActiveModal('snapshot')} aria-label="快照" title="快照管理" className="p-0.5 tap-target">
               <Camera className="w-5 h-5 text-ink-100/70" />
             </button>
-            <button onClick={() => setActiveModal('history')} aria-label="历史" title="操作历史" className="p-0.5">
+            <button onClick={() => setActiveModal('history')} aria-label="历史" title="操作历史" className="p-0.5 tap-target">
               <HistoryIcon className="w-5 h-5 text-ink-100/70" />
             </button>
-            <button onClick={handleOpenAnnouncements} aria-label="公告" title="公告板" className="relative p-0.5">
+            <button onClick={handleOpenAnnouncements} aria-label="公告" title="公告板" className="relative p-0.5 tap-target">
               <Bell className="w-5 h-5 text-ink-100/70" />
               {hasUnread && (
                 <span className="absolute -top-0.5 right-0 w-2 h-2 rounded-full bg-red-500" />
@@ -388,7 +386,7 @@ export default function Layout() {
                 </div>
               )}
             </button>
-            <button onClick={handleLogout} aria-label="退出" title="退出登录" className="p-0.5">
+            <button onClick={handleLogout} aria-label="退出" title="退出登录" className="p-0.5 tap-target">
               <LogOut className="w-5 h-5 text-ink-100/70" />
             </button>
           </div>
@@ -416,13 +414,15 @@ export default function Layout() {
 
       {/* 主内容：进入时淡入，登出时淡出；独立滚动不影响侧边栏。
           scrollbar-gutter: stable 预留滚动条宽度，避免内容变长时滚动条出现挤动整页布局 */}
-      <main className={`flex-1 min-w-0 overflow-y-auto [scrollbar-gutter:stable] pt-[104px] desktop:pt-0 ${mainClass}`}>
+      <main data-app-content className={`flex-1 min-w-0 overflow-y-auto [scrollbar-gutter:stable] pt-[var(--mobile-chrome-h)] desktop:pt-0 ${mainClass}`}>
         {/* 右侧内容：key 变化触发重新挂载，播放 route-fade-in 淡入动画 */}
         <div
           key={loc.pathname}
           className="px-4 desktop:px-10 py-6 desktop:py-8 max-w-7xl mx-auto route-fade-in"
         >
-          <Outlet />
+          <Suspense fallback={<DeferredPageLoading label="正在加载页面…" />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
 

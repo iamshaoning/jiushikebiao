@@ -140,8 +140,9 @@ export default function DatePicker({
       {shouldRender && position && createPortal(
         <div
           ref={popoverRef}
+          data-popover="true"
           aria-hidden={!visible}
-          className={`fixed z-[70] p-3 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg transition-all duration-200 ${
+          className={`fixed z-[var(--z-popover)] p-3 rounded-lg border border-ink-200 bg-[var(--bg-secondary)] shadow-lg transition-[opacity,transform] duration-[var(--motion-base)] ${
             visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
           }`}
           style={{

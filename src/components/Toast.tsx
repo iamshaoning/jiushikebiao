@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createContext, useContext, useState, useEffect, useMemo, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
@@ -58,16 +59,18 @@ function ToastList() {
 
   const remove = useToastStore.getState().remove;
 
-  return (
+  return createPortal(
     <div
       role="status"
       aria-live="polite"
-      className="fixed top-4 right-4 z-[100] flex flex-col items-end gap-2 max-w-md pointer-events-none"
+      data-toast="true"
+      className="fixed top-4 right-4 z-[var(--z-toast)] flex flex-col items-end gap-2 max-w-md pointer-events-none"
     >
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onClose={() => remove(t.id)} />
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }
 

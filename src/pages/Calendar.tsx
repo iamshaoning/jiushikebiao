@@ -39,6 +39,7 @@ import {
 import PageLoading from '@/components/PageLoading';
 import ScrollHelperButton from '@/components/ScrollHelperButton';
 import Marquee from '@/components/Marquee';
+import { DESKTOP_MEDIA_QUERY, isMobileViewport } from '@/lib/breakpoints';
 
 const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日'];
 
@@ -124,11 +125,10 @@ export default function Calendar() {
   const [dragRect, setDragRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const dragStartPosRef = useRef<{ x: number; y: number } | null>(null);
   // 响应式：移动端用列表视图（每天一卡），桌面端用月历网格
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < 1100,
-  );
+  const [isMobile, setIsMobile] = useState(() => isMobileViewport());
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth < 1100);
+    const query = window.matchMedia(DESKTOP_MEDIA_QUERY);
+    const onResize = () => setIsMobile(!query.matches);
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -741,7 +741,7 @@ export default function Calendar() {
       <div className="flex items-center gap-1.5 desktop:gap-3 flex-nowrap">
         <button
           onClick={prevMonth}
-          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0 tap-target"
           aria-label="上个月"
         >
           <ChevronLeft className="w-4 h-4 text-gray-500" />
@@ -760,7 +760,7 @@ export default function Calendar() {
         />
         <button
           onClick={nextMonth}
-          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0"
+          className="p-2 desktop:p-1.5 rounded-lg hover:bg-ink-50 shrink-0 tap-target"
           aria-label="下个月"
         >
           <ChevronRight className="w-4 h-4 text-gray-500" />
@@ -852,7 +852,7 @@ export default function Calendar() {
                       return (
                         <div
                           key={course.id}
-                          className={`course-tag-item rounded grow basis-[150px] min-w-[150px] relative cursor-pointer transition-all ${
+                          className={`course-tag-item rounded grow basis-[150px] min-w-[150px] relative cursor-pointer transition-[box-shadow,transform,border-color] ${
                             isSelectedCourse ? 'is-selected' : ''
                           }`}
                           style={{
@@ -1011,7 +1011,7 @@ export default function Calendar() {
                     return (
                       <div
                         key={course.id}
-                        className={`course-tag-item rounded text-xs relative z-10 cursor-pointer transition-all ${
+                        className={`course-tag-item rounded text-xs relative z-10 cursor-pointer transition-[box-shadow,transform,border-color] ${
                           isSelectedCourse ? 'is-selected' : ''
                         }`}
                         style={{
@@ -1115,7 +1115,7 @@ export default function Calendar() {
       {/* 拖拽选择框线 */}
       {dragRect && dragRect.w > 2 && dragRect.h > 2 && (
         <div
-          className="fixed pointer-events-none z-[55] border-2 border-dashed border-ink-300 bg-ink-100/20 rounded"
+          className="fixed pointer-events-none z-[var(--z-drag)] border-2 border-dashed border-ink-300 bg-ink-100/20 rounded"
           style={{
             left: dragRect.x,
             top: dragRect.y,

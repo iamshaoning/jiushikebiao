@@ -50,6 +50,10 @@ interface StoreState {
   /* 用户/同步 */
   user: SessionUser | null;
   syncStatus: SyncStatus;
+  /** 本地有未确认上传的修改 */
+  syncPending: boolean;
+  /** Realtime 通道是否已订阅 */
+  realtimeConnected: boolean;
   dataLoaded: boolean;
 
   /* 选择状态 */
@@ -60,6 +64,8 @@ interface StoreState {
   /* actions —— 用户/同步 */
   setSessionUser: (u: SessionUser | null) => void;
   setSyncStatus: (s: SyncStatus) => void;
+  setSyncPending: (b: boolean) => void;
+  setRealtimeConnected: (b: boolean) => void;
   setDataLoaded: (b: boolean) => void;
 
   /* actions —— 数据 */
@@ -100,6 +106,8 @@ export const useStore = create<StoreState>((set, get) => ({
 
   user: null,
   syncStatus: 'offline',
+  syncPending: false,
+  realtimeConnected: false,
   dataLoaded: false,
 
   selectedDates: [],
@@ -108,6 +116,8 @@ export const useStore = create<StoreState>((set, get) => ({
 
   setSessionUser: (u) => set({ user: u }),
   setSyncStatus: (s) => set({ syncStatus: s }),
+  setSyncPending: (b) => set({ syncPending: b }),
+  setRealtimeConnected: (b) => set({ realtimeConnected: b }),
   setDataLoaded: (b) => set({ dataLoaded: b }),
 
   replaceData: (data, triggerColorInit = true) => {
@@ -131,9 +141,9 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   mutateData: (producer) => {
-    // 离线限制：登录后离线仅可查看，禁止一切增删改操作
+    // 离线限制：仅真正离线时禁止修改；同步中/检测中不应阻塞编辑
     const { user, dataLoaded, syncStatus } = get();
-    if (user && dataLoaded && syncStatus !== 'online') {
+    if (user && dataLoaded && syncStatus === 'offline') {
       useToastStore.getState().push('warning', '当前处于离线状态，仅可查看数据，无法修改');
       return;
     }
@@ -156,6 +166,7 @@ export const useStore = create<StoreState>((set, get) => ({
       return {
         ...state,
         ...draft,
+        syncPending: true,
       };
     });
   },

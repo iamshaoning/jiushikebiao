@@ -415,7 +415,7 @@ export default function CourseFormModal({
                   setLessonType(lt);
                   setSelectedStudentIds([]);
                 }}
-                className={`py-2 rounded-md text-sm font-medium transition-all ${
+                className={`py-2 rounded-md text-sm font-medium transition-colors ${
                   lessonType === lt
                     ? 'bg-ink-200 text-ink-700 font-medium shadow-sm'
                     : 'text-gray-500 hover:text-ink-700 hover:bg-ink-50'
@@ -460,7 +460,7 @@ export default function CourseFormModal({
                       key={student.id}
                       type="button"
                       onClick={() => toggleStudent(student)}
-                      className="px-3 py-1 rounded-full text-sm border-2 transition-all duration-200"
+                      className="px-3 py-1 rounded-full text-sm border-2 transition-[transform,border-color] duration-[var(--motion-fast)]"
                       style={{
                         borderColor: color,
                         color: isSelected ? '#fff' : color,

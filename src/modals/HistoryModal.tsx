@@ -620,7 +620,7 @@ export default function HistoryModal({ open, onClose }: HistoryModalProps) {
                   {hasDetail && (
                     <button
                       onClick={() => setExpandedId(expanded ? null : record.id)}
-                      className="p-1.5 rounded hover:bg-ink-50 text-gray-400 transition-all"
+                      className="p-1.5 rounded hover:bg-ink-50 text-gray-400 transition-colors"
                       title={expanded ? '收起详情' : '展开详情'}
                     >
                       <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />

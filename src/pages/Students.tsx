@@ -115,6 +115,7 @@ import {
   batchUpdateStudents,
 } from '@/lib/student';
 import { generateColor, scrollMainToTop } from '@/lib/utils';
+import { isDesktopViewport } from '@/lib/breakpoints';
 import { recordDeleteStudent, recordBatchDeleteStudents, recordBatchUpdateStudents } from '@/lib/history';
 import type { Student, StudentFees } from '@/lib/types';
 import {
@@ -195,7 +196,7 @@ export default function Students() {
       if (e.button !== 0) return;
       const target = e.target as HTMLElement;
       // 窄屏（手机触摸或窄桌面窗口）：不做自由拖拽框选，点击空白处仅取消选中
-      if (window.innerWidth < 1100) {
+      if (!isDesktopViewport()) {
         if (
           target.closest(
             'button, input, select, textarea, .modal-overlay, .floating-action-bar, .student-card, .student-org-group-header',
@@ -332,12 +333,12 @@ export default function Students() {
     return w >= 1300 ? 3 : w >= 650 ? 2 : 1;
   });
   // 窄屏（移动端）：拖拽排序只允许从专用手柄发起，避免竖屏滚动误触发
-  const [isNarrow, setIsNarrow] = useState(() => window.innerWidth < 1100);
+  const [isNarrow, setIsNarrow] = useState(() => !isDesktopViewport());
   const gridRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const calc = () => {
       const w = window.innerWidth;
-      setIsNarrow(w < 1100);
+      setIsNarrow(!isDesktopViewport());
       if (w >= 1300) setNumCols(3);
       else if (w >= 650) setNumCols(2);
       else setNumCols(1);
@@ -593,7 +594,7 @@ export default function Students() {
   // 拖拽框选（从卡片/行上按下鼠标启动）
   const handleDragStart = (e: React.MouseEvent) => {
     // 窄屏不支持框选，仅保留点击/长按多选
-    if (window.innerWidth < 1100) return;
+    if (!isDesktopViewport()) return;
     if (e.button !== 0) return;
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
@@ -977,7 +978,7 @@ export default function Students() {
       {/* 拖拽选择框线 */}
       {dragRect && dragRect.w > 2 && dragRect.h > 2 && (
         <div
-          className="fixed pointer-events-none z-[55] border-2 border-dashed border-ink-300 bg-ink-100/20 rounded"
+          className="fixed pointer-events-none z-[var(--z-drag)] border-2 border-dashed border-ink-300 bg-ink-100/20 rounded"
           style={{
             left: dragRect.x,
             top: dragRect.y,

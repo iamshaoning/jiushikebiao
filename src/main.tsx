@@ -1,9 +1,14 @@
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 import { startDomSkeleton, stopDomSkeleton } from './lib/bootSkeleton'
 
-createRoot(document.getElementById('root')!).render(<App />)
+createRoot(document.getElementById('root')!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>,
+)
 
 /* ---------- 首屏加载：字体未就绪时用真实 DOM 生成骨架 ---------- */
 

@@ -4,6 +4,7 @@ import { useToast } from '@/components/Toast';
 import { useAuth } from '@/context/AuthContext';
 import BrandLogo from '@/components/BrandLogo';
 import { login, register } from '@/lib/auth';
+import { isDesktopViewport } from '@/lib/breakpoints';
 import {
   Loader2,
   UserPlus,
@@ -313,7 +314,7 @@ export default function AuthPage() {
 
   // 根据 phase 计算布局参数
   const getLayout = () => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 1100;
+    const isMobile = !isDesktopViewport();
     // 移动端：纵向布局，绿色品牌区在上、白色表单区在下；形变目标为系统页顶部块高度（104px）
     if (isMobile) {
       // 顶栏 logo：px-4(16px)、行高 32px 内垂直居中 → 顶部偏移 12px、宽 28px；idle logo：top-8 left-8(32px) w-10(40px)
@@ -326,17 +327,17 @@ export default function AuthPage() {
       const titleAtIdle = 'scale(1)';
       switch (phase) {
         case 'form-fading':
-          return { leftBasis: '40vh', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
+          return { leftBasis: '40dvh', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
         case 'expanding':
           return { leftBasis: '104px', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtBar, titleTransform: titleAtBar };
         case 'leaving-start':
           return { leftBasis: '104px', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtBar, titleTransform: titleAtBar };
         case 'leaving-expand':
-          return { leftBasis: '40vh', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
+          return { leftBasis: '40dvh', rightBasis: '0', mainGrow: 1, sideOpacity: 0, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
         case 'mode-switching':
-          return { leftBasis: '40vh', rightBasis: '0', mainGrow: 1, sideOpacity: 1, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
+          return { leftBasis: '40dvh', rightBasis: '0', mainGrow: 1, sideOpacity: 1, formOpacity: 0, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
         default:
-          return { leftBasis: '40vh', rightBasis: '0', mainGrow: 1, sideOpacity: 1, formOpacity: 1, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
+          return { leftBasis: '40dvh', rightBasis: '0', mainGrow: 1, sideOpacity: 1, formOpacity: 1, logoTransform: logoAtIdle, titleTransform: titleAtIdle };
       }
     }
     // 桌面端：左右分栏，形变目标为系统页侧边栏宽度占比（desktop:w-64 = 256px）
@@ -405,7 +406,7 @@ export default function AuthPage() {
     phase === 'idle' ? 'opacity 0.5s ease-out' : 'opacity 0.3s ease-out';
 
   return (
-    <div className="min-h-screen flex flex-col desktop:flex-row bg-cream">
+    <div className="min-h-dvh flex flex-col desktop:flex-row bg-cream">
       {/* 品牌氛围区：移动端在上（纵向），桌面端在左 */}
       <aside
         className="relative flex flex-col justify-between overflow-hidden bg-ink-700 text-white p-8 desktop:p-12"

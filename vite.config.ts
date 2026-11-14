@@ -8,6 +8,17 @@ export default defineConfig({
   base: './',
   build: {
     sourcemap: 'hidden',
+    rollupOptions: {
+      output: {
+        // 依赖按体积/更新频率拆分，页面本身由路由级 dynamic import 分包
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          dnd: ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
   },
   plugins: [
     react(),

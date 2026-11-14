@@ -77,6 +77,26 @@ export function useAnchoredPopover<T extends HTMLElement = HTMLElement>({
     });
   }, [open, estimatedHeight, minWidth]);
 
+  // 首屏定位使用预估高度；挂载后按真实渲染高度校正一次展开方向
+  useLayoutEffect(() => {
+    if (!open || !shouldRender) return;
+    const anchor = anchorRef.current;
+    const popover = popoverRef.current;
+    if (!anchor || !popover) return;
+    const rect = anchor.getBoundingClientRect();
+    const height = popover.getBoundingClientRect().height;
+    const spaceBelow = window.innerHeight - rect.bottom - 4;
+    const spaceAbove = rect.top - 4;
+    const direction = spaceBelow < height && spaceAbove >= height ? 'up' : 'down';
+    setPosition((prev) => {
+      if (!prev) return prev;
+      const top = direction === 'up' ? undefined : rect.bottom + 4;
+      const bottom = direction === 'up' ? window.innerHeight - rect.top + 4 : undefined;
+      if (prev.direction === direction && prev.top === top && prev.bottom === bottom) return prev;
+      return { ...prev, direction, top, bottom };
+    });
+  }, [open, shouldRender, visible]);
+
   // 点击外部 / 滚动 / 尺寸变化时关闭（fixed 定位需自行同步关闭）
   useEffect(() => {
     if (!open) return;

@@ -4,11 +4,13 @@
  * 还原原项目 modalService.showConfirm 的视觉设计：
  * - 居中图标圆形背景 + 消息文本 + 取消/确认按钮
  * - 三种类型：confirm(蓝) / delete(红) / warning(琥珀)
- * - 遮罩效果与 Modal 一级一致（z-[45]，不覆盖导航栏）
+ * - 遮罩效果与 Modal 一级一致（z-[var(--z-confirm)]，不覆盖导航栏）
  */
-import { type ReactNode, useState, useEffect, useId } from 'react';
+import { type ReactNode, useState, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { HelpCircle, TriangleAlert, CircleAlert } from 'lucide-react';
+import { useInertBackground } from '@/hooks/useInertBackground';
+import { pushModal, popModal, isTopModal } from '@/lib/modalStack';
 
 export type ConfirmType = 'confirm' | 'delete' | 'warning';
 
@@ -64,6 +66,30 @@ export default function ConfirmDialog({
   const [shouldRender, setShouldRender] = useState(false);
   const [visible, setVisible] = useState(false);
   const msgId = useId();
+  const modalIdRef = useRef(Symbol('confirm-dialog'));
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+
+  useInertBackground(open);
+
+  // 点击弹窗外的任意区域关闭最上层弹窗（与 Modal 行为一致）
+  useEffect(() => {
+    if (!open) return;
+    const id = modalIdRef.current;
+    pushModal(id);
+    const onPointerDown = (e: PointerEvent) => {
+      if (!isTopModal(id)) return;
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (target.closest('[role="dialog"], [role="alertdialog"], [data-popover], [data-toast]')) return;
+      onCancelRef.current();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      popModal(id);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (open) {
@@ -82,6 +108,7 @@ export default function ConfirmDialog({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
+      if (!isTopModal(modalIdRef.current)) return;
       if (e.key === 'Escape') {
         onCancel();
         return;
@@ -114,16 +141,16 @@ export default function ConfirmDialog({
 
   return createPortal(
     <div
-      className={`modal-overlay fixed top-[104px] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-[45] flex items-center justify-center p-4 transition-opacity duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+      className={`modal-overlay fixed top-[var(--mobile-chrome-h)] inset-x-0 bottom-0 desktop:top-0 desktop:inset-y-0 desktop:left-64 bg-ink-900/40 z-[var(--z-confirm)] flex items-center justify-center p-4 transition-opacity duration-[var(--motion-base)] ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={onCancel}
     >
       <div
         role="alertdialog"
         aria-modal="true"
         aria-describedby={msgId}
-        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full max-w-sm p-6 transition-all duration-200 ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
+        className={`bg-[var(--bg-modal)] rounded-xl2 shadow-lift w-full max-w-sm p-6 transition-[transform,opacity] duration-[var(--motion-base)] ${visible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'}`}
         onClick={(e) => e.stopPropagation()}
-        style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+        style={{ transitionTimingFunction: 'var(--ease-emphasized)' }}
       >
         {/* 图标 */}
         <div className="text-center mb-6">
